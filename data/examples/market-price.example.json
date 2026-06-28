@@ -1,0 +1,25 @@
+{
+  "indicatorId": "us2y",
+  "name": "미국 2년물 국채금리",
+  "type": "market_price",
+  "asOf": "2099-01-31",
+  "unit": "%",
+  "available": true,
+  "status": null,
+  "source": {
+    "provider": "FRED",
+    "seriesId": "DGS2",
+    "originalSource": "Federal Reserve Board H.15"
+  },
+  "metrics": {
+    "currentValue": 4.3217,
+    "currentObservationDate": "2099-01-30",
+    "weeklyChange": 7.43,
+    "weeklyChangeUnit": "bp",
+    "weeklyReferenceDate": "2099-01-23",
+    "fourWeekChange": -12.86,
+    "fourWeekChangeUnit": "bp",
+    "fourWeekReferenceDate": "2099-01-02"
+  },
+  "error": null
+}
