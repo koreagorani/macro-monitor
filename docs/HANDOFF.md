@@ -14,6 +14,7 @@ Phase 3 데이터 자동 수집 준비 시작.
 - 5분 이내 핵심 판단이 가능하도록 출력 범위 정리
 - 주간 보고서 취약 테마 출력을 상위 3개로 제한
 - 헷지 필요성 판정 후 조건부로 0~2개 테마만 제안하도록 명세 수정
+- `docs/REQUIREMENTS.md`의 보고서 항목을 `docs/REPORT_SPEC.md`와 일치하도록 정리
 - 관련 결정사항을 `docs/DECISIONS.md`에 반영
 
 ### Phase 2 GitHub 하네스 구성
