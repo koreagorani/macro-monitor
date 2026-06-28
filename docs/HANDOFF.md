@@ -70,9 +70,12 @@ Phase 3 데이터 자동 수집 구현 준비:
 
 ## 검증 결과
 
-- `config/indicators.json` JSON 문법 검증 필요
-- `data/schema/indicator-output.schema.json` JSON 문법 검증 필요
-- 합성 예시 2개 JSON 문법 및 스키마 검증 필요
+- `config/indicators.json`: JSON 문법 정상, MVP 지표 ID 6개 확인
+- `data/schema/indicator-output.schema.json`: JSON 문법 정상, 공통 필드와 유형별 `metrics` 분기 확인
+- `data/examples/market-price.example.json`: JSON 문법 정상, 시장가격형 계약과 일치
+- `data/examples/scheduled-release.example.json`: JSON 문법 정상, 정기발표형 계약과 일치
+- 예시 값은 실제 시장 데이터가 아닌 합성 값이며 계산 정밀도 보존 확인
+- `RISK_MODEL.md`의 미국 2년물 bp, 근원 PCE 전월비·3개월 평균, 시장가격형 변화율 입력 요구와 충돌 없음
 
 ## 미해결
 
