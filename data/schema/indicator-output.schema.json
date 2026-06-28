@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/indicator-output.schema.json",
+  "title": "Normalized Indicator Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "indicatorId",
+    "name",
+    "type",
+    "asOf",
+    "unit",
+    "available",
+    "status",
+    "source",
+    "metrics",
+    "error"
+  ],
+  "properties": {
+    "indicatorId": {
+      "type": "string",
+      "enum": ["us2y", "core_pce", "wti", "usdkrw", "btc", "sp500"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": ["market_price", "scheduled_release"]
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date",
+      "description": "Evaluation date requested by the collection run."
+    },
+    "unit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "available": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": ["string", "null"],
+      "description": "Reserved for the risk model. Null during collection when not yet evaluated."
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "metrics": {},
+    "error": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/error" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "market_price" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "#/$defs/marketPriceMetrics" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "scheduled_release" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "#/$defs/scheduledReleaseMetrics" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "nullableNumber": {
+      "type": ["number", "null"]
+    },
+    "nullableDate": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "seriesId", "originalSource"],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seriesId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "originalSource": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "marketPriceMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currentValue",
+        "currentObservationDate",
+        "weeklyChange",
+        "weeklyChangeUnit",
+        "weeklyReferenceDate",
+        "fourWeekChange",
+        "fourWeekChangeUnit",
+        "fourWeekReferenceDate"
+      ],
+      "properties": {
+        "currentValue": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "currentObservationDate": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "weeklyChange": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "weeklyChangeUnit": {
+          "type": ["string", "null"],
+          "enum": ["bp", "%", null]
+        },
+        "weeklyReferenceDate": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "fourWeekChange": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "fourWeekChangeUnit": {
+          "type": ["string", "null"],
+          "enum": ["bp", "%", null]
+        },
+        "fourWeekReferenceDate": {
+          "$ref": "#/$defs/nullableDate"
+        }
+      }
+    },
+    "scheduledReleaseMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currentMoM",
+        "previousMoM",
+        "threeMonthAverageMoM",
+        "consensusMoM",
+        "referenceMonth",
+        "currentObservationDate"
+      ],
+      "properties": {
+        "currentMoM": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "previousMoM": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "threeMonthAverageMoM": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "consensusMoM": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "referenceMonth": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+        },
+        "currentObservationDate": {
+          "$ref": "#/$defs/nullableDate"
+        }
+      }
+    }
+  }
+}
