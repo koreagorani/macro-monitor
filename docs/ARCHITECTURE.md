@@ -33,11 +33,22 @@
 
 - GitHub Actions 실행 시 필요한 기간의 데이터만 API에서 조회한다.
 - 원시 시계열은 메모리 또는 임시 파일에서만 처리한다.
-- 계산 대상은 기준일 현재값, 전주 대비 변화율, 4주 누적 변화율, 필요한 경우 최근 흐름 또는 추세다.
+- 시장가격형은 기준일, 7일 전, 28일 전 이하의 가장 최근 유효 관측값을 사용한다.
+- 미국 2년물 변화는 bp 차이로 계산하고 나머지 시장가격형 변화는 백분율로 계산한다.
+- 근원 PCE는 지수 수준에서 전월비와 최근 3개월 전월비 평균을 계산한다.
 - 계산이 끝나면 원시 시계열을 폐기한다.
 - 비트코인과 S&P 500의 전체 원시 시계열을 공개 저장소에 장기간 저장하거나 커밋하지 않는다.
 - 운영 원시 시계열과 개인 최종 보고서는 공개 저장소에 커밋하지 않는다.
-- 코드, 설정, 임계값, 문서, 비민감 샘플 스키마, 테스트 고정 데이터와 예시 파일은 공개 저장소에 보관할 수 있다.
+- 코드, 설정, 임계값, 문서, 데이터 스키마, 합성 테스트 데이터와 비민감 예시 파일은 공개 저장소에 보관할 수 있다.
+
+## 정규화 출력 계약
+
+- 지표 설정의 단일 출처는 `config/indicators.json`이다.
+- 수집 결과의 공통 JSON 계약은 `data/schema/indicator-output.schema.json`이다.
+- 합성 예시는 `data/examples/`에 둔다.
+- `asOf`는 수집 실행의 기준일이다.
+- 실제 계산에 사용한 관측일은 유형별 `metrics`에 별도로 저장한다.
+- 계산값은 원래 정밀도를 유지하고 표시 단계에서만 반올림한다.
 
 ## 보고서 전달 경로
 
@@ -63,19 +74,21 @@ macro-monitor/
 ├─ prompts/
 ├─ scripts/
 ├─ data/
+│  ├─ schema/
+│  └─ examples/
 ├─ reports/
 ├─ evals/
 └─ .github/workflows/
 ```
 
-`data/`와 `reports/`는 샘플 스키마, 테스트용 고정 데이터, 비민감 예시 파일에만 사용한다. 실제 원시 시계열과 개인 보고서는 커밋하지 않는다.
+`data/`와 `reports/`는 스키마, 합성 테스트 데이터, 비민감 예시 파일에만 사용한다. 실제 원시 시계열과 개인 보고서는 커밋하지 않는다.
 
 ## 초기 기술
 
 - GitHub
 - GitHub Actions
 - JavaScript 또는 TypeScript
-- 데이터 API
+- FRED API
 - 초기 AI 분석은 ChatGPT 수동
 - 이후 OpenAI API
 - Notion API
@@ -93,7 +106,7 @@ macro-monitor/
 ## 보안
 
 GitHub Secrets:
-- 데이터 API 키
+- FRED API 키
 - OpenAI API 키
 - Notion API 키
 - Telegram Bot Token
