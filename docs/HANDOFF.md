@@ -20,32 +20,37 @@
 - README와 config 설정 파일 초안 생성
 - 새 세션이 작업 유형에 필요한 문서만 읽고 시작할 수 있는 구조 확보
 
-### 최근 문서 정리
+### Phase 3 데이터 수집 설계
 
-- `docs/ROADMAP.md`의 Phase 3 비교 방식과 Phase 6 헷지 규칙을 현재 결정에 맞게 수정
-- 근원 PCE를 월간 발표형으로 분류하고 이전 발표치와 3개월 추세를 사용하도록 정리
-- 운영 원시 시계열과 개인 보고서는 공개 저장소에 보관하지 않도록 범위 명확화
-- 비민감 샘플 스키마, 테스트 고정 데이터, 예시 파일은 저장소에 보관 가능하도록 정리
-- Notion 연동 전 보고서는 수동 실행 화면에만 출력하도록 결정
-- D-007은 헷지 필요성 및 추천 개수, D-009는 취약 테마 출력 개수만 담당하도록 분리
-- `AGENTS.md`에 문서 역할과 단일 출처 원칙 추가
-- README는 간결한 프로젝트 개요만 유지하고 상세 상태는 이 문서에서 관리하도록 변경
+- MVP 지표 6개를 FRED API 기반으로 설정
+- `config/indicators.json`에 지표 ID, 유형, 출처, 단위, 계산 방식, 표시 자릿수 작성
+- 시장가격형과 정기발표형의 공통 출력 계약 작성
+- JSON Schema를 `data/schema/indicator-output.schema.json`에 생성
+- 시장가격형과 근원 PCE의 합성 예시를 `data/examples/`에 생성
+- 시장가격형은 휴일·결측일에 목표일 이하의 최근 유효 관측값을 사용하도록 확정
+- 미국 2년물 변화는 bp, 나머지 시장가격형 변화는 백분율로 계산하도록 확정
+- 근원 PCE는 지수 수준에서 전월비와 최근 3개월 평균을 계산하도록 확정
+- 계산값은 원래 정밀도를 유지하고 보고서 표시 단계에서만 반올림하도록 확정
+- 지표별 실패 처리와 스키마 계약을 `docs/REQUIREMENTS.md`에 반영
+- 스키마 위치와 데이터 처리 구조를 `docs/ARCHITECTURE.md`에 반영
+- 관련 구조적 결정을 D-014로 기록
 
 ## 현재 작업
 
-Phase 3 데이터 자동 수집 준비:
+Phase 3 데이터 자동 수집 구현 준비:
 
-- MVP 지표 6개 데이터 소스 확정
-- `config/indicators.json` 작성
-- 시장가격형과 정기발표형의 공통 출력 스키마 정의
 - JavaScript와 TypeScript 중 구현 언어 결정
-- 수동 실행 가능한 수집 스크립트 구조 설계
+- FRED API 호출 모듈 설계
+- 유효 관측값 선택 함수 구현
+- 시장가격형 변화 계산 함수 구현
+- 근원 PCE 전월비 계산 함수 구현
+- 스키마 검증과 수동 실행 화면 출력 구현
 
 ## Phase 3 완료 조건
 
 - 시장가격형 지표의 기준일 현재값, 전주 대비 변화율, 4주 누적 변화율 계산
-- 근원 PCE의 현재 발표치, 이전 발표치, 3개월 추세 계산
-- 정규화된 데이터 구조 생성
+- 근원 PCE의 현재 전월비, 이전 전월비, 3개월 평균 계산
+- 정규화된 데이터 구조 생성 및 JSON Schema 검증
 - 원시 시계열은 계산 후 폐기하고 저장소에 커밋하지 않음
 - 수동 실행 화면에서 결과 확인 가능
 
@@ -56,16 +61,23 @@ Phase 3 데이터 자동 수집 준비:
 - `docs/REQUIREMENTS.md`
 - `docs/ARCHITECTURE.md`
 - `config/indicators.json`
+- `data/schema/indicator-output.schema.json`
 - `docs/HANDOFF.md`
 
 선택:
 - 지표 판정 필드 확인 시 `docs/RISK_MODEL.md`
 - 구조적 결정 확인 시 `docs/DECISIONS.md`
 
+## 검증 결과
+
+- `config/indicators.json` JSON 문법 검증 필요
+- `data/schema/indicator-output.schema.json` JSON 문법 검증 필요
+- 합성 예시 2개 JSON 문법 및 스키마 검증 필요
+
 ## 미해결
 
-- MVP 지표별 실제 데이터 소스
 - JavaScript와 TypeScript 중 선택
-- 데이터 API 키 필요 여부
-- 공통 출력 스키마
-- 정규화 방식
+- FRED API 키 발급 및 GitHub Secrets 등록
+- 핵심 지표의 범위
+- 핵심 지표 2개 이상 실패 시 중단 로직의 구체적 적용 위치
+- 스키마 검증 라이브러리 선택
