@@ -1,0 +1,23 @@
+{
+  "indicatorId": "core_pce",
+  "name": "근원 PCE",
+  "type": "scheduled_release",
+  "asOf": "2099-02-28",
+  "unit": "% MoM",
+  "available": true,
+  "status": null,
+  "source": {
+    "provider": "FRED",
+    "seriesId": "PCEPILFE",
+    "originalSource": "U.S. Bureau of Economic Analysis"
+  },
+  "metrics": {
+    "currentMoM": 0.237891,
+    "previousMoM": 0.201234,
+    "threeMonthAverageMoM": 0.219876,
+    "consensusMoM": null,
+    "referenceMonth": "2099-01",
+    "currentObservationDate": "2099-01-01"
+  },
+  "error": null
+}
