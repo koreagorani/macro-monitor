@@ -11,10 +11,15 @@
 
 ## 현재 단계
 
-Phase 2: GitHub 하네스 구성
+Phase 3: 데이터 자동 수집 준비 및 구현
+
+완료:
+- Phase 1 수동 보고서 검증
+- Phase 2 GitHub 하네스 구성
 
 ## 저장소 구조
 
+```text
 macro-monitor/
 ├─ AGENTS.md
 ├─ README.md
@@ -26,24 +31,26 @@ macro-monitor/
 ├─ reports/
 ├─ evals/
 └─ .github/workflows/
+```
 
 ## 주요 문서
 
-- AGENTS.md
-- docs/ARCHITECTURE.md
-- docs/ROADMAP.md
-- docs/HANDOFF.md
+- `AGENTS.md`
+- `docs/ARCHITECTURE.md`
+- `docs/ROADMAP.md`
+- `docs/HANDOFF.md`
 
-## 범위
+## 현재 작업 범위
 
-현재 구현 범위:
-- 저장소 구조 정리
-- 설정 파일 초안
-- 문서 체계 구축
+- MVP 지표 6개 데이터 소스 확정
+- `config/indicators.json` 작성
+- 데이터 출력 스키마 정의
+- 수동 실행 가능한 데이터 수집 구현
 
-현재 제외:
-- 데이터 수집
-- 위험 모델
-- 포트폴리오 모델
-- Notion
-- Telegram
+## 현재 제외
+
+- 위험 모델 구현
+- 포트폴리오 모델 구현
+- AI 보고서 자동 생성
+- Notion 연동
+- Telegram 연동
