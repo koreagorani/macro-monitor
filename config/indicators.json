@@ -1,1 +1,139 @@
-{}
+{
+  "schemaVersion": "1.0.0",
+  "providerDefaults": {
+    "provider": "FRED",
+    "apiBaseUrl": "https://api.stlouisfed.org/fred/series/observations",
+    "apiKeyEnvironmentVariable": "FRED_API_KEY",
+    "fileType": "json"
+  },
+  "indicators": {
+    "us2y": {
+      "name": "미국 2년물 국채금리",
+      "type": "market_price",
+      "source": {
+        "provider": "FRED",
+        "seriesId": "DGS2",
+        "originalSource": "Federal Reserve Board H.15"
+      },
+      "unit": "%",
+      "display": {
+        "currentValueDecimals": 2,
+        "changeDecimals": 1
+      },
+      "calculation": {
+        "method": "basis_point_difference",
+        "weeklyLookbackDays": 7,
+        "fourWeekLookbackDays": 28,
+        "changeUnit": "bp",
+        "percentagePointToBasisPoint": 100,
+        "observationSelection": "latest_valid_on_or_before_target_date"
+      }
+    },
+    "core_pce": {
+      "name": "근원 PCE",
+      "type": "scheduled_release",
+      "source": {
+        "provider": "FRED",
+        "seriesId": "PCEPILFE",
+        "originalSource": "U.S. Bureau of Economic Analysis"
+      },
+      "unit": "% MoM",
+      "display": {
+        "valueDecimals": 2
+      },
+      "calculation": {
+        "method": "month_over_month_percent_change",
+        "formula": "(current_index / previous_index - 1) * 100",
+        "threeMonthAveragePeriods": 3,
+        "consensusDefault": null,
+        "observationSelection": "latest_valid_monthly_observation"
+      }
+    },
+    "wti": {
+      "name": "WTI",
+      "type": "market_price",
+      "source": {
+        "provider": "FRED",
+        "seriesId": "DCOILWTICO",
+        "originalSource": "U.S. Energy Information Administration"
+      },
+      "unit": "USD/barrel",
+      "display": {
+        "currentValueDecimals": 1,
+        "changeDecimals": 1
+      },
+      "calculation": {
+        "method": "percent_change",
+        "weeklyLookbackDays": 7,
+        "fourWeekLookbackDays": 28,
+        "changeUnit": "%",
+        "observationSelection": "latest_valid_on_or_before_target_date"
+      }
+    },
+    "usdkrw": {
+      "name": "원·달러 환율",
+      "type": "market_price",
+      "source": {
+        "provider": "FRED",
+        "seriesId": "DEXKOUS",
+        "originalSource": "Federal Reserve Board H.10"
+      },
+      "unit": "KRW/USD",
+      "display": {
+        "currentValueDecimals": 1,
+        "changeDecimals": 1
+      },
+      "calculation": {
+        "method": "percent_change",
+        "weeklyLookbackDays": 7,
+        "fourWeekLookbackDays": 28,
+        "changeUnit": "%",
+        "observationSelection": "latest_valid_on_or_before_target_date"
+      }
+    },
+    "btc": {
+      "name": "비트코인",
+      "type": "market_price",
+      "source": {
+        "provider": "FRED",
+        "seriesId": "CBBTCUSD",
+        "originalSource": "Coinbase"
+      },
+      "unit": "USD",
+      "display": {
+        "currentValueDecimals": 0,
+        "changeDecimals": 1
+      },
+      "calculation": {
+        "method": "percent_change",
+        "weeklyLookbackDays": 7,
+        "fourWeekLookbackDays": 28,
+        "changeUnit": "%",
+        "observationSelection": "latest_valid_on_or_before_target_date",
+        "retainRawSeries": false
+      }
+    },
+    "sp500": {
+      "name": "S&P 500",
+      "type": "market_price",
+      "source": {
+        "provider": "FRED",
+        "seriesId": "SP500",
+        "originalSource": "S&P Dow Jones Indices"
+      },
+      "unit": "index",
+      "display": {
+        "currentValueDecimals": 1,
+        "changeDecimals": 1
+      },
+      "calculation": {
+        "method": "percent_change",
+        "weeklyLookbackDays": 7,
+        "fourWeekLookbackDays": 28,
+        "changeUnit": "%",
+        "observationSelection": "latest_valid_on_or_before_target_date",
+        "retainRawSeries": false
+      }
+    }
+  }
+}
