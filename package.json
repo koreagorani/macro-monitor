@@ -8,6 +8,7 @@
   },
   "scripts": {
     "collect:us2y": "node scripts/run-us2y.js",
+    "collect:market-prices": "node scripts/run-market-prices.js",
     "test": "node --test",
     "validate:examples": "node scripts/validate-examples.js"
   },
