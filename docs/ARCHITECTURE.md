@@ -29,6 +29,14 @@
 - 원시 시계열은 실행 중에만 사용하고 장기 보관하지 않음
 - 공개 저장소에는 운영 원시 시계열과 개인 보고서를 보관하지 않음
 
+## 실행 환경
+
+- Node.js 22 이상
+- JavaScript ES Modules
+- GitHub Actions와 수동 명령에서 동일한 실행 코드를 사용
+- JSON Schema 검증은 Ajv를 사용
+- 테스트는 Node.js 내장 `node:test`를 사용
+
 ## 데이터 처리 및 보관
 
 - GitHub Actions 실행 시 필요한 기간의 데이터만 API에서 조회한다.
@@ -50,6 +58,24 @@
 - 실제 계산에 사용한 관측일은 유형별 `metrics`에 별도로 저장한다.
 - 계산값은 원래 정밀도를 유지하고 표시 단계에서만 반올림한다.
 
+## 소스 구조
+
+```text
+src/
+├─ clients/       # 외부 API 호출
+├─ collectors/    # 지표별 수집 오케스트레이션과 실패 격리
+├─ config/        # JSON 설정 로딩
+├─ domain/        # 관측값 선택과 순수 계산 함수
+└─ validation/    # JSON Schema 검증
+
+scripts/          # 수동 실행 진입점
+test/             # 합성 데이터 기반 단위 테스트
+```
+
+- 외부 API 응답 처리와 계산 로직을 분리한다.
+- `domain/` 함수는 네트워크나 환경변수에 의존하지 않는다.
+- 실행 스크립트는 설정 로딩, 수집, 검증, 화면 출력을 연결한다.
+
 ## 보고서 전달 경로
 
 - Notion 연동 전에는 생성된 보고서를 수동 실행 화면에만 출력한다.
@@ -69,10 +95,12 @@
 macro-monitor/
 ├─ AGENTS.md
 ├─ README.md
+├─ package.json
 ├─ docs/
 ├─ config/
-├─ prompts/
+├─ src/
 ├─ scripts/
+├─ test/
 ├─ data/
 │  ├─ schema/
 │  └─ examples/
@@ -87,8 +115,10 @@ macro-monitor/
 
 - GitHub
 - GitHub Actions
-- JavaScript 또는 TypeScript
+- Node.js 22
+- JavaScript ES Modules
 - FRED API
+- Ajv
 - 초기 AI 분석은 ChatGPT 수동
 - 이후 OpenAI API
 - Notion API
