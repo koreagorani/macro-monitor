@@ -3,6 +3,7 @@ import { collectMarketPriceIndicators } from "../src/collectors/collect-market-p
 import { validateIndicatorOutput } from "../src/validation/validate-output.js";
 
 const asOf = process.argv[2] ?? new Date().toISOString().slice(0, 10);
+const strict = process.env.STRICT_MARKET_COLLECTION === "true";
 const config = await loadIndicatorConfig();
 const apiKeyName = config.providerDefaults.apiKeyEnvironmentVariable;
 const apiKey = process.env[apiKeyName];
@@ -35,6 +36,14 @@ if (!schemaFailure) {
   console.log(JSON.stringify(outputs, null, 2));
 }
 
-if (schemaFailure) {
+const unavailable = outputs.filter((output) => !output.available);
+if (strict && unavailable.length > 0) {
+  console.error(JSON.stringify({
+    code: "STRICT_COLLECTION_FAILED",
+    unavailableIndicatorIds: unavailable.map((output) => output.indicatorId)
+  }, null, 2));
+}
+
+if (schemaFailure || (strict && unavailable.length > 0)) {
   process.exitCode = 1;
 }
