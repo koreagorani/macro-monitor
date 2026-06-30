@@ -1,0 +1,45 @@
+name: Manual US2Y Collection
+
+on:
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: Evaluation date in YYYY-MM-DD format. Leave blank for UTC today.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  collect-us2y:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate synthetic examples
+        run: npm run validate:examples
+
+      - name: Collect US 2-year Treasury yield
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          AS_OF: ${{ inputs.as_of }}
+        run: |
+          if [ -n "$AS_OF" ]; then
+            npm run collect:us2y -- "$AS_OF"
+          else
+            npm run collect:us2y
+          fi
