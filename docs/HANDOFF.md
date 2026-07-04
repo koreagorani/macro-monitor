@@ -4,7 +4,8 @@
 
 - Phase 1 완료
 - Phase 2 완료
-- Phase 3 데이터 자동 수집 구현 진행 중
+- Phase 3 데이터 자동 수집 MVP 완료
+- 다음 단계: Phase 4 위험 모델 구현 준비
 
 ## 완료된 내용
 
@@ -59,21 +60,26 @@
   - job: `collect-core-pce`
   - 의존성 설치, 단위 테스트, 합성 예시 검증, 실제 `PCEPILFE` 수집 모두 성공
 
-### Phase 3 MVP 통합 수집 준비
+### Phase 3 MVP 통합 수집 및 검증
 
 - 시장가격형 5개와 근원 PCE를 한 번에 수집하는 통합 collector 추가
 - 공통 JSON Schema 검증 결과 배열 유틸리티 추가
 - `npm run collect:all -- YYYY-MM-DD` 수동 명령 추가
 - `Manual All Indicator Collection` GitHub Actions 워크플로 추가
 - 합성 데이터 기반 통합 collector 단위 테스트 추가
+- `Manual All Indicator Collection` 실제 실행 성공 확인
+  - run: `28704090587`
+  - job: `collect-all-indicators`
+  - 의존성 설치, 단위 테스트, 합성 예시 검증, MVP 6개 실제 수집 모두 성공
+  - strict 모드 통과
 
 ## 현재 실행 방법
 
 GitHub Actions:
-- 미국 2년물 단일 검증: Actions → `Manual US2Y Collection`
+- MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
 - 시장가격형 5개 검증: Actions → `Manual Market Price Collection`
 - 근원 PCE 검증: Actions → `Manual Core PCE Collection`
-- MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
+- 미국 2년물 단일 검증: Actions → `Manual US2Y Collection`
 - 선택적으로 `as_of`를 `YYYY-MM-DD`로 입력
 - 저장소 Secret `FRED_API_KEY` 필요
 
@@ -81,51 +87,54 @@ Node.js 환경:
 - `npm install --no-audit --no-fund`
 - `npm test`
 - `npm run validate:examples`
-- `npm run collect:us2y -- YYYY-MM-DD`
+- `npm run collect:all -- YYYY-MM-DD`
 - `npm run collect:market-prices -- YYYY-MM-DD`
 - `npm run collect:core-pce -- YYYY-MM-DD`
-- `npm run collect:all -- YYYY-MM-DD`
+- `npm run collect:us2y -- YYYY-MM-DD`
 
 ## 검증 결과
 
 확인 완료:
 - 미국 2년물 실제 GitHub Actions 성공
 - 시장가격형 5개 실제 GitHub Actions 성공
-- 시장가격형 결과가 strict 모드를 통과했으므로 다섯 지표 모두 `available: true`로 간주
 - 근원 PCE 실제 GitHub Actions 성공
-- 근원 PCE 결과가 성공했으므로 `core_pce.available: true`와 JSON Schema 통과로 간주
-- MVP 6개 통합 collector와 워크플로 정적 구현 완료
-
-실행 검증 대기:
-- `Manual All Indicator Collection` 실제 GitHub Actions 실행
-- MVP 6개 전체 결과의 strict 모드 통과 확인
+- MVP 6개 통합 실제 GitHub Actions 성공
+- strict 모드 통과로 6개 지표 모두 `available: true`로 간주
+- 모든 결과가 JSON Schema 검증을 통과한 것으로 간주
+- 원시 API 응답 전체와 전체 시계열은 저장소에 커밋하지 않음
 
 ## Phase 3 완료 조건
 
 - 시장가격형 지표 5개의 기준일 현재값, 전주 대비 변화율 또는 bp, 4주 누적 변화율 또는 bp 계산 완료
 - 근원 PCE의 현재 전월비, 이전 전월비, 3개월 평균 계산 완료
-- 모든 지표의 정규화된 데이터 구조 생성 및 JSON Schema 검증
-- 지표별 실패 격리와 보고서 신뢰도 처리
+- 모든 지표의 정규화된 데이터 구조 생성 및 JSON Schema 검증 완료
+- 지표별 실패 격리 구현 완료
 - 원시 시계열은 계산 후 폐기하고 저장소에 커밋하지 않음
 - 수동 실행 화면에서 결과 확인 가능
 
+## 다음 작업 후보
+
+1. Phase 4 위험 모델 구현 시작
+2. `package-lock.json` 생성 및 의존성 버전 고정
+3. 핵심 지표 범위 결정
+4. 핵심 지표 2개 이상 실패 시 중단 로직 적용 위치 결정
+
 ## 다음 세션이 읽을 문서
 
-필수:
+Phase 4 위험 모델 구현 시 필수:
 - `AGENTS.md`
-- `docs/REQUIREMENTS.md`
+- `docs/RISK_MODEL.md`
 - `docs/ARCHITECTURE.md`
-- `config/indicators.json`
-- `data/schema/indicator-output.schema.json`
+- `config/thresholds.json`
+- `config/risk-areas.json`
 - `docs/HANDOFF.md`
 
 선택:
-- 지표 판정 필드 확인 시 `docs/RISK_MODEL.md`
-- 구현 언어와 구조적 결정 확인 시 `docs/DECISIONS.md`
+- 입력 데이터 형식 확인 시 `docs/REQUIREMENTS.md`
+- 구조적 결정 확인 시 `docs/DECISIONS.md`
 
 ## 미해결
 
-- `Manual All Indicator Collection` 실제 GitHub Actions 실행 검증
 - `package-lock.json` 생성 및 의존성 버전 고정
 - 핵심 지표의 범위
 - 핵심 지표 2개 이상 실패 시 중단 로직의 구체적 적용 위치
