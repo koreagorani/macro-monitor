@@ -44,7 +44,7 @@
   - 의존성 설치, 단위 테스트, 합성 예시 검증, 시장가격형 5개 실제 수집 모두 성공
   - strict 모드 통과
 
-### Phase 3 근원 PCE 최소 수직 슬라이스
+### Phase 3 근원 PCE 구현 및 검증
 
 - FRED `PCEPILFE` 수집용 scheduled release collector 구현
 - FRED 지수 수준에서 전월비 계산 구현
@@ -54,6 +54,18 @@
 - `npm run collect:core-pce -- YYYY-MM-DD` 수동 명령 추가
 - `Manual Core PCE Collection` GitHub Actions 워크플로 추가
 - 합성 월간 지수 데이터 기반 단위 테스트 추가
+- `Manual Core PCE Collection` 실제 실행 성공 확인
+  - run: `28703880180`
+  - job: `collect-core-pce`
+  - 의존성 설치, 단위 테스트, 합성 예시 검증, 실제 `PCEPILFE` 수집 모두 성공
+
+### Phase 3 MVP 통합 수집 준비
+
+- 시장가격형 5개와 근원 PCE를 한 번에 수집하는 통합 collector 추가
+- 공통 JSON Schema 검증 결과 배열 유틸리티 추가
+- `npm run collect:all -- YYYY-MM-DD` 수동 명령 추가
+- `Manual All Indicator Collection` GitHub Actions 워크플로 추가
+- 합성 데이터 기반 통합 collector 단위 테스트 추가
 
 ## 현재 실행 방법
 
@@ -61,6 +73,7 @@ GitHub Actions:
 - 미국 2년물 단일 검증: Actions → `Manual US2Y Collection`
 - 시장가격형 5개 검증: Actions → `Manual Market Price Collection`
 - 근원 PCE 검증: Actions → `Manual Core PCE Collection`
+- MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
 - 선택적으로 `as_of`를 `YYYY-MM-DD`로 입력
 - 저장소 Secret `FRED_API_KEY` 필요
 
@@ -71,6 +84,7 @@ Node.js 환경:
 - `npm run collect:us2y -- YYYY-MM-DD`
 - `npm run collect:market-prices -- YYYY-MM-DD`
 - `npm run collect:core-pce -- YYYY-MM-DD`
+- `npm run collect:all -- YYYY-MM-DD`
 
 ## 검증 결과
 
@@ -78,12 +92,13 @@ Node.js 환경:
 - 미국 2년물 실제 GitHub Actions 성공
 - 시장가격형 5개 실제 GitHub Actions 성공
 - 시장가격형 결과가 strict 모드를 통과했으므로 다섯 지표 모두 `available: true`로 간주
-- 근원 PCE 계산과 수집 경로 정적 구현 완료
-- 근원 PCE 합성 데이터 단위 테스트 추가
+- 근원 PCE 실제 GitHub Actions 성공
+- 근원 PCE 결과가 성공했으므로 `core_pce.available: true`와 JSON Schema 통과로 간주
+- MVP 6개 통합 collector와 워크플로 정적 구현 완료
 
 실행 검증 대기:
-- `Manual Core PCE Collection` 실제 GitHub Actions 실행
-- 실제 `PCEPILFE` 응답 기반 JSON Schema 검증
+- `Manual All Indicator Collection` 실제 GitHub Actions 실행
+- MVP 6개 전체 결과의 strict 모드 통과 확인
 
 ## Phase 3 완료 조건
 
@@ -110,8 +125,7 @@ Node.js 환경:
 
 ## 미해결
 
-- `Manual Core PCE Collection` 실제 GitHub Actions 실행 검증
+- `Manual All Indicator Collection` 실제 GitHub Actions 실행 검증
 - `package-lock.json` 생성 및 의존성 버전 고정
-- 모든 MVP 지표를 한 번에 수집하는 통합 오케스트레이터 작성
 - 핵심 지표의 범위
 - 핵심 지표 2개 이상 실패 시 중단 로직의 구체적 적용 위치
