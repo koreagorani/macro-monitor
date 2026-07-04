@@ -10,6 +10,7 @@
     "collect:us2y": "node scripts/run-us2y.js",
     "collect:market-prices": "node scripts/run-market-prices.js",
     "collect:core-pce": "node scripts/run-core-pce.js",
+    "collect:all": "node scripts/run-all-indicators.js",
     "test": "node --test",
     "validate:examples": "node scripts/validate-examples.js"
   },
