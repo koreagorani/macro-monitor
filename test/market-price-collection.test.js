@@ -10,6 +10,13 @@ const percentObservations = [
   { date: "2026-05-30", value: "110" }
 ];
 
+function assertCloseTo(actual, expected, tolerance = 1e-10) {
+  assert.ok(
+    Math.abs(actual - expected) < tolerance,
+    `Expected ${actual} to be within ${tolerance} of ${expected}`
+  );
+}
+
 test("calculates weekly and four-week percent changes", () => {
   const metrics = calculateMarketPriceMetrics({
     observations: percentObservations,
@@ -22,8 +29,8 @@ test("calculates weekly and four-week percent changes", () => {
     }
   });
 
-  assert.ok(Math.abs(metrics.weeklyChange - ((110 / 105 - 1) * 100)) < 1e-10);
-  assert.equal(metrics.fourWeekChange, 10);
+  assertCloseTo(metrics.weeklyChange, (110 / 105 - 1) * 100);
+  assertCloseTo(metrics.fourWeekChange, 10);
   assert.equal(metrics.weeklyChangeUnit, "%");
   assert.equal(metrics.fourWeekChangeUnit, "%");
 });
