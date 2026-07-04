@@ -21,65 +21,30 @@
 - README와 config 설정 파일 초안 생성
 - 새 세션이 작업 유형에 필요한 문서만 읽고 시작할 수 있는 구조 확보
 
-### Phase 3 데이터 수집 설계
+### Phase 3 데이터 수집 MVP
 
 - MVP 지표 6개를 FRED API 기반으로 설정
-- `config/indicators.json`에 지표 ID, 유형, 출처, 단위, 계산 방식, 표시 자릿수 작성
-- 시장가격형과 정기발표형의 공통 출력 계약 작성
-- JSON Schema를 `data/schema/indicator-output.schema.json`에 생성
-- 시장가격형과 근원 PCE의 합성 예시를 `data/examples/`에 생성
-
-### Phase 3 시장가격형 구현 및 검증
-
-- FRED API 공통 호출 모듈 구현
-- 결측값 제거와 최근 유효 관측값 선택 함수 구현
-- 시장가격형 공통 계산 함수 구현
-- 시장가격형 5개 병렬 수집 오케스트레이터 구현
-- 지표별 실패 격리 구현
-- 각 결과를 공통 JSON Schema로 개별 검증
-- 미국 2년물 단일 워크플로 실제 성공 확인
-- `Manual Market Price Collection` 첫 실행의 테스트 실패 수정
-- `Manual Market Price Collection` 재실행 성공 확인
-  - run: `28703080661`
-  - job: `collect-market-prices`
-  - 의존성 설치, 단위 테스트, 합성 예시 검증, 시장가격형 5개 실제 수집 모두 성공
-  - strict 모드 통과
-
-### Phase 3 근원 PCE 구현 및 검증
-
-- FRED `PCEPILFE` 수집용 scheduled release collector 구현
-- FRED 지수 수준에서 전월비 계산 구현
-- 최신 전월비, 이전 전월비, 최근 3개월 전월비 평균 계산 구현
-- 시장 예상치는 `null` 유지
-- 정기발표형 정규화 객체 생성 및 JSON Schema 검증 연결
-- `npm run collect:core-pce -- YYYY-MM-DD` 수동 명령 추가
-- `Manual Core PCE Collection` GitHub Actions 워크플로 추가
-- 합성 월간 지수 데이터 기반 단위 테스트 추가
-- `Manual Core PCE Collection` 실제 실행 성공 확인
-  - run: `28703880180`
-  - job: `collect-core-pce`
-  - 의존성 설치, 단위 테스트, 합성 예시 검증, 실제 `PCEPILFE` 수집 모두 성공
-
-### Phase 3 MVP 통합 수집 및 검증
-
-- 시장가격형 5개와 근원 PCE를 한 번에 수집하는 통합 collector 추가
-- 공통 JSON Schema 검증 결과 배열 유틸리티 추가
-- `npm run collect:all -- YYYY-MM-DD` 수동 명령 추가
-- `Manual All Indicator Collection` GitHub Actions 워크플로 추가
-- 합성 데이터 기반 통합 collector 단위 테스트 추가
-- `Manual All Indicator Collection` 실제 실행 성공 확인
+- 정규화 출력 계약과 JSON Schema 작성
+- 시장가격형 5개 수집·계산·검증 완료
+- 근원 PCE 수집·전월비 계산·검증 완료
+- MVP 6개 통합 수집 워크플로 실제 성공 확인
   - run: `28704090587`
   - job: `collect-all-indicators`
-  - 의존성 설치, 단위 테스트, 합성 예시 검증, MVP 6개 실제 수집 모두 성공
   - strict 모드 통과
+
+### Phase 4 준비 결정
+
+- 핵심 지표 범위 결정 완료
+  - 핵심: `us2y`, `core_pce`, `wti`, `usdkrw`, `sp500`
+  - 비핵심: `btc`
+- 핵심 지표 2개 이상 실패 시 중단 판단은 데이터 수집기 내부가 아니라 수집 완료 후 위험점수 계산 전 품질 게이트에서 수행하기로 결정
+- `package-lock.json`은 Phase 4 코드 구현 전에 `npm install` 결과로 생성해 커밋하기로 결정
+- 관련 구조적 결정은 `docs/DECISIONS.md`의 D-016, D-017, D-018에 기록
 
 ## 현재 실행 방법
 
 GitHub Actions:
 - MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
-- 시장가격형 5개 검증: Actions → `Manual Market Price Collection`
-- 근원 PCE 검증: Actions → `Manual Core PCE Collection`
-- 미국 2년물 단일 검증: Actions → `Manual US2Y Collection`
 - 선택적으로 `as_of`를 `YYYY-MM-DD`로 입력
 - 저장소 Secret `FRED_API_KEY` 필요
 
@@ -112,12 +77,22 @@ Node.js 환경:
 - 원시 시계열은 계산 후 폐기하고 저장소에 커밋하지 않음
 - 수동 실행 화면에서 결과 확인 가능
 
+## Phase 4 설계 방향
+
+- `docs/RISK_MODEL.md`는 위험모델의 설명 기준과 초기 휴리스틱의 단일 출처로 둔다.
+- `config/thresholds.json`에는 코드가 읽을 지표별 임계값과 상태 점수 규칙을 둔다.
+- `config/risk-areas.json`에는 영역 정의, 영역 가중치, 지표와 영역의 연결 관계를 둔다.
+- 위험점수 코드는 수집 결과를 직접 재계산하지 않고 정규화 출력의 `metrics`만 사용한다.
+- 데이터 품질 게이트는 위험점수 계산 전 단계에 둔다.
+
 ## 다음 작업 후보
 
-1. Phase 4 위험 모델 구현 시작
-2. `package-lock.json` 생성 및 의존성 버전 고정
-3. 핵심 지표 범위 결정
-4. 핵심 지표 2개 이상 실패 시 중단 로직 적용 위치 결정
+1. `package-lock.json` 생성 및 커밋
+2. `config/thresholds.json` 작성
+3. `config/risk-areas.json` 작성
+4. 위험점수 출력 스키마 설계
+5. 지표별 상태 판정 함수 구현
+6. 영역별 위험 점수 계산 구현
 
 ## 다음 세션이 읽을 문서
 
@@ -135,6 +110,6 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- `package-lock.json` 생성 및 의존성 버전 고정
-- 핵심 지표의 범위
-- 핵심 지표 2개 이상 실패 시 중단 로직의 구체적 적용 위치
+- `package-lock.json` 실제 생성 및 커밋
+- 위험점수 출력 스키마 확정
+- `thresholds.json`과 `risk-areas.json` 실제 작성
