@@ -51,6 +51,8 @@
   - `available: true` 성공 객체 생성
 - GitHub 공식 Action 내부 런타임 warning은 비차단 경고로 확인
 - 전체 시장가격형 검증용 `Manual Market Price Collection` 워크플로 추가
+- `Manual Market Price Collection` 첫 실행은 `Run tests` 단계에서 실패
+- 실패 원인으로 추정되는 백분율 변화 테스트의 부동소수점 엄격 비교를 허용오차 비교로 수정
 
 ## 현재 실행 방법
 
@@ -88,9 +90,15 @@ GitHub Actions 실제 검증:
 - 두 지표 중 하나의 FRED 호출이 실패해도 다른 지표가 성공하는 실패 격리 테스트 추가
 - 통합 실행 결과를 지표별 JSON Schema로 검증하도록 연결
 - 전체 시장가격형 검증 워크플로 구조 정적 확인
+- `Manual Market Price Collection` 실패 run 확인
+  - 실패 run: `28702969410`
+  - 실패 job: `collect-market-prices`
+  - 실패 단계: `Run tests`
+  - `Validate synthetic examples`와 실제 시장가격형 수집 단계는 실행되지 않음
+- 백분율 테스트의 부동소수점 엄격 비교 수정 완료
 
 실행 검증 대기:
-- `Manual Market Price Collection` 실제 실행
+- 수정 후 `Manual Market Price Collection` 재실행
 - `wti`, `usdkrw`, `btc`, `sp500` 실제 FRED 응답과 스키마 검증
 
 ## Phase 3 완료 조건
@@ -118,7 +126,7 @@ GitHub Actions 실제 검증:
 
 ## 미해결
 
-- `Manual Market Price Collection` 실제 GitHub Actions 실행 검증
+- 수정 후 `Manual Market Price Collection` 실제 GitHub Actions 재실행 검증
 - `package-lock.json` 생성 및 의존성 버전 고정
 - 근원 PCE 수집과 전월비 계산 구현
 - 핵심 지표의 범위
