@@ -5,7 +5,7 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- 다음 단계: Phase 4 위험 모델 구현 준비
+- Phase 4 위험 모델 구현 준비 진행 중
 
 ## 완료된 내용
 
@@ -41,6 +41,28 @@
 - `package-lock.json`은 Phase 4 코드 구현 전에 `npm install` 결과로 생성해 커밋하기로 결정
 - 관련 구조적 결정은 `docs/DECISIONS.md`의 D-016, D-017, D-018에 기록
 
+### Phase 4 설정 기반
+
+- `config/thresholds.json` 작성
+  - `RISK_MODEL.md`의 MVP 임계값을 코드가 읽을 수 있는 지표별 상태 판정 규칙으로 구조화
+  - 상태 코드는 `easing`, `normal`, `watch`, `alert`, `strong_alert` 사용
+  - 점수는 `-1`, `0`, `1`, `2`, `3` 사용
+  - 현재 수집 가능한 `weeklyChange`, `fourWeekChange`, `currentMoM`, `threeMonthAverageMoM` 중심으로 활성 규칙 작성
+  - consensus, 24시간 변화, 3년 백분위 등 미수집 항목은 disabled 또는 future로 표시
+- `config/risk-areas.json` 작성
+  - 영역 정의와 가중치 작성
+  - 지표-영역 연결 작성
+  - `core_pce`의 60/40 배분 반영
+  - `sp500`과 `btc`가 함께 `risk_appetite`에 연결될 때 MVP에서는 영역 내 단순 평균 방침 명시
+  - 핵심/비핵심 지표와 품질 게이트 기준 반영
+
+## package-lock 상태
+
+- 현재 작업 컨테이너에서 `npm install --no-audit --no-fund` 실행 시 lockfile 생성 자체는 가능했다.
+- 다만 해당 환경의 npm registry가 내부 프록시를 사용해 `package-lock.json`의 `resolved` URL에 환경 의존적인 내부 주소가 들어간다.
+- 이 lockfile은 GitHub Actions나 일반 로컬 환경의 재현성을 해칠 수 있으므로 커밋하지 않았다.
+- 표준 npm registry 기준 lockfile은 GitHub Actions 또는 사용자 로컬에서 생성 후 커밋해야 한다.
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -67,15 +89,13 @@ Node.js 환경:
 - strict 모드 통과로 6개 지표 모두 `available: true`로 간주
 - 모든 결과가 JSON Schema 검증을 통과한 것으로 간주
 - 원시 API 응답 전체와 전체 시계열은 저장소에 커밋하지 않음
+- `thresholds.json`과 `risk-areas.json` JSON 구조 작성 및 재조회 확인
 
-## Phase 3 완료 조건
-
-- 시장가격형 지표 5개의 기준일 현재값, 전주 대비 변화율 또는 bp, 4주 누적 변화율 또는 bp 계산 완료
-- 근원 PCE의 현재 전월비, 이전 전월비, 3개월 평균 계산 완료
-- 모든 지표의 정규화된 데이터 구조 생성 및 JSON Schema 검증 완료
-- 지표별 실패 격리 구현 완료
-- 원시 시계열은 계산 후 폐기하고 저장소에 커밋하지 않음
-- 수동 실행 화면에서 결과 확인 가능
+검증 대기:
+- 표준 npm registry 기준 `package-lock.json` 생성
+- lockfile 생성 후 `npm test` 실행
+- lockfile 생성 후 `npm run validate:examples` 실행
+- Phase 4 설정 파일을 사용하는 위험점수 코드 구현 전 테스트 추가
 
 ## Phase 4 설계 방향
 
@@ -87,12 +107,11 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. `package-lock.json` 생성 및 커밋
-2. `config/thresholds.json` 작성
-3. `config/risk-areas.json` 작성
-4. 위험점수 출력 스키마 설계
-5. 지표별 상태 판정 함수 구현
-6. 영역별 위험 점수 계산 구현
+1. 표준 npm registry 기준 `package-lock.json` 생성 및 커밋
+2. 위험점수 출력 스키마 설계
+3. 지표별 상태 판정 함수 구현
+4. 영역별 위험 점수 계산 구현
+5. 전체 위험 단계 판정 구현
 
 ## 다음 세션이 읽을 문서
 
@@ -110,6 +129,6 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- `package-lock.json` 실제 생성 및 커밋
+- 표준 npm registry 기준 `package-lock.json` 실제 생성 및 커밋
 - 위험점수 출력 스키마 확정
-- `thresholds.json`과 `risk-areas.json` 실제 작성
+- Phase 4 위험점수 코드 구현
