@@ -63,7 +63,18 @@
 - GitHub Actions runner에서 `npm install --package-lock-only --no-audit --no-fund` 실행
 - npm registry를 `https://registry.npmjs.org/`로 명시
 - lockfile의 모든 `resolved` URL hostname이 `registry.npmjs.org`인지 Node.js 검증 스크립트로 확인
-- lockfile 생성 후 `npm test`와 `npm run validate:examples`를 실행하도록 구성
+- 첫 실행 실패 확인
+  - run: `28734643805`
+  - job: `generate-package-lock`
+  - lockfile 생성 성공
+  - registry URL 검증 성공
+  - `npm test` 성공
+  - `npm run validate:examples` 실패
+  - artifact 업로드 skipped
+- 실패 원인: `npm install --package-lock-only`는 lockfile만 만들고 `node_modules`를 설치하지 않으므로 Ajv 의존성이 필요한 예시 검증 단계에서 실패한 것으로 판단
+- workflow 수정 완료
+  - lockfile 생성 및 URL 검증 후 `npm ci --no-audit --no-fund`로 생성된 lockfile 기반 의존성 설치 단계 추가
+  - 이후 `npm test`와 `npm run validate:examples` 실행
 
 ## package-lock 상태
 
@@ -101,9 +112,10 @@ Node.js 환경:
 - 원시 API 응답 전체와 전체 시계열은 저장소에 커밋하지 않음
 - `thresholds.json`과 `risk-areas.json` JSON 구조 작성 및 재조회 확인
 - lockfile artifact workflow 작성 완료
+- lockfile artifact workflow 1차 실패 원인 확인 및 수정 완료
 
 검증 대기:
-- `Generate Package Lock` workflow 실제 실행
+- 수정 후 `Generate Package Lock` workflow 재실행
 - artifact의 `package-lock.json` 확인
 - artifact 확인 후 `package-lock.json` 커밋
 - Phase 4 설정 파일을 사용하는 위험점수 코드 구현 전 테스트 추가
@@ -118,7 +130,7 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. `Generate Package Lock` workflow 실행
+1. 수정 후 `Generate Package Lock` workflow 재실행
 2. artifact로 생성된 `package-lock.json` 확인 및 커밋
 3. 위험점수 출력 스키마 설계
 4. 지표별 상태 판정 함수 구현
@@ -141,7 +153,7 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- `Generate Package Lock` workflow 실제 실행
+- 수정 후 `Generate Package Lock` workflow 실제 재실행
 - artifact 기반 `package-lock.json` 실제 커밋
 - 위험점수 출력 스키마 확정
 - Phase 4 위험점수 코드 구현
