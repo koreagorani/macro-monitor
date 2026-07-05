@@ -28,7 +28,7 @@
     "overallRisk": {
       "oneOf": [
         { "type": "null" },
-        { "type": "object" }
+        { "$ref": "#/$defs/overallRisk" }
       ]
     },
     "warnings": {
@@ -162,6 +162,35 @@
         "score": { "type": "number" },
         "areaWeight": { "type": "number" },
         "weightedScore": { "type": "number" }
+      }
+    },
+    "overallRisk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "score",
+        "label",
+        "reasons",
+        "triggeredRules",
+        "confidence"
+      ],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["normal", "watch", "alert", "high_risk"]
+        },
+        "score": { "type": ["number", "null"] },
+        "label": { "type": "string" },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "triggeredRules": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "confidence": { "type": "string", "enum": ["normal", "reduced", "aborted"] }
       }
     },
     "warning": {
