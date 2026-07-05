@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/risk-output.schema.json",
+  "title": "Risk Model Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "asOf",
+    "quality",
+    "indicatorStatuses",
+    "areaRisks",
+    "overallRisk",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date"
+    },
+    "quality": {
+      "$ref": "#/$defs/quality"
+    },
+    "indicatorStatuses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/indicatorStatus"
+      }
+    },
+    "areaRisks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "overallRisk": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object" }
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    }
+  },
+  "$defs": {
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shouldAbort",
+        "confidence",
+        "coreIndicatorIds",
+        "nonCoreIndicatorIds",
+        "failedCoreIndicators",
+        "failedNonCoreIndicators",
+        "availableIndicatorCount",
+        "unavailableIndicatorCount",
+        "warnings"
+      ],
+      "properties": {
+        "shouldAbort": { "type": "boolean" },
+        "confidence": {
+          "type": "string",
+          "enum": ["normal", "reduced", "aborted"]
+        },
+        "coreIndicatorIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "nonCoreIndicatorIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "failedCoreIndicators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/failedIndicator" }
+        },
+        "failedNonCoreIndicators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/failedIndicator" }
+        },
+        "availableIndicatorCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unavailableIndicatorCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/warning" }
+        }
+      }
+    },
+    "failedIndicator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["indicatorId", "reason"],
+      "properties": {
+        "indicatorId": { "type": "string" },
+        "reason": {
+          "type": "string",
+          "enum": ["missing_output", "unavailable"]
+        }
+      }
+    },
+    "indicatorStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "indicatorId",
+        "available",
+        "status",
+        "score",
+        "selectedEvaluation",
+        "evaluations",
+        "warnings"
+      ],
+      "properties": {
+        "indicatorId": { "type": "string" },
+        "available": { "type": "boolean" },
+        "status": {
+          "type": "string",
+          "enum": ["easing", "normal", "watch", "alert", "strong_alert", "unavailable"]
+        },
+        "score": {
+          "type": ["number", "null"]
+        },
+        "selectedEvaluation": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/metricEvaluation" }
+          ]
+        },
+        "evaluations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metricEvaluation" }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/warning" }
+        }
+      }
+    },
+    "metricEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metricPath",
+        "unit",
+        "value",
+        "status",
+        "score",
+        "matchedRuleId",
+        "signal"
+      ],
+      "properties": {
+        "metricPath": { "type": "string" },
+        "unit": { "type": "string" },
+        "value": { "type": ["number", "null"] },
+        "status": {
+          "type": "string",
+          "enum": ["easing", "normal", "watch", "alert", "strong_alert", "unavailable"]
+        },
+        "score": { "type": ["number", "null"] },
+        "matchedRuleId": { "type": ["string", "null"] },
+        "signal": { "type": ["string", "null"] }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "indicatorId"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "indicatorId": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
