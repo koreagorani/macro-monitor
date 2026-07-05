@@ -13,6 +13,10 @@ function isFiniteNumber(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function normalizeScore(value) {
+  return Number(value.toFixed(12));
+}
+
 function areaMap(areaRisks) {
   return new Map(areaRisks.map((areaRisk) => [areaRisk.areaId, areaRisk]));
 }
@@ -38,7 +42,7 @@ function calculateWeightedScore(areaRisks) {
     0
   );
 
-  return weightedScore / totalWeight;
+  return normalizeScore(weightedScore / totalWeight);
 }
 
 function countAreas(areaRisks, predicate) {
