@@ -1,0 +1,77 @@
+name: Generate Package Lock
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-package-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Configure npm registry
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm config get registry
+
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --no-audit --no-fund
+
+      - name: Verify package-lock resolved URLs
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const packages = Object.entries(lock.packages ?? {});
+          const resolvedUrls = packages
+            .map(([path, value]) => ({ path, resolved: value.resolved }))
+            .filter(({ resolved }) => typeof resolved === 'string');
+
+          const invalid = resolvedUrls.filter(({ resolved }) => {
+            try {
+              const url = new URL(resolved);
+              return url.hostname !== 'registry.npmjs.org';
+            } catch {
+              return true;
+            }
+          });
+
+          if (resolvedUrls.length === 0) {
+            console.error('No resolved URLs found in package-lock.json.');
+            process.exit(1);
+          }
+
+          if (invalid.length > 0) {
+            console.error('package-lock.json contains non-standard resolved URLs:');
+            for (const item of invalid) {
+              console.error(`${item.path}: ${item.resolved}`);
+            }
+            process.exit(1);
+          }
+
+          console.log(`Verified ${resolvedUrls.length} resolved URLs from registry.npmjs.org.`);
+          NODE
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate synthetic examples
+        run: npm run validate:examples
+
+      - name: Upload package-lock artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-lock-json
+          path: package-lock.json
+          if-no-files-found: error
