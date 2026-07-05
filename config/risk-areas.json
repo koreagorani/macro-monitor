@@ -1,1 +1,77 @@
-{}
+{
+  "schemaVersion": "1.0.0",
+  "aggregation": {
+    "indicatorToAreaMethod": "weighted_contribution",
+    "multipleIndicatorsInSameArea": "simple_average_for_mvp",
+    "missingIndicatorPolicy": "quality_gate_before_risk_model",
+    "notes": [
+      "Core PCE is split 60% to rates_policy and 40% to inflation_supply as defined in RISK_MODEL.md.",
+      "S&P 500 and BTC both map to risk_appetite. MVP aggregation uses a simple average inside the area.",
+      "BTC is not a core indicator for report-abort decisions, but it contributes to risk_appetite when available."
+    ]
+  },
+  "areas": {
+    "rates_policy": {
+      "name": "금리·통화정책",
+      "weight": 0.35,
+      "enabled": true
+    },
+    "inflation_supply": {
+      "name": "인플레이션·공급",
+      "weight": 0.25,
+      "enabled": true
+    },
+    "risk_appetite": {
+      "name": "위험선호",
+      "weight": 0.30,
+      "enabled": true
+    },
+    "dollar_korea": {
+      "name": "달러·한국 금융환경",
+      "weight": 0.10,
+      "enabled": true
+    },
+    "future_liquidity_fiscal": {
+      "name": "향후 유동성·재정",
+      "weight": 0,
+      "enabled": false,
+      "reason": "Listed in RISK_MODEL.md but no Phase 3 MVP indicator currently maps to this area."
+    }
+  },
+  "indicatorAreaLinks": {
+    "us2y": {
+      "rates_policy": 1.0
+    },
+    "core_pce": {
+      "rates_policy": 0.6,
+      "inflation_supply": 0.4
+    },
+    "wti": {
+      "inflation_supply": 1.0
+    },
+    "usdkrw": {
+      "dollar_korea": 1.0
+    },
+    "sp500": {
+      "risk_appetite": 1.0
+    },
+    "btc": {
+      "risk_appetite": 1.0
+    }
+  },
+  "coreIndicators": [
+    "us2y",
+    "core_pce",
+    "wti",
+    "usdkrw",
+    "sp500"
+  ],
+  "nonCoreIndicators": [
+    "btc"
+  ],
+  "qualityGate": {
+    "abortWhenFailedCoreIndicatorCountGreaterThanOrEqualTo": 2,
+    "reducedConfidenceWhenFailedCoreIndicatorCountGreaterThanOrEqualTo": 1,
+    "nonCoreFailurePolicy": "continue_with_reduced_relevant_area_confidence"
+  }
+}
