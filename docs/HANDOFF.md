@@ -56,16 +56,26 @@
   - `sp500`과 `btc`가 함께 `risk_appetite`에 연결될 때 MVP에서는 영역 내 단순 평균 방침 명시
   - 핵심/비핵심 지표와 품질 게이트 기준 반영
 
+### Lockfile 생성 workflow
+
+- `Generate Package Lock` GitHub Actions workflow 추가
+- 자동 커밋 없이 `package-lock.json`을 artifact로 업로드하도록 구성
+- GitHub Actions runner에서 `npm install --package-lock-only --no-audit --no-fund` 실행
+- npm registry를 `https://registry.npmjs.org/`로 명시
+- lockfile의 모든 `resolved` URL hostname이 `registry.npmjs.org`인지 Node.js 검증 스크립트로 확인
+- lockfile 생성 후 `npm test`와 `npm run validate:examples`를 실행하도록 구성
+
 ## package-lock 상태
 
 - 현재 작업 컨테이너에서 `npm install --no-audit --no-fund` 실행 시 lockfile 생성 자체는 가능했다.
 - 다만 해당 환경의 npm registry가 내부 프록시를 사용해 `package-lock.json`의 `resolved` URL에 환경 의존적인 내부 주소가 들어간다.
 - 이 lockfile은 GitHub Actions나 일반 로컬 환경의 재현성을 해칠 수 있으므로 커밋하지 않았다.
-- 표준 npm registry 기준 lockfile은 GitHub Actions 또는 사용자 로컬에서 생성 후 커밋해야 한다.
+- 표준 npm registry 기준 lockfile은 `Generate Package Lock` workflow의 artifact로 먼저 확인한 뒤 커밋한다.
 
 ## 현재 실행 방법
 
 GitHub Actions:
+- Lockfile 생성: Actions → `Generate Package Lock`
 - MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
 - 선택적으로 `as_of`를 `YYYY-MM-DD`로 입력
 - 저장소 Secret `FRED_API_KEY` 필요
@@ -90,11 +100,12 @@ Node.js 환경:
 - 모든 결과가 JSON Schema 검증을 통과한 것으로 간주
 - 원시 API 응답 전체와 전체 시계열은 저장소에 커밋하지 않음
 - `thresholds.json`과 `risk-areas.json` JSON 구조 작성 및 재조회 확인
+- lockfile artifact workflow 작성 완료
 
 검증 대기:
-- 표준 npm registry 기준 `package-lock.json` 생성
-- lockfile 생성 후 `npm test` 실행
-- lockfile 생성 후 `npm run validate:examples` 실행
+- `Generate Package Lock` workflow 실제 실행
+- artifact의 `package-lock.json` 확인
+- artifact 확인 후 `package-lock.json` 커밋
 - Phase 4 설정 파일을 사용하는 위험점수 코드 구현 전 테스트 추가
 
 ## Phase 4 설계 방향
@@ -107,11 +118,12 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. 표준 npm registry 기준 `package-lock.json` 생성 및 커밋
-2. 위험점수 출력 스키마 설계
-3. 지표별 상태 판정 함수 구현
-4. 영역별 위험 점수 계산 구현
-5. 전체 위험 단계 판정 구현
+1. `Generate Package Lock` workflow 실행
+2. artifact로 생성된 `package-lock.json` 확인 및 커밋
+3. 위험점수 출력 스키마 설계
+4. 지표별 상태 판정 함수 구현
+5. 영역별 위험 점수 계산 구현
+6. 전체 위험 단계 판정 구현
 
 ## 다음 세션이 읽을 문서
 
@@ -129,6 +141,7 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- 표준 npm registry 기준 `package-lock.json` 실제 생성 및 커밋
+- `Generate Package Lock` workflow 실제 실행
+- artifact 기반 `package-lock.json` 실제 커밋
 - 위험점수 출력 스키마 확정
 - Phase 4 위험점수 코드 구현
