@@ -5,7 +5,7 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- Phase 4 위험 모델 첫 수직 슬라이스 구현 완료
+- Phase 4 위험 모델 첫 수직 슬라이스 구현 및 검증 완료
 
 ## 완료된 내용
 
@@ -76,6 +76,10 @@
 - `package.json`에 `evaluate:risk` 명령 추가
 - `Manual Risk Model Evaluation` workflow 추가
 - 기존 수집 workflow의 의존성 설치를 `npm ci --no-audit --no-fund`로 변경
+- `Manual Risk Model Evaluation` 실제 실행 성공 확인
+  - run: `28736780393`
+  - job: `evaluate-risk-model`
+  - `npm ci`, `npm test`, `npm run validate:examples`, 실제 FRED 수집 기반 risk-output 생성 모두 성공
 
 ## 현재 실행 방법
 
@@ -108,11 +112,9 @@ Node.js 환경:
 - `thresholds.json`과 `risk-areas.json` JSON 구조 작성 및 재조회 확인
 - lockfile artifact workflow 성공 확인
 - artifact 기반 `package-lock.json` 커밋 완료
-
-검증 대기:
-- `Manual Risk Model Evaluation` 실제 GitHub Actions 실행
-- `npm test`에서 새 risk model 단위 테스트 통과 확인
-- 실제 FRED 수집 결과 기반 risk-output schema 통과 확인
+- `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
+- 새 risk model 단위 테스트 통과
+- 실제 FRED 수집 결과 기반 risk-output schema 통과
 
 ## Phase 4 설계 방향
 
@@ -124,11 +126,10 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. `Manual Risk Model Evaluation` 실제 실행 검증
-2. 영역별 위험 점수 계산 구현
-3. 전체 위험 단계 판정 구현
-4. 위험 모델 출력 예시 파일 추가
-5. 이후 포트폴리오 취약도 계산 단계로 연결
+1. 영역별 위험 점수 계산 구현
+2. 전체 위험 단계 판정 구현
+3. 위험 모델 출력 예시 파일 추가
+4. 이후 포트폴리오 취약도 계산 단계로 연결
 
 ## 다음 세션이 읽을 문서
 
@@ -146,6 +147,5 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- `Manual Risk Model Evaluation` 실제 GitHub Actions 실행 검증
 - 영역별 위험 점수 계산 구현
 - 전체 위험 단계 판정 구현
