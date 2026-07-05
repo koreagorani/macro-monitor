@@ -5,8 +5,8 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- Phase 4 전체 위험 단계 판정 구현 완료
-- 다음 검증: `Manual Risk Model Evaluation` 재실행
+- Phase 4 위험 모델 핵심 구현 및 검증 완료
+- 다음 단계: Phase 5 포트폴리오 취약도 모델 진입 전 정리
 
 ## 완료된 내용
 
@@ -115,6 +115,10 @@
   - weighted score 계산 결과를 12자리 정밀도로 안정화
   - 부동소수점 표현 오차로 테스트가 실패하지 않도록 `calculateWeightedScore` 반환값을 정규화
   - 수정 커밋: `1c5b339e6792d7b4d9097041abbdeb092d0300ea`
+- 수정 후 `Manual Risk Model Evaluation` 재실행 성공 확인
+  - run: `28737269543`
+  - job: `evaluate-risk-model`
+  - `npm ci`, `npm test`, `npm run validate:examples`, 실제 FRED 수집 기반 populated `overallRisk` 포함 risk-output 생성 모두 성공
 
 ## 현재 실행 방법
 
@@ -146,11 +150,9 @@ Node.js 환경:
 - artifact 기반 `package-lock.json` 커밋 완료
 - `Manual Risk Model Evaluation` 첫 수직 슬라이스 실제 GitHub Actions 성공
 - area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
-
-검증 대기:
-- overallRisk 부동소수점 안정화 수정 후 `Manual Risk Model Evaluation` 재실행
-- 새 `test/overall-risk.test.js` 통과 확인
-- 실제 FRED 수집 결과 기반 populated `overallRisk` 포함 risk-output schema 통과 확인
+- overallRisk 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
+- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js` 통과
+- 실제 FRED 수집 결과 기반 populated `overallRisk` 포함 risk-output schema 통과
 
 ## Phase 4 설계 방향
 
@@ -163,14 +165,13 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. `Manual Risk Model Evaluation` 재실행 검증
-2. 위험 모델 출력 예시 파일 추가
-3. Phase 5 포트폴리오 취약도 모델 진입 전 문서 정리
-4. 이후 포트폴리오 취약도 계산 단계로 연결
+1. 위험 모델 출력 예시 파일 추가
+2. Phase 5 포트폴리오 취약도 모델 진입 전 문서 정리
+3. 이후 포트폴리오 취약도 계산 단계로 연결
 
 ## 다음 세션이 읽을 문서
 
-Phase 4 위험 모델 검증 및 마무리 시 필수:
+Phase 4 마무리 및 Phase 5 준비 시 필수:
 - `AGENTS.md`
 - `docs/RISK_MODEL.md`
 - `docs/ARCHITECTURE.md`
@@ -178,11 +179,16 @@ Phase 4 위험 모델 검증 및 마무리 시 필수:
 - `config/risk-areas.json`
 - `docs/HANDOFF.md`
 
+Phase 5 포트폴리오 취약도 모델 진입 시 추가 확인:
+- `docs/PORTFOLIO.md`
+- `config/portfolio-themes.json`
+- `config/hedge-candidates.json`
+
 선택:
 - 입력 데이터 형식 확인 시 `docs/REQUIREMENTS.md`
 - 구조적 결정 확인 시 `docs/DECISIONS.md`
 
 ## 미해결
 
-- overallRisk 수정 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 재실행 검증
 - Phase 5 진입 전 위험 모델 출력 예시와 문서 정리
+- Phase 5 포트폴리오 취약도 모델 구현
