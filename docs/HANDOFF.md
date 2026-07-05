@@ -105,6 +105,16 @@
   - quality reduced의 confidence 반영
   - shouldAbort true 시 overallRisk 계산 생략
   - risk-output schema 검증
+- `Manual Risk Model Evaluation` 첫 재실행 실패 확인
+  - run: `28737163280`
+  - job: `evaluate-risk-model`
+  - `npm ci` 성공
+  - `npm test` 실패
+  - 이후 단계 skipped
+- 실패 수정
+  - weighted score 계산 결과를 12자리 정밀도로 안정화
+  - 부동소수점 표현 오차로 테스트가 실패하지 않도록 `calculateWeightedScore` 반환값을 정규화
+  - 수정 커밋: `1c5b339e6792d7b4d9097041abbdeb092d0300ea`
 
 ## 현재 실행 방법
 
@@ -138,7 +148,7 @@ Node.js 환경:
 - area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
 
 검증 대기:
-- overallRisk 추가 후 `Manual Risk Model Evaluation` 재실행
+- overallRisk 부동소수점 안정화 수정 후 `Manual Risk Model Evaluation` 재실행
 - 새 `test/overall-risk.test.js` 통과 확인
 - 실제 FRED 수집 결과 기반 populated `overallRisk` 포함 risk-output schema 통과 확인
 
@@ -174,5 +184,5 @@ Phase 4 위험 모델 검증 및 마무리 시 필수:
 
 ## 미해결
 
-- overallRisk 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 재실행 검증
+- overallRisk 수정 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 재실행 검증
 - Phase 5 진입 전 위험 모델 출력 예시와 문서 정리
