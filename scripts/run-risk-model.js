@@ -2,6 +2,7 @@ import { loadIndicatorConfig, loadJsonFile } from "../src/config/load-config.js"
 import { collectAllIndicators } from "../src/collectors/collect-all-indicators.js";
 import { evaluateQualityGate } from "../src/risk/quality-gate.js";
 import { evaluateIndicatorStatuses } from "../src/risk/evaluate-indicator.js";
+import { aggregateAreaRisks } from "../src/risk/aggregate-areas.js";
 import { validateIndicatorOutputs } from "../src/validation/validate-outputs.js";
 import { validateRiskOutput } from "../src/validation/validate-risk-output.js";
 
@@ -32,6 +33,23 @@ const quality = evaluateQualityGate({
   riskAreasConfig
 });
 
+const indicatorStatuses = quality.shouldAbort
+  ? []
+  : evaluateIndicatorStatuses({
+      indicatorOutputs,
+      thresholdsConfig
+    });
+
+const areaRisks = quality.shouldAbort
+  ? []
+  : aggregateAreaRisks({
+      indicatorStatuses,
+      riskAreasConfig
+    });
+
+const areaWarnings = areaRisks.flatMap((areaRisk) => areaRisk.warnings);
+const warnings = [...quality.warnings, ...schemaWarnings, ...areaWarnings];
+
 const riskOutput = {
   schemaVersion: "1.0.0",
   asOf,
@@ -39,15 +57,10 @@ const riskOutput = {
     ...quality,
     warnings: [...quality.warnings, ...schemaWarnings]
   },
-  indicatorStatuses: quality.shouldAbort
-    ? []
-    : evaluateIndicatorStatuses({
-        indicatorOutputs,
-        thresholdsConfig
-      }),
-  areaRisks: [],
+  indicatorStatuses,
+  areaRisks,
   overallRisk: null,
-  warnings: [...quality.warnings, ...schemaWarnings]
+  warnings
 };
 
 const validation = await validateRiskOutput(riskOutput);
