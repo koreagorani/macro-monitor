@@ -1,1 +1,366 @@
-{}
+{
+  "schemaVersion": "1.0.0",
+  "ruleEvaluation": "first_match",
+  "statusScores": {
+    "easing": -1,
+    "normal": 0,
+    "watch": 1,
+    "alert": 2,
+    "strong_alert": 3
+  },
+  "indicators": {
+    "us2y": {
+      "enabled": true,
+      "name": "미국 2년물 주간 변화",
+      "activeMetrics": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "bp",
+          "rules": [
+            {
+              "id": "us2y_weekly_strong_alert",
+              "when": { "operator": ">=", "value": 30 },
+              "status": "strong_alert",
+              "score": 3
+            },
+            {
+              "id": "us2y_weekly_alert",
+              "when": { "operator": ">=", "value": 20 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "us2y_weekly_watch",
+              "when": { "operator": ">", "value": 10 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "us2y_weekly_easing",
+              "when": { "operator": "<=", "value": -10 },
+              "status": "easing",
+              "score": -1
+            },
+            {
+              "id": "us2y_weekly_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        }
+      ],
+      "disabledMetrics": [
+        {
+          "name": "strong_easing_split",
+          "reason": "RISK_MODEL mentions strong easing at -20bp, but MVP status codes do not include a separate strong_easing status. It is folded into easing."
+        }
+      ]
+    },
+    "core_pce": {
+      "enabled": true,
+      "name": "근원 PCE 전월비",
+      "activeMetrics": [
+        {
+          "metricPath": "metrics.currentMoM",
+          "unit": "% MoM",
+          "rules": [
+            {
+              "id": "core_pce_current_alert",
+              "when": { "operator": ">=", "value": 0.35 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "core_pce_current_watch",
+              "when": { "operator": ">=", "value": 0.26 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "core_pce_current_normal",
+              "when": { "operator": ">=", "value": 0.16 },
+              "status": "normal",
+              "score": 0
+            },
+            {
+              "id": "core_pce_current_easing",
+              "when": { "operator": "<=", "value": 0.15 },
+              "status": "easing",
+              "score": -1
+            }
+          ]
+        },
+        {
+          "metricPath": "metrics.threeMonthAverageMoM",
+          "unit": "% MoM",
+          "rules": [
+            {
+              "id": "core_pce_3m_reacceleration_alert",
+              "when": { "operator": ">=", "value": 0.30 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "core_pce_3m_neutral",
+              "when": { "operator": ">", "value": 0.20 },
+              "status": "normal",
+              "score": 0
+            },
+            {
+              "id": "core_pce_3m_stable",
+              "when": { "operator": "<=", "value": 0.20 },
+              "status": "easing",
+              "score": -1
+            }
+          ]
+        }
+      ],
+      "disabledMetrics": [
+        {
+          "name": "consensusMoM",
+          "reason": "Consensus remains null until a reliable source is added."
+        },
+        {
+          "name": "release_week_decay",
+          "reason": "Release-age decay is excluded from MVP because release-week metadata is not collected separately."
+        }
+      ]
+    },
+    "wti": {
+      "enabled": true,
+      "name": "WTI",
+      "activeMetrics": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "rules": [
+            {
+              "id": "wti_weekly_up_strong_alert",
+              "when": { "operator": ">=", "value": 8 },
+              "status": "strong_alert",
+              "score": 3,
+              "signal": "supply_inflation_pressure"
+            },
+            {
+              "id": "wti_weekly_up_alert",
+              "when": { "operator": ">=", "value": 5 },
+              "status": "alert",
+              "score": 2,
+              "signal": "supply_inflation_pressure"
+            },
+            {
+              "id": "wti_weekly_up_watch",
+              "when": { "operator": ">=", "value": 3 },
+              "status": "watch",
+              "score": 1,
+              "signal": "supply_inflation_pressure"
+            },
+            {
+              "id": "wti_weekly_down_strong_alert",
+              "when": { "operator": "<=", "value": -8 },
+              "status": "strong_alert",
+              "score": 3,
+              "signal": "growth_concern"
+            },
+            {
+              "id": "wti_weekly_down_watch",
+              "when": { "operator": "<=", "value": -5 },
+              "status": "watch",
+              "score": 1,
+              "signal": "growth_concern"
+            },
+            {
+              "id": "wti_weekly_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        },
+        {
+          "metricPath": "metrics.fourWeekChange",
+          "unit": "%",
+          "rules": [
+            {
+              "id": "wti_4w_alert",
+              "when": { "operator": ">=", "value": 15 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "wti_4w_watch",
+              "when": { "operator": ">=", "value": 10 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "wti_4w_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        }
+      ]
+    },
+    "usdkrw": {
+      "enabled": true,
+      "name": "원·달러 환율",
+      "activeMetrics": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "rules": [
+            {
+              "id": "usdkrw_weekly_strong_alert",
+              "when": { "operator": ">=", "value": 3 },
+              "status": "strong_alert",
+              "score": 3
+            },
+            {
+              "id": "usdkrw_weekly_alert",
+              "when": { "operator": ">=", "value": 2 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "usdkrw_weekly_watch",
+              "when": { "operator": ">=", "value": 1 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "usdkrw_weekly_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        },
+        {
+          "metricPath": "metrics.fourWeekChange",
+          "unit": "%",
+          "rules": [
+            {
+              "id": "usdkrw_4w_alert",
+              "when": { "operator": ">=", "value": 5 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "usdkrw_4w_watch",
+              "when": { "operator": ">=", "value": 3 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "usdkrw_4w_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        }
+      ]
+    },
+    "btc": {
+      "enabled": true,
+      "name": "비트코인",
+      "activeMetrics": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "rules": [
+            {
+              "id": "btc_weekly_down_strong_alert",
+              "when": { "operator": "<=", "value": -15 },
+              "status": "strong_alert",
+              "score": 3
+            },
+            {
+              "id": "btc_weekly_down_alert",
+              "when": { "operator": "<=", "value": -10 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "btc_weekly_down_watch",
+              "when": { "operator": "<=", "value": -5 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "btc_weekly_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        }
+      ],
+      "disabledMetrics": [
+        {
+          "name": "weekly_upside_or_overheat",
+          "reason": "RISK_MODEL includes bullish and overheat candidates, but MVP risk scoring initially focuses on downside risk-off signals."
+        },
+        {
+          "name": "twentyFourHourChange",
+          "reason": "24-hour BTC change is not collected in Phase 3 MVP."
+        }
+      ]
+    },
+    "sp500": {
+      "enabled": true,
+      "name": "S&P 500",
+      "activeMetrics": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "rules": [
+            {
+              "id": "sp500_weekly_down_strong_alert",
+              "when": { "operator": "<=", "value": -5 },
+              "status": "strong_alert",
+              "score": 3
+            },
+            {
+              "id": "sp500_weekly_down_alert",
+              "when": { "operator": "<=", "value": -3.5 },
+              "status": "alert",
+              "score": 2
+            },
+            {
+              "id": "sp500_weekly_down_watch",
+              "when": { "operator": "<=", "value": -2 },
+              "status": "watch",
+              "score": 1
+            },
+            {
+              "id": "sp500_weekly_normal",
+              "when": { "operator": "default" },
+              "status": "normal",
+              "score": 0
+            }
+          ]
+        }
+      ],
+      "disabledMetrics": [
+        {
+          "name": "weekly_upside_or_overheat",
+          "reason": "RISK_MODEL includes bullish and overheat candidates, but MVP risk scoring initially focuses on downside risk-off signals."
+        },
+        {
+          "name": "dailyChange",
+          "reason": "Daily S&P 500 change is not collected in Phase 3 MVP."
+        }
+      ]
+    }
+  },
+  "futureMetrics": [
+    {
+      "name": "threeYearWeeklyChangePercentile",
+      "reason": "Planned but not collected in Phase 3 MVP."
+    }
+  ]
+}
