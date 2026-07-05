@@ -3,6 +3,7 @@ import { collectAllIndicators } from "../src/collectors/collect-all-indicators.j
 import { evaluateQualityGate } from "../src/risk/quality-gate.js";
 import { evaluateIndicatorStatuses } from "../src/risk/evaluate-indicator.js";
 import { aggregateAreaRisks } from "../src/risk/aggregate-areas.js";
+import { evaluateOverallRisk } from "../src/risk/evaluate-overall-risk.js";
 import { validateIndicatorOutputs } from "../src/validation/validate-outputs.js";
 import { validateRiskOutput } from "../src/validation/validate-risk-output.js";
 
@@ -47,6 +48,13 @@ const areaRisks = quality.shouldAbort
       riskAreasConfig
     });
 
+const overallRisk = quality.shouldAbort
+  ? null
+  : evaluateOverallRisk({
+      areaRisks,
+      quality
+    });
+
 const areaWarnings = areaRisks.flatMap((areaRisk) => areaRisk.warnings);
 const warnings = [...quality.warnings, ...schemaWarnings, ...areaWarnings];
 
@@ -59,7 +67,7 @@ const riskOutput = {
   },
   indicatorStatuses,
   areaRisks,
-  overallRisk: null,
+  overallRisk,
   warnings
 };
 
