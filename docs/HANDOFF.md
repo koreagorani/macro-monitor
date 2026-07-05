@@ -5,7 +5,8 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- Phase 4 위험 모델 첫 수직 슬라이스 구현 및 검증 완료
+- Phase 4 영역별 위험 점수 계산 구현 완료
+- 다음 검증: `Manual Risk Model Evaluation` 재실행
 
 ## 완료된 내용
 
@@ -45,34 +46,11 @@
 ### Phase 4 첫 수직 슬라이스
 
 - `data/schema/risk-output.schema.json` 추가
-  - `schemaVersion`, `asOf`, `quality`, `indicatorStatuses`, `areaRisks`, `overallRisk`, `warnings` 포함
-  - 이번 단계에서 `areaRisks`는 빈 배열, `overallRisk`는 `null` 허용
 - `src/risk/quality-gate.js` 구현
-  - `risk-areas.json`의 `coreIndicators`, `nonCoreIndicators`, `qualityGate` 설정 사용
-  - 핵심 지표 2개 이상 실패 시 `shouldAbort: true`
-  - 핵심 지표 1개 실패 시 `confidence: reduced`
-  - 비핵심 지표 실패 시 중단하지 않고 warning 생성
 - `src/risk/evaluate-indicator.js` 구현
-  - `thresholds.json`의 활성 규칙 기준으로 지표별 `status`, `score` 계산
-  - `available: false` 지표는 `unavailable`로 반환하고 threshold 평가 제외
-  - `disabledMetrics`와 `futureMetrics`는 계산에서 제외
-  - 여러 규칙이 매칭되면 가장 높은 `score`를 선택
-  - `easing`의 음수 점수는 그대로 보존
 - `scripts/run-risk-model.js` 추가
-  - 내부에서 MVP 6개 수집 함수 재사용
-  - 품질 게이트 실행
-  - `shouldAbort: true`이면 `indicatorStatuses`는 빈 배열로 출력
-  - `shouldAbort: false`이면 `indicatorStatuses`까지 계산해 출력
-  - `areaRisks`는 빈 배열, `overallRisk`는 `null` 유지
 - `src/validation/validate-risk-output.js` 추가
 - `test/risk-model.test.js` 추가
-  - 핵심 지표 2개 실패
-  - 핵심 지표 1개 실패
-  - `btc`만 실패
-  - unavailable 지표 처리
-  - disabled/future rule 무시
-  - 가장 높은 score rule 선택
-  - risk-output schema 검증
 - `package.json`에 `evaluate:risk` 명령 추가
 - `Manual Risk Model Evaluation` workflow 추가
 - 기존 수집 workflow의 의존성 설치를 `npm ci --no-audit --no-fund`로 변경
@@ -81,10 +59,40 @@
   - job: `evaluate-risk-model`
   - `npm ci`, `npm test`, `npm run validate:examples`, 실제 FRED 수집 기반 risk-output 생성 모두 성공
 
+### Phase 4 영역별 위험 점수 계산
+
+- `src/risk/aggregate-areas.js` 구현
+  - `risk-areas.json`의 `areas`와 `indicatorAreaLinks` 사용
+  - disabled 영역 제외
+  - unavailable 지표는 영역 점수 계산에서 제외하고 area warning 생성
+  - 한 지표가 여러 영역에 연결되면 link weight 반영
+  - `core_pce`의 `rates_policy` 0.6, `inflation_supply` 0.4 배분 반영
+  - `sp500`과 `btc`가 모두 `risk_appetite`에 연결될 때 MVP 기준 단순 평균 처리
+- 영역 상태 판정 구현
+  - score < 0: `easing`
+  - 0 이상 0.5 미만: `normal`
+  - 0.5 이상 1.5 미만: `watch`
+  - 1.5 이상 2.5 미만: `alert`
+  - 2.5 이상: `strong_alert`
+- `data/schema/risk-output.schema.json` 보강
+  - `areaRisks`가 실제 area risk 객체 배열로 검증되도록 변경
+  - 각 area risk는 `areaId`, `name`, `weight`, `score`, `status`, `contributingIndicators`, `warnings` 포함
+- `scripts/run-risk-model.js` 연결
+  - quality gate 통과 후 `indicatorStatuses` 생성
+  - 이후 `aggregateAreaRisks` 실행
+  - `overallRisk`는 아직 `null` 유지
+- `test/area-aggregation.test.js` 추가
+  - `core_pce` 60/40 영역 배분
+  - `risk_appetite`에서 `sp500`/`btc` 단순 평균
+  - disabled 영역 제외
+  - unavailable 지표 제외 및 warning 생성
+  - 영역 상태 판정
+  - populated `areaRisks` 포함 risk-output schema 검증
+
 ## 현재 실행 방법
 
 GitHub Actions:
-- 위험 모델 첫 수직 슬라이스 검증: Actions → `Manual Risk Model Evaluation`
+- 위험 모델 검증: Actions → `Manual Risk Model Evaluation`
 - MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
 - Lockfile 생성: Actions → `Generate Package Lock`
 - 선택적으로 `as_of`를 `YYYY-MM-DD`로 입력
@@ -107,14 +115,14 @@ Node.js 환경:
 - 시장가격형 5개 실제 GitHub Actions 성공
 - 근원 PCE 실제 GitHub Actions 성공
 - MVP 6개 통합 실제 GitHub Actions 성공
-- strict 모드 통과로 6개 지표 모두 `available: true`로 간주
-- 모든 결과가 JSON Schema 검증을 통과한 것으로 간주
-- `thresholds.json`과 `risk-areas.json` JSON 구조 작성 및 재조회 확인
 - lockfile artifact workflow 성공 확인
 - artifact 기반 `package-lock.json` 커밋 완료
-- `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
-- 새 risk model 단위 테스트 통과
-- 실제 FRED 수집 결과 기반 risk-output schema 통과
+- `Manual Risk Model Evaluation` 첫 수직 슬라이스 실제 GitHub Actions 성공
+
+검증 대기:
+- area risk aggregation 추가 후 `Manual Risk Model Evaluation` 재실행
+- 새 `test/area-aggregation.test.js` 통과 확인
+- 실제 FRED 수집 결과 기반 populated `areaRisks` 포함 risk-output schema 통과 확인
 
 ## Phase 4 설계 방향
 
@@ -126,7 +134,7 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. 영역별 위험 점수 계산 구현
+1. `Manual Risk Model Evaluation` 재실행 검증
 2. 전체 위험 단계 판정 구현
 3. 위험 모델 출력 예시 파일 추가
 4. 이후 포트폴리오 취약도 계산 단계로 연결
@@ -147,5 +155,5 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- 영역별 위험 점수 계산 구현
+- area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 재실행 검증
 - 전체 위험 단계 판정 구현
