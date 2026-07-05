@@ -5,8 +5,8 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- Phase 4 영역별 위험 점수 계산 구현 완료
-- 다음 검증: `Manual Risk Model Evaluation` 재실행
+- Phase 4 영역별 위험 점수 계산 구현 및 검증 완료
+- 다음 단계: 전체 위험 단계 판정 구현
 
 ## 완료된 내용
 
@@ -88,6 +88,10 @@
   - unavailable 지표 제외 및 warning 생성
   - 영역 상태 판정
   - populated `areaRisks` 포함 risk-output schema 검증
+- `Manual Risk Model Evaluation` 재실행 성공 확인
+  - run: `28736992100`
+  - job: `evaluate-risk-model`
+  - `npm ci`, `npm test`, `npm run validate:examples`, 실제 FRED 수집 기반 populated `areaRisks` 포함 risk-output 생성 모두 성공
 
 ## 현재 실행 방법
 
@@ -118,11 +122,9 @@ Node.js 환경:
 - lockfile artifact workflow 성공 확인
 - artifact 기반 `package-lock.json` 커밋 완료
 - `Manual Risk Model Evaluation` 첫 수직 슬라이스 실제 GitHub Actions 성공
-
-검증 대기:
-- area risk aggregation 추가 후 `Manual Risk Model Evaluation` 재실행
-- 새 `test/area-aggregation.test.js` 통과 확인
-- 실제 FRED 수집 결과 기반 populated `areaRisks` 포함 risk-output schema 통과 확인
+- area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
+- 새 `test/area-aggregation.test.js` 통과
+- 실제 FRED 수집 결과 기반 populated `areaRisks` 포함 risk-output schema 통과
 
 ## Phase 4 설계 방향
 
@@ -134,10 +136,9 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. `Manual Risk Model Evaluation` 재실행 검증
-2. 전체 위험 단계 판정 구현
-3. 위험 모델 출력 예시 파일 추가
-4. 이후 포트폴리오 취약도 계산 단계로 연결
+1. 전체 위험 단계 판정 구현
+2. 위험 모델 출력 예시 파일 추가
+3. 이후 포트폴리오 취약도 계산 단계로 연결
 
 ## 다음 세션이 읽을 문서
 
@@ -155,5 +156,4 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 재실행 검증
 - 전체 위험 단계 판정 구현
