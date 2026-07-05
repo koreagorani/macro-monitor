@@ -63,6 +63,9 @@ jobs:
           console.log(`Verified ${resolvedUrls.length} resolved URLs from registry.npmjs.org.`);
           NODE
 
+      - name: Install dependencies from generated lockfile
+        run: npm ci --no-audit --no-fund
+
       - name: Run tests
         run: npm test
 
