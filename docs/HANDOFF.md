@@ -5,7 +5,7 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- Phase 4 위험 모델 구현 준비 진행 중
+- Phase 4 위험 모델 첫 수직 슬라이스 구현 완료
 
 ## 완료된 내용
 
@@ -32,65 +32,57 @@
   - job: `collect-all-indicators`
   - strict 모드 통과
 
-### Phase 4 준비 결정
+### Phase 4 준비 결정 및 설정 기반
 
 - 핵심 지표 범위 결정 완료
   - 핵심: `us2y`, `core_pce`, `wti`, `usdkrw`, `sp500`
   - 비핵심: `btc`
 - 핵심 지표 2개 이상 실패 시 중단 판단은 데이터 수집기 내부가 아니라 수집 완료 후 위험점수 계산 전 품질 게이트에서 수행하기로 결정
-- `package-lock.json`은 Phase 4 코드 구현 전에 `npm install` 결과로 생성해 커밋하기로 결정
-- 관련 구조적 결정은 `docs/DECISIONS.md`의 D-016, D-017, D-018에 기록
-
-### Phase 4 설정 기반
-
-- `config/thresholds.json` 작성
-  - `RISK_MODEL.md`의 MVP 임계값을 코드가 읽을 수 있는 지표별 상태 판정 규칙으로 구조화
-  - 상태 코드는 `easing`, `normal`, `watch`, `alert`, `strong_alert` 사용
-  - 점수는 `-1`, `0`, `1`, `2`, `3` 사용
-  - 현재 수집 가능한 `weeklyChange`, `fourWeekChange`, `currentMoM`, `threeMonthAverageMoM` 중심으로 활성 규칙 작성
-  - consensus, 24시간 변화, 3년 백분위 등 미수집 항목은 disabled 또는 future로 표시
-- `config/risk-areas.json` 작성
-  - 영역 정의와 가중치 작성
-  - 지표-영역 연결 작성
-  - `core_pce`의 60/40 배분 반영
-  - `sp500`과 `btc`가 함께 `risk_appetite`에 연결될 때 MVP에서는 영역 내 단순 평균 방침 명시
-  - 핵심/비핵심 지표와 품질 게이트 기준 반영
-
-### Lockfile 생성 및 커밋
-
-- `Generate Package Lock` GitHub Actions workflow 추가
-- 자동 커밋 없이 `package-lock.json`을 artifact로 업로드하도록 구성
-- 첫 실행 실패 확인
-  - run: `28734643805`
-  - lockfile 생성, registry URL 검증, `npm test` 성공
-  - `npm run validate:examples` 실패
-  - 원인: `npm install --package-lock-only`는 `node_modules`를 설치하지 않음
-- workflow 수정 완료
-  - lockfile 생성 및 URL 검증 후 `npm ci --no-audit --no-fund` 추가
-- 수정 후 재실행 성공 확인
-  - run: `28736466987`
-  - job: `generate-package-lock`
-  - lockfile 생성 성공
-  - `registry.npmjs.org` resolved URL 검증 성공
-  - `npm ci`, `npm test`, `npm run validate:examples` 성공
-  - artifact `package-lock-json` 업로드 성공
-- artifact를 다운로드해 확인 후 `package-lock.json` 커밋 완료
-  - 모든 `resolved` URL hostname은 `registry.npmjs.org`
-  - 커밋: `eea983b542c753dc6d7685ec6ae337cd2c0a2beb`
-
-## package-lock 상태
-
 - `package-lock.json` 생성 및 커밋 완료
-- 현재 의존성 고정 버전:
-  - `ajv`: `8.20.0`
-  - `ajv-formats`: `3.0.1`
-- Phase 4 구현부터는 `npm ci --no-audit --no-fund` 사용 가능
+- `config/thresholds.json` 작성 완료
+- `config/risk-areas.json` 작성 완료
+
+### Phase 4 첫 수직 슬라이스
+
+- `data/schema/risk-output.schema.json` 추가
+  - `schemaVersion`, `asOf`, `quality`, `indicatorStatuses`, `areaRisks`, `overallRisk`, `warnings` 포함
+  - 이번 단계에서 `areaRisks`는 빈 배열, `overallRisk`는 `null` 허용
+- `src/risk/quality-gate.js` 구현
+  - `risk-areas.json`의 `coreIndicators`, `nonCoreIndicators`, `qualityGate` 설정 사용
+  - 핵심 지표 2개 이상 실패 시 `shouldAbort: true`
+  - 핵심 지표 1개 실패 시 `confidence: reduced`
+  - 비핵심 지표 실패 시 중단하지 않고 warning 생성
+- `src/risk/evaluate-indicator.js` 구현
+  - `thresholds.json`의 활성 규칙 기준으로 지표별 `status`, `score` 계산
+  - `available: false` 지표는 `unavailable`로 반환하고 threshold 평가 제외
+  - `disabledMetrics`와 `futureMetrics`는 계산에서 제외
+  - 여러 규칙이 매칭되면 가장 높은 `score`를 선택
+  - `easing`의 음수 점수는 그대로 보존
+- `scripts/run-risk-model.js` 추가
+  - 내부에서 MVP 6개 수집 함수 재사용
+  - 품질 게이트 실행
+  - `shouldAbort: true`이면 `indicatorStatuses`는 빈 배열로 출력
+  - `shouldAbort: false`이면 `indicatorStatuses`까지 계산해 출력
+  - `areaRisks`는 빈 배열, `overallRisk`는 `null` 유지
+- `src/validation/validate-risk-output.js` 추가
+- `test/risk-model.test.js` 추가
+  - 핵심 지표 2개 실패
+  - 핵심 지표 1개 실패
+  - `btc`만 실패
+  - unavailable 지표 처리
+  - disabled/future rule 무시
+  - 가장 높은 score rule 선택
+  - risk-output schema 검증
+- `package.json`에 `evaluate:risk` 명령 추가
+- `Manual Risk Model Evaluation` workflow 추가
+- 기존 수집 workflow의 의존성 설치를 `npm ci --no-audit --no-fund`로 변경
 
 ## 현재 실행 방법
 
 GitHub Actions:
-- Lockfile 생성: Actions → `Generate Package Lock`
+- 위험 모델 첫 수직 슬라이스 검증: Actions → `Manual Risk Model Evaluation`
 - MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
+- Lockfile 생성: Actions → `Generate Package Lock`
 - 선택적으로 `as_of`를 `YYYY-MM-DD`로 입력
 - 저장소 Secret `FRED_API_KEY` 필요
 
@@ -98,6 +90,7 @@ Node.js 환경:
 - `npm ci --no-audit --no-fund`
 - `npm test`
 - `npm run validate:examples`
+- `npm run evaluate:risk -- YYYY-MM-DD`
 - `npm run collect:all -- YYYY-MM-DD`
 - `npm run collect:market-prices -- YYYY-MM-DD`
 - `npm run collect:core-pce -- YYYY-MM-DD`
@@ -112,13 +105,14 @@ Node.js 환경:
 - MVP 6개 통합 실제 GitHub Actions 성공
 - strict 모드 통과로 6개 지표 모두 `available: true`로 간주
 - 모든 결과가 JSON Schema 검증을 통과한 것으로 간주
-- 원시 API 응답 전체와 전체 시계열은 저장소에 커밋하지 않음
 - `thresholds.json`과 `risk-areas.json` JSON 구조 작성 및 재조회 확인
 - lockfile artifact workflow 성공 확인
 - artifact 기반 `package-lock.json` 커밋 완료
 
 검증 대기:
-- Phase 4 설정 파일을 사용하는 위험점수 코드 구현 전 테스트 추가
+- `Manual Risk Model Evaluation` 실제 GitHub Actions 실행
+- `npm test`에서 새 risk model 단위 테스트 통과 확인
+- 실제 FRED 수집 결과 기반 risk-output schema 통과 확인
 
 ## Phase 4 설계 방향
 
@@ -130,11 +124,11 @@ Node.js 환경:
 
 ## 다음 작업 후보
 
-1. 위험점수 출력 스키마 설계
-2. 지표별 상태 판정 함수 구현
-3. 영역별 위험 점수 계산 구현
-4. 전체 위험 단계 판정 구현
-5. 위험 모델 수동 실행 명령 및 GitHub Actions 검증 경로 추가
+1. `Manual Risk Model Evaluation` 실제 실행 검증
+2. 영역별 위험 점수 계산 구현
+3. 전체 위험 단계 판정 구현
+4. 위험 모델 출력 예시 파일 추가
+5. 이후 포트폴리오 취약도 계산 단계로 연결
 
 ## 다음 세션이 읽을 문서
 
@@ -152,5 +146,6 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- 위험점수 출력 스키마 확정
-- Phase 4 위험점수 코드 구현
+- `Manual Risk Model Evaluation` 실제 GitHub Actions 실행 검증
+- 영역별 위험 점수 계산 구현
+- 전체 위험 단계 판정 구현
