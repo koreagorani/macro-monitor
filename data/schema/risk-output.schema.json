@@ -14,28 +14,16 @@
     "warnings"
   ],
   "properties": {
-    "schemaVersion": {
-      "type": "string",
-      "const": "1.0.0"
-    },
-    "asOf": {
-      "type": "string",
-      "format": "date"
-    },
-    "quality": {
-      "$ref": "#/$defs/quality"
-    },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "asOf": { "type": "string", "format": "date" },
+    "quality": { "$ref": "#/$defs/quality" },
     "indicatorStatuses": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/indicatorStatus"
-      }
+      "items": { "$ref": "#/$defs/indicatorStatus" }
     },
     "areaRisks": {
       "type": "array",
-      "items": {
-        "type": "object"
-      }
+      "items": { "$ref": "#/$defs/areaRisk" }
     },
     "overallRisk": {
       "oneOf": [
@@ -45,9 +33,7 @@
     },
     "warnings": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/warning"
-      }
+      "items": { "$ref": "#/$defs/warning" }
     }
   },
   "$defs": {
@@ -67,38 +53,14 @@
       ],
       "properties": {
         "shouldAbort": { "type": "boolean" },
-        "confidence": {
-          "type": "string",
-          "enum": ["normal", "reduced", "aborted"]
-        },
-        "coreIndicatorIds": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "nonCoreIndicatorIds": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "failedCoreIndicators": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/failedIndicator" }
-        },
-        "failedNonCoreIndicators": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/failedIndicator" }
-        },
-        "availableIndicatorCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "unavailableIndicatorCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "warnings": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/warning" }
-        }
+        "confidence": { "type": "string", "enum": ["normal", "reduced", "aborted"] },
+        "coreIndicatorIds": { "type": "array", "items": { "type": "string" } },
+        "nonCoreIndicatorIds": { "type": "array", "items": { "type": "string" } },
+        "failedCoreIndicators": { "type": "array", "items": { "$ref": "#/$defs/failedIndicator" } },
+        "failedNonCoreIndicators": { "type": "array", "items": { "$ref": "#/$defs/failedIndicator" } },
+        "availableIndicatorCount": { "type": "integer", "minimum": 0 },
+        "unavailableIndicatorCount": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } }
       }
     },
     "failedIndicator": {
@@ -107,10 +69,7 @@
       "required": ["indicatorId", "reason"],
       "properties": {
         "indicatorId": { "type": "string" },
-        "reason": {
-          "type": "string",
-          "enum": ["missing_output", "unavailable"]
-        }
+        "reason": { "type": "string", "enum": ["missing_output", "unavailable"] }
       }
     },
     "indicatorStatus": {
@@ -128,27 +87,16 @@
       "properties": {
         "indicatorId": { "type": "string" },
         "available": { "type": "boolean" },
-        "status": {
-          "type": "string",
-          "enum": ["easing", "normal", "watch", "alert", "strong_alert", "unavailable"]
-        },
-        "score": {
-          "type": ["number", "null"]
-        },
+        "status": { "$ref": "#/$defs/status" },
+        "score": { "type": ["number", "null"] },
         "selectedEvaluation": {
           "oneOf": [
             { "type": "null" },
             { "$ref": "#/$defs/metricEvaluation" }
           ]
         },
-        "evaluations": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/metricEvaluation" }
-        },
-        "warnings": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/warning" }
-        }
+        "evaluations": { "type": "array", "items": { "$ref": "#/$defs/metricEvaluation" } },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } }
       }
     },
     "metricEvaluation": {
@@ -167,13 +115,53 @@
         "metricPath": { "type": "string" },
         "unit": { "type": "string" },
         "value": { "type": ["number", "null"] },
-        "status": {
-          "type": "string",
-          "enum": ["easing", "normal", "watch", "alert", "strong_alert", "unavailable"]
-        },
+        "status": { "$ref": "#/$defs/status" },
         "score": { "type": ["number", "null"] },
         "matchedRuleId": { "type": ["string", "null"] },
         "signal": { "type": ["string", "null"] }
+      }
+    },
+    "areaRisk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "areaId",
+        "name",
+        "weight",
+        "score",
+        "status",
+        "contributingIndicators",
+        "warnings"
+      ],
+      "properties": {
+        "areaId": { "type": "string" },
+        "name": { "type": "string" },
+        "weight": { "type": "number" },
+        "score": { "type": ["number", "null"] },
+        "status": { "$ref": "#/$defs/status" },
+        "contributingIndicators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/areaContribution" }
+        },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } }
+      }
+    },
+    "areaContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "indicatorId",
+        "status",
+        "score",
+        "areaWeight",
+        "weightedScore"
+      ],
+      "properties": {
+        "indicatorId": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "score": { "type": "number" },
+        "areaWeight": { "type": "number" },
+        "weightedScore": { "type": "number" }
       }
     },
     "warning": {
@@ -185,6 +173,10 @@
         "message": { "type": "string", "minLength": 1 },
         "indicatorId": { "type": ["string", "null"] }
       }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["easing", "normal", "watch", "alert", "strong_alert", "unavailable"]
     }
   }
 }
