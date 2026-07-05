@@ -5,8 +5,8 @@
 - Phase 1 완료
 - Phase 2 완료
 - Phase 3 데이터 자동 수집 MVP 완료
-- Phase 4 영역별 위험 점수 계산 구현 및 검증 완료
-- 다음 단계: 전체 위험 단계 판정 구현
+- Phase 4 전체 위험 단계 판정 구현 완료
+- 다음 검증: `Manual Risk Model Evaluation` 재실행
 
 ## 완료된 내용
 
@@ -62,36 +62,49 @@
 ### Phase 4 영역별 위험 점수 계산
 
 - `src/risk/aggregate-areas.js` 구현
-  - `risk-areas.json`의 `areas`와 `indicatorAreaLinks` 사용
-  - disabled 영역 제외
-  - unavailable 지표는 영역 점수 계산에서 제외하고 area warning 생성
-  - 한 지표가 여러 영역에 연결되면 link weight 반영
-  - `core_pce`의 `rates_policy` 0.6, `inflation_supply` 0.4 배분 반영
-  - `sp500`과 `btc`가 모두 `risk_appetite`에 연결될 때 MVP 기준 단순 평균 처리
-- 영역 상태 판정 구현
-  - score < 0: `easing`
-  - 0 이상 0.5 미만: `normal`
-  - 0.5 이상 1.5 미만: `watch`
-  - 1.5 이상 2.5 미만: `alert`
-  - 2.5 이상: `strong_alert`
 - `data/schema/risk-output.schema.json` 보강
-  - `areaRisks`가 실제 area risk 객체 배열로 검증되도록 변경
-  - 각 area risk는 `areaId`, `name`, `weight`, `score`, `status`, `contributingIndicators`, `warnings` 포함
-- `scripts/run-risk-model.js` 연결
-  - quality gate 통과 후 `indicatorStatuses` 생성
-  - 이후 `aggregateAreaRisks` 실행
-  - `overallRisk`는 아직 `null` 유지
+- `scripts/run-risk-model.js`에 `aggregateAreaRisks` 연결
 - `test/area-aggregation.test.js` 추가
-  - `core_pce` 60/40 영역 배분
-  - `risk_appetite`에서 `sp500`/`btc` 단순 평균
-  - disabled 영역 제외
-  - unavailable 지표 제외 및 warning 생성
-  - 영역 상태 판정
-  - populated `areaRisks` 포함 risk-output schema 검증
 - `Manual Risk Model Evaluation` 재실행 성공 확인
   - run: `28736992100`
   - job: `evaluate-risk-model`
   - `npm ci`, `npm test`, `npm run validate:examples`, 실제 FRED 수집 기반 populated `areaRisks` 포함 risk-output 생성 모두 성공
+
+### Phase 4 전체 위험 단계 판정
+
+- `src/risk/evaluate-overall-risk.js` 구현
+  - `areaRisks`와 `quality`를 입력으로 전체 위험 단계 판정
+  - `RISK_MODEL.md`의 전체 위험 단계 규칙을 discrete rule로 우선 적용
+  - weighted score는 보조 점수로 계산
+  - `quality.shouldAbort === true`이면 `overallRisk`는 `null` 반환
+- discrete rule 우선순위 구현
+  - `high_risk`: `rates_policy`, `inflation_supply`, `risk_appetite`가 모두 watch 이상
+  - `alert`: 서로 다른 두 영역이 alert 이상
+  - `alert`: `rates_policy`와 `risk_appetite`가 동시에 watch 이상
+  - `watch`: 한 영역이 alert 이상
+  - `watch`: 두 영역 이상이 watch 이상
+  - `normal`: 경계 영역 없음 + 주의 영역 1개 이하
+- `overallRisk` 출력 구조 구현
+  - `level`: `normal`, `watch`, `alert`, `high_risk`
+  - `score`: 영역 weight 기반 전체 가중 점수
+  - `label`: 한국어 단계 이름
+  - `reasons`: 핵심 이유 배열
+  - `triggeredRules`: 적용 규칙 ID 배열
+  - `confidence`: quality gate 결과 반영
+- `data/schema/risk-output.schema.json` 보강
+  - `overallRisk` 객체 구조 검증 추가
+  - 단, abort 상태에서는 `overallRisk: null` 허용
+- `scripts/run-risk-model.js` 연결
+  - `quality` → `indicatorStatuses` → `areaRisks` → `overallRisk` 순서로 출력
+- `test/overall-risk.test.js` 추가
+  - normal 판정
+  - watch 판정
+  - alert 판정
+  - high_risk 판정
+  - 금리와 위험선호 동시 악화 규칙
+  - quality reduced의 confidence 반영
+  - shouldAbort true 시 overallRisk 계산 생략
+  - risk-output schema 검증
 
 ## 현재 실행 방법
 
@@ -123,8 +136,11 @@ Node.js 환경:
 - artifact 기반 `package-lock.json` 커밋 완료
 - `Manual Risk Model Evaluation` 첫 수직 슬라이스 실제 GitHub Actions 성공
 - area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
-- 새 `test/area-aggregation.test.js` 통과
-- 실제 FRED 수집 결과 기반 populated `areaRisks` 포함 risk-output schema 통과
+
+검증 대기:
+- overallRisk 추가 후 `Manual Risk Model Evaluation` 재실행
+- 새 `test/overall-risk.test.js` 통과 확인
+- 실제 FRED 수집 결과 기반 populated `overallRisk` 포함 risk-output schema 통과 확인
 
 ## Phase 4 설계 방향
 
@@ -133,16 +149,18 @@ Node.js 환경:
 - `config/risk-areas.json`에는 영역 정의, 영역 가중치, 지표와 영역의 연결 관계를 둔다.
 - 위험점수 코드는 수집 결과를 직접 재계산하지 않고 정규화 출력의 `metrics`만 사용한다.
 - 데이터 품질 게이트는 위험점수 계산 전 단계에 둔다.
+- 전체 위험 단계 판정은 discrete rule을 우선하고 weighted score는 보조 지표로 사용한다.
 
 ## 다음 작업 후보
 
-1. 전체 위험 단계 판정 구현
+1. `Manual Risk Model Evaluation` 재실행 검증
 2. 위험 모델 출력 예시 파일 추가
-3. 이후 포트폴리오 취약도 계산 단계로 연결
+3. Phase 5 포트폴리오 취약도 모델 진입 전 문서 정리
+4. 이후 포트폴리오 취약도 계산 단계로 연결
 
 ## 다음 세션이 읽을 문서
 
-Phase 4 위험 모델 구현 시 필수:
+Phase 4 위험 모델 검증 및 마무리 시 필수:
 - `AGENTS.md`
 - `docs/RISK_MODEL.md`
 - `docs/ARCHITECTURE.md`
@@ -156,4 +174,5 @@ Phase 4 위험 모델 구현 시 필수:
 
 ## 미해결
 
-- 전체 위험 단계 판정 구현
+- overallRisk 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 재실행 검증
+- Phase 5 진입 전 위험 모델 출력 예시와 문서 정리
