@@ -10,7 +10,8 @@
 - Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 및 검증 완료
-- 다음 단계: AI 보고서 생성 구현
+- AI 주간 보고서 생성 구현 완료
+- 다음 검증: `Manual Weekly Report Generation` 실행
 
 ## 완료된 내용
 
@@ -110,57 +111,76 @@
   - 개인 보유 수량·평가금액 관련 key 미포함 확인
 - `docs/DECISIONS.md` 갱신
   - D-024: AI 주간 보고서 출력 계약 확정
-
-### AI 주간 보고서 검증 실패 수정
-
-- `Manual Macro Review Evaluation` 재실행 실패 확인
-  - run: `29088104445`
-  - job: `evaluate-macro-review`
-  - `npm ci` 성공
-  - `npm test` 실패
-  - 이후 `npm run validate:examples`, `npm run evaluate:macro-review` skipped
-- 1차 실패 원인
-  - `test/weekly-report-output.test.js`와 `scripts/validate-examples.js`가 `src/validation/validate-weekly-report-output.js`를 import했지만 해당 파일이 누락되어 있었다.
-- 1차 수정 내용
-  - `src/validation/validate-weekly-report-output.js` 추가
-  - 기존 validator들과 동일한 Ajv2020 + ajv-formats 패턴으로 수정
-- 1차 수정 커밋
-  - 최초 validator 추가: `bd3d1e03ac1eac61f5e5012d7eafbe81236d5641`
-  - 기존 Ajv 패턴 정렬: `7486835b65c16ad31d196a69a11a6f3cef149de5`
-- `Manual Macro Review Evaluation` 재실행 실패 확인
-  - run: `29088328224`
-  - job: `evaluate-macro-review`
-  - `npm ci` 성공
-  - `npm test` 실패
-  - 이후 `npm run validate:examples`, `npm run evaluate:macro-review` skipped
-- 2차 실패 원인
-  - `weekly-report-output.schema.json`의 `indicatorRow` 표시 필드가 `string | number | null` union type을 사용했다.
-  - 기존 validator는 Ajv2020 strict 모드이므로 표시 필드는 strict schema에 맞춰 단순화해야 한다.
-- 2차 수정 내용
-  - `indicatorRow.currentValue`, `indicatorRow.weeklyChange`, `indicatorRow.secondaryMetric`을 `string | null`로 제한
-  - AI 보고서 표의 수치 필드는 계산용 값이 아니라 사람이 읽는 표시 문자열로 취급
-- 2차 수정 커밋
-  - `cf9bcd13245c7b9eaa09358a3b33ea4f7540f717`
-- 수정 후 `Manual Macro Review Evaluation` 재실행 성공 확인
+- 설계 검증 완료
   - run: `29088698198`
   - job: `evaluate-macro-review`
   - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:macro-review` 모두 성공
 
+### AI 주간 보고서 생성 구현
+
+- `src/clients/openai-client.js` 추가
+  - OpenAI Responses API 호출 클라이언트
+  - `OPENAI_API_KEY` 필수
+  - `OPENAI_MODEL` optional, 미설정 또는 빈 값이면 `gpt-4.1` 사용
+  - `OPENAI_BASE_URL`, `OPENAI_MAX_OUTPUT_TOKENS` optional
+  - API key와 원문 응답 전체를 로그에 남기지 않음
+  - 실패 시 안전한 error code/message만 반환
+- `src/report/generate-weekly-report.js` 추가
+  - `macroReviewOutput`과 `prompts/weekly-analysis.md`를 사용해 AI 보고서 생성
+  - AI 응답 JSON 파싱
+  - `weekly-report-output` schema 검증
+  - macro-review 원본과 consistency 검증
+  - AI가 `overallLevel`, `overallScore`, `confidence`, 상위 테마 ID, 영역별 score/status, 테마별 score/level을 바꾸면 실패
+- `scripts/run-weekly-report.js` 추가
+  - 실제 FRED 기반 숫자 파이프라인 실행
+  - macro-review 출력 생성 및 검증
+  - OpenAI API 호출
+  - weekly-report-output 생성 및 최종 schema 검증
+- `package.json`에 `generate:weekly-report` 명령 추가
+- `.github/workflows/manual-weekly-report.yml` 추가
+  - `Manual Weekly Report Generation`
+  - `FRED_API_KEY`, `OPENAI_API_KEY` 사용
+- `test/openai-client.test.js` 추가
+  - API key 누락
+  - Authorization header 구성
+  - 안전한 에러 메시지
+  - output text 추출
+- `test/weekly-report-generation.test.js` 추가
+  - mock OpenAI client 기반 정상 JSON 응답 파싱
+  - schema 검증 통과
+  - JSON 파싱 실패 처리
+  - schema 검증 실패 처리
+  - consistency 검증 실패 처리
+  - prompt/user message의 재계산·재판정 금지 규칙 확인
+- `data/examples/macro-review.example.json` 갱신
+  - weekly report consistency 테스트가 참조할 수 있도록 area/theme score와 level을 합성 예시에 명시
+- `docs/REPORT_SPEC.md` 갱신
+  - `generate:weekly-report` 실행 계약
+  - OpenAI 호출 후 schema/consistency 검증 계약
+- `docs/DECISIONS.md` 갱신
+  - D-025: AI 주간 보고서 생성 실행 경로 확정
+
 ## 현재 실행 방법
 
 GitHub Actions:
+- AI 주간 보고서 생성 검증: Actions → `Manual Weekly Report Generation`
 - 통합 매크로 리뷰 검증: Actions → `Manual Macro Review Evaluation`
 - 포트폴리오 취약도 검증: Actions → `Manual Portfolio Vulnerability Evaluation`
 - 위험 모델 검증: Actions → `Manual Risk Model Evaluation`
 - MVP 6개 통합 검증: Actions → `Manual All Indicator Collection`
 - Lockfile 생성: Actions → `Generate Package Lock`
 - 선택적으로 `as_of` 입력
-- 저장소 Secret `FRED_API_KEY` 필요
+- 저장소 Secret 필요:
+  - `FRED_API_KEY`
+  - `OPENAI_API_KEY`
+- 선택 repository variable:
+  - `OPENAI_MODEL`
 
 Node.js 환경:
 - `npm ci --no-audit --no-fund`
 - `npm test`
 - `npm run validate:examples`
+- `npm run generate:weekly-report -- YYYY-MM-DD`
 - `npm run evaluate:macro-review -- YYYY-MM-DD`
 - `npm run evaluate:risk -- YYYY-MM-DD`
 - `npm run evaluate:portfolio -- data/examples/risk-output.example.json`
@@ -190,25 +210,30 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- AI 보고서 생성 구현
+- AI 주간 보고서 생성 구현 후 `Manual Weekly Report Generation` 실행
+- `test/openai-client.test.js` 통과 확인
+- `test/weekly-report-generation.test.js` 통과 확인
+- 실제 FRED 기반 macro-review 생성 후 OpenAI API 호출 및 weekly-report-output schema/consistency 검증 확인
 
 ## 다음 세션이 읽을 문서
 
-AI 보고서 생성 구현 시 필수:
+AI 보고서 생성 검증 및 후속 구현 시 필수:
 - `AGENTS.md`
 - `docs/REPORT_SPEC.md`
-- `docs/RISK_MODEL.md`
-- `docs/PORTFOLIO.md`
 - `prompts/weekly-analysis.md`
 - `docs/HANDOFF.md`
 
 선택:
 - 통합 출력 계약 확인 시 `data/schema/macro-review-output.schema.json`
 - AI 보고서 출력 계약 확인 시 `data/schema/weekly-report-output.schema.json`
+- OpenAI client 확인 시 `src/clients/openai-client.js`
+- AI 보고서 generator 확인 시 `src/report/generate-weekly-report.js`
 - 구조적 결정 확인 시 `docs/DECISIONS.md`
 - 아키텍처 원칙 확인 시 `docs/ARCHITECTURE.md`
 
 ## 미해결
 
-- AI 보고서 생성 구현
-- Markdown/Notion/Telegram 렌더링 구현
+- `Manual Weekly Report Generation` 실제 GitHub Actions 검증
+- Markdown 렌더링 구현
+- Notion 저장 구현
+- Telegram 알림 구현
