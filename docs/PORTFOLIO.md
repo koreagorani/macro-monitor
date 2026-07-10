@@ -66,9 +66,13 @@ notes
 
 헷지 후보는 테마 단위로 정의한다. Phase 5의 첫 구현에서는 헷지 실행을 자동화하지 않고, 취약도 출력에 연결 가능한 후보 목록만 제공한다.
 
-## 출력 초안
+## 출력 계약
 
-Phase 5 출력은 다음 형태를 목표로 한다.
+단일 출처:
+
+- `data/schema/portfolio-vulnerability-output.schema.json`
+
+Phase 5 MVP 출력은 다음 형태를 따른다.
 
 ```json
 {
@@ -77,18 +81,26 @@ Phase 5 출력은 다음 형태를 목표로 한다.
   "sourceRisk": {
     "overallLevel": "watch",
     "overallScore": 0.82,
-    "confidence": "normal"
+    "confidence": "normal",
+    "triggeredRules": []
+  },
+  "selection": {
+    "policy": "top_3_by_score",
+    "displayedThemeCount": 3,
+    "evaluatedThemeCount": 6
   },
   "themeVulnerabilities": [
     {
       "themeId": "crypto_altcoins",
       "name": "알트코인",
+      "description": "비트코인을 제외한 고변동성 암호자산 테마",
       "score": 2.1,
       "level": "alert",
       "macroContributions": [
         {
           "areaId": "risk_appetite",
           "areaScore": 2,
+          "areaStatus": "alert",
           "exposure": 1.5,
           "contribution": 3
         }
@@ -109,10 +121,21 @@ Phase 5 출력은 다음 형태를 목표로 한다.
 1. `areaRisks`의 영역 점수를 입력으로 사용한다.
 2. 테마별 `macroExposures`와 영역 점수를 곱해 영역별 기여도를 계산한다.
 3. 테마 취약도 점수는 영역별 기여도의 합으로 계산한다.
-4. 음수 기여도는 완화 신호로 유지하되, 최종 취약도 하한은 구현 단계에서 별도 결정한다.
-5. 보유 비중은 공개 저장소에 직접 저장하지 않는다. 필요 시 별도 비공개 입력으로 받고, 공개 모델에서는 `positionWeightPolicy`만 정의한다.
-6. 출력 테마는 기본적으로 상위 3개로 제한한다. 4위는 3위와 점수가 유사하고 위험 성격이 다를 때만 보조 표시한다.
-7. 헷지는 필요성 판단 이후 테마 단위 후보를 연결한다.
+4. 음수 기여도는 완화 신호로 유지한다.
+5. 최종 테마 점수도 음수를 보존하며, 0으로 강제 보정하지 않는다.
+6. 보유 비중은 공개 저장소에 직접 저장하지 않는다. 필요 시 별도 비공개 입력으로 받고, 공개 모델에서는 `positionWeightPolicy`만 정의한다.
+7. 출력 테마는 기본적으로 상위 3개로 제한한다. 4위는 3위와 점수가 유사하고 위험 성격이 다를 때만 향후 보조 표시한다.
+8. 헷지 후보는 테마 취약도 level이 `watch` 이상일 때만 연결한다.
+
+## 취약도 단계
+
+```text
+score < 0: easing
+0 이상 0.5 미만: normal
+0.5 이상 1.5 미만: watch
+1.5 이상 2.5 미만: alert
+2.5 이상: high_risk
+```
 
 ## 신뢰도 처리
 
@@ -140,13 +163,13 @@ Phase 5 출력은 다음 형태를 목표로 한다.
 
 ## Phase 5 첫 구현 범위
 
-구현할 것:
+구현한 것:
 
 1. 포트폴리오 취약도 출력 스키마
 2. 테마별 취약도 계산 함수
-3. `risk-output`을 입력으로 받는 실행 스크립트 또는 내부 연결 함수
+3. `risk-output`을 입력으로 받는 실행 스크립트
 4. 합성 테스트
-5. 필요 시 수동 검증 workflow
+5. 수동 검증 workflow
 
 아직 구현하지 않을 것:
 
