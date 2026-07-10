@@ -23,7 +23,7 @@
 - `docs/DECISIONS.md`: 구조적 결정과 그 이유. 세부 운영 규칙은 담당 문서를 참조한다.
 - `docs/REPORT_SPEC.md`: 보고서의 세부 출력 형식과 표현 규칙
 - `docs/RISK_MODEL.md`: 위험 판정 규칙과 초기 임계값
-- `docs/PORTFOLIO_MODEL.md`: 포트폴리오 취약도 계산 및 테마 분류
+- `docs/PORTFOLIO.md`: 포트폴리오 취약도 입력·출력 계약과 테마 민감도 모델
 - `docs/ROADMAP.md`: 단계별 범위와 완료 조건
 - `docs/HANDOFF.md`: 현재 상태, 최근 완료 작업, 미해결 문제, 다음 작업
 - `README.md`: 프로젝트의 간결한 개요와 주요 문서 안내
@@ -58,7 +58,7 @@
 - 지표 판정에 필요한 필드 확인 시 `docs/RISK_MODEL.md`
 
 읽지 않아도 되는 문서:
-- `docs/PORTFOLIO_MODEL.md`
+- `docs/PORTFOLIO.md`
 - `docs/REPORT_SPEC.md`
 
 ### 위험점수 계산 구현
@@ -76,20 +76,21 @@
 ### 포트폴리오 취약도 구현
 
 읽을 문서:
-- `docs/PORTFOLIO_MODEL.md`
-- `config/portfolio.json`
-- `config/theme-exposures.json`
+- `docs/PORTFOLIO.md`
+- `config/portfolio-themes.json`
+- `config/hedge-candidates.json`
 - `docs/HANDOFF.md`
 
 선택:
 - 영역 점수 형식 확인 시 `docs/RISK_MODEL.md`
+- risk-output 입력 계약 확인 시 `data/schema/risk-output.schema.json`
 
 ### AI 분석 프롬프트 작업
 
 읽을 문서:
 - `docs/REPORT_SPEC.md`
 - `docs/RISK_MODEL.md`
-- `docs/PORTFOLIO_MODEL.md`
+- `docs/PORTFOLIO.md`
 - `prompts/weekly-analysis.md`
 - `docs/HANDOFF.md`
 
@@ -101,7 +102,7 @@
 읽을 문서:
 - `docs/REPORT_SPEC.md`
 - `docs/RISK_MODEL.md`
-- `docs/PORTFOLIO_MODEL.md`
+- `docs/PORTFOLIO.md`
 - `docs/HANDOFF.md`
 
 읽지 않아도 되는 문서:
