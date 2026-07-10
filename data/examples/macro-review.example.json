@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "asOf": "2026-07-05",
+  "generatedAt": "2026-07-05T00:00:00.000Z",
+  "dataSourceSummary": {
+    "source": "fred_live_collection",
+    "riskAsOf": "2026-07-05",
+    "indicatorCount": 6,
+    "availableIndicatorCount": 6,
+    "unavailableIndicatorCount": 0,
+    "riskQualityConfidence": "normal",
+    "riskShouldAbort": false,
+    "portfolioVulnerabilityCalculated": true
+  },
+  "riskOutput": {
+    "schemaVersion": "1.0.0",
+    "asOf": "2026-07-05",
+    "quality": {
+      "shouldAbort": false,
+      "confidence": "normal"
+    },
+    "overallRisk": {
+      "level": "high_risk",
+      "score": 0.546428571429
+    }
+  },
+  "portfolioVulnerability": {
+    "schemaVersion": "1.0.0",
+    "asOf": "2026-07-05",
+    "sourceRisk": {
+      "overallLevel": "high_risk",
+      "overallScore": 0.546428571429,
+      "confidence": "normal",
+      "triggeredRules": [
+        "HIGH_RISK_RATES_INFLATION_RISK_APPETITE_WORSENING"
+      ]
+    },
+    "selection": {
+      "policy": "top_3_by_score",
+      "displayedThemeCount": 3,
+      "evaluatedThemeCount": 6
+    },
+    "themeVulnerabilities": [
+      {
+        "themeId": "crypto_altcoins",
+        "name": "알트코인",
+        "score": 1.980357142857,
+        "level": "alert"
+      }
+    ],
+    "warnings": []
+  },
+  "warnings": []
+}
