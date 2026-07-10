@@ -14,6 +14,7 @@
     "evaluate:risk": "node scripts/run-risk-model.js",
     "evaluate:portfolio": "node scripts/run-portfolio-vulnerability.js",
     "evaluate:macro-review": "node scripts/run-macro-review.js",
+    "generate:weekly-report": "node scripts/run-weekly-report.js",
     "test": "node --test",
     "validate:examples": "node scripts/validate-examples.js"
   },
