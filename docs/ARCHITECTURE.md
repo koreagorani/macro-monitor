@@ -53,6 +53,8 @@
 
 - 지표 설정의 단일 출처는 `config/indicators.json`이다.
 - 수집 결과의 공통 JSON 계약은 `data/schema/indicator-output.schema.json`이다.
+- 위험 모델 출력 계약은 `data/schema/risk-output.schema.json`이다.
+- 포트폴리오 취약도 출력 계약은 `data/schema/portfolio-vulnerability-output.schema.json`이다.
 - 합성 예시는 `data/examples/`에 둔다.
 - `asOf`는 수집 실행의 기준일이다.
 - 실제 계산에 사용한 관측일은 유형별 `metrics`에 별도로 저장한다.
@@ -66,6 +68,8 @@ src/
 ├─ collectors/    # 지표별 수집 오케스트레이션과 실패 격리
 ├─ config/        # JSON 설정 로딩
 ├─ domain/        # 관측값 선택과 순수 계산 함수
+├─ portfolio/     # 포트폴리오 테마 취약도 계산
+├─ risk/          # 지표·영역·전체 위험 판정
 └─ validation/    # JSON Schema 검증
 
 scripts/          # 수동 실행 진입점
@@ -73,7 +77,7 @@ test/             # 합성 데이터 기반 단위 테스트
 ```
 
 - 외부 API 응답 처리와 계산 로직을 분리한다.
-- `domain/` 함수는 네트워크나 환경변수에 의존하지 않는다.
+- `domain/`, `risk/`, `portfolio/`의 순수 계산 함수는 네트워크나 환경변수에 의존하지 않는다.
 - 실행 스크립트는 설정 로딩, 수집, 검증, 화면 출력을 연결한다.
 
 ## 보고서 전달 경로
