@@ -3,6 +3,7 @@ import { validateIndicatorOutput } from "../src/validation/validate-output.js";
 import { validateRiskOutput } from "../src/validation/validate-risk-output.js";
 import { validatePortfolioVulnerabilityOutput } from "../src/validation/validate-portfolio-vulnerability-output.js";
 import { validateMacroReviewOutput } from "../src/validation/validate-macro-review-output.js";
+import { validateWeeklyReportOutput } from "../src/validation/validate-weekly-report-output.js";
 
 const indicatorExamplePaths = [
   "data/examples/market-price.example.json",
@@ -19,6 +20,10 @@ const portfolioVulnerabilityExamplePaths = [
 
 const macroReviewExamplePaths = [
   "data/examples/macro-review.example.json"
+];
+
+const weeklyReportExamplePaths = [
+  "data/examples/weekly-report-output.example.json"
 ];
 
 let failed = false;
@@ -62,6 +67,18 @@ for (const path of portfolioVulnerabilityExamplePaths) {
 for (const path of macroReviewExamplePaths) {
   const value = await loadJsonFile(path);
   const result = await validateMacroReviewOutput(value);
+  if (!result.valid) {
+    failed = true;
+    console.error(`${path}: invalid`);
+    console.error(JSON.stringify(result.errors, null, 2));
+  } else {
+    console.log(`${path}: valid`);
+  }
+}
+
+for (const path of weeklyReportExamplePaths) {
+  const value = await loadJsonFile(path);
+  const result = await validateWeeklyReportOutput(value);
   if (!result.valid) {
     failed = true;
     console.error(`${path}: invalid`);
