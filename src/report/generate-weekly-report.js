@@ -113,18 +113,18 @@ function validateWeeklyReportConsistency({ weeklyReportOutput, macroReviewOutput
     const sourceArea = sourceAreaMap.get(area.areaId);
     assertConsistency(
       Boolean(sourceArea),
-      `report.areaRisks contains unknown areaId ${area.areaId}.\`,
+      `report.areaRisks contains unknown areaId ${area.areaId}.`,
       errors
     );
     if (sourceArea) {
       assertConsistency(
         sameNumberOrNull(area.score, sourceArea.score),
-        `report.areaRisks score for ${area.areaId} must match macroReviewOutput.\`,
+        `report.areaRisks score for ${area.areaId} must match macroReviewOutput.`,
         errors
       );
       assertConsistency(
         area.status === sourceArea.status,
-        `report.areaRisks status for ${area.areaId} must match macroReviewOutput.\`,
+        `report.areaRisks status for ${area.areaId} must match macroReviewOutput.`,
         errors
       );
     }
@@ -135,18 +135,18 @@ function validateWeeklyReportConsistency({ weeklyReportOutput, macroReviewOutput
     const sourceTheme = sourceThemeMap.get(theme.themeId);
     assertConsistency(
       Boolean(sourceTheme),
-      `report.portfolioThemes contains unknown themeId ${theme.themeId}.\`,
+      `report.portfolioThemes contains unknown themeId ${theme.themeId}.`,
       errors
     );
     if (sourceTheme) {
       assertConsistency(
         sameNumberOrNull(theme.score, sourceTheme.score),
-        `report.portfolioThemes score for ${theme.themeId} must match macroReviewOutput.\`,
+        `report.portfolioThemes score for ${theme.themeId} must match macroReviewOutput.`,
         errors
       );
       assertConsistency(
         theme.level === sourceTheme.level,
-        `report.portfolioThemes level for ${theme.themeId} must match macroReviewOutput.\`,
+        `report.portfolioThemes level for ${theme.themeId} must match macroReviewOutput.`,
         errors
       );
     }
