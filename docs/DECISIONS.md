@@ -253,3 +253,19 @@
 - AI가 숫자 판정과 임계값을 자의적으로 바꾸는 것을 방지하기 위해서다.
 - 구조화 출력으로 검증해야 후속 Notion·Telegram 렌더링을 안정적으로 연결할 수 있다.
 - 보고서 문장화와 숫자 계산 책임을 분리하기 위해서다.
+
+## D-025 AI 주간 보고서 생성 실행 경로
+
+결정:
+- AI 주간 보고서 생성 명령은 `npm run generate:weekly-report -- YYYY-MM-DD`로 한다.
+- 이 명령은 실제 FRED 기반 macro-review 숫자 파이프라인을 실행한 뒤 OpenAI API를 호출해 weekly-report-output JSON을 생성한다.
+- OpenAI API 키는 `OPENAI_API_KEY` 환경변수 또는 GitHub Secret으로만 전달한다.
+- 기본 모델은 `OPENAI_MODEL`이 없으면 `gpt-4.1`을 사용한다.
+- OpenAI 원문 응답 전체와 API 키는 로그에 남기지 않는다.
+- AI 응답은 JSON 파싱, weekly-report-output schema 검증, macro-review 원본과의 consistency 검증을 모두 통과해야 한다.
+- consistency 검증에서는 `overallLevel`, `overallScore`, `confidence`, 상위 테마 ID, 영역별 score/status, 테마별 score/level을 입력과 비교한다.
+
+이유:
+- 자연어 보고서는 AI가 담당하되, 숫자·등급·점수는 코드 산출물에서 벗어나지 않도록 하기 위해서다.
+- 후속 Markdown/Notion/Telegram 렌더링 전에 구조화 보고서 JSON의 신뢰성을 확보해야 한다.
+- API 키와 원문 응답을 로그에 남기지 않아 운영 보안을 유지하기 위해서다.
