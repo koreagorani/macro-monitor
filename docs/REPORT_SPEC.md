@@ -1,5 +1,49 @@
 # Weekly Report Specification
 
+## 0. AI 보고서 생성 계약
+
+AI 보고서 생성 단계의 입력은 `macro-review` JSON이다.
+
+단일 입력 계약:
+
+- `data/schema/macro-review-output.schema.json`
+
+AI의 출력은 자유 형식 Markdown이 아니라 구조화된 JSON이다.
+
+단일 출력 계약:
+
+- `data/schema/weekly-report-output.schema.json`
+
+이후 Markdown, Notion, Telegram용 문장은 이 구조화된 JSON을 렌더링해서 만든다.
+
+### AI 역할
+
+AI는 다음만 수행한다.
+
+- 핵심 변화 요약
+- 위험 성격 설명
+- 상충 신호 정리
+- 취약 테마의 핵심 이유 정리
+- 헷지 필요성 문장화
+- 다음 주 체크리스트 문장화
+
+AI는 다음을 수행하지 않는다.
+
+- 지표 수치 재계산
+- 위험 등급 재판정
+- 포트폴리오 취약도 점수 재계산
+- 입력에 없는 최신 뉴스, 일정, 가격 생성
+- 특정 종목 매수·매도 추천
+- 실제 개인 보유 수량·평가금액 추정
+
+### 입력 우선순위
+
+- 전체 위험 단계는 `macroReviewOutput.riskOutput.overallRisk.level`을 따른다.
+- 영역별 위험도는 `macroReviewOutput.riskOutput.areaRisks[]`를 따른다.
+- 테마별 취약도는 `macroReviewOutput.portfolioVulnerability.themeVulnerabilities[]`를 따른다.
+- 신뢰도는 `macroReviewOutput.riskOutput.quality.confidence`를 따른다.
+- warnings는 삭제하지 않고 보고서 warnings로 전달한다.
+
 ## 1. 한눈에 보는 결론
 
 - 기준일
@@ -110,6 +154,8 @@
 - 위험 강화 조건
 - 위험 완화 조건
 - 기본 시나리오 무효화 조건
+
+입력에 없는 예정 지표나 정책 일정을 추측해서 추가하지 않는다.
 
 ## 8. 판단 기록
 
