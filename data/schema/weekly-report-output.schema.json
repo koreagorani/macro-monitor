@@ -128,9 +128,9 @@
       "properties": {
         "indicatorId": { "type": "string" },
         "name": { "type": "string" },
-        "currentValue": { "type": ["string", "number", "null"] },
-        "weeklyChange": { "type": ["string", "number", "null"] },
-        "secondaryMetric": { "type": ["string", "number", "null"] },
+        "currentValue": { "type": ["string", "null"] },
+        "weeklyChange": { "type": ["string", "null"] },
+        "secondaryMetric": { "type": ["string", "null"] },
         "status": { "type": "string" },
         "note": { "type": "string" }
       }
