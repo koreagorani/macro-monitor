@@ -21,15 +21,35 @@
     },
     "overallRisk": {
       "level": "high_risk",
-      "score": 0.546428571429
-    }
+      "score": 0.549285714286
+    },
+    "areaRisks": [
+      {
+        "areaId": "rates_policy",
+        "name": "금리·통화정책",
+        "score": 0.625,
+        "status": "watch"
+      },
+      {
+        "areaId": "inflation_supply",
+        "name": "인플레이션·공급",
+        "score": 0.714285714286,
+        "status": "watch"
+      },
+      {
+        "areaId": "risk_appetite",
+        "name": "위험선호",
+        "score": 0.5,
+        "status": "watch"
+      }
+    ]
   },
   "portfolioVulnerability": {
     "schemaVersion": "1.0.0",
     "asOf": "2026-07-05",
     "sourceRisk": {
       "overallLevel": "high_risk",
-      "overallScore": 0.546428571429,
+      "overallScore": 0.549285714286,
       "confidence": "normal",
       "triggeredRules": [
         "HIGH_RISK_RATES_INFLATION_RISK_APPETITE_WORSENING"
@@ -46,6 +66,18 @@
         "name": "알트코인",
         "score": 1.980357142857,
         "level": "alert"
+      },
+      {
+        "themeId": "us_large_cap_growth",
+        "name": "미국 대형 성장주",
+        "score": 1.339285714286,
+        "level": "watch"
+      },
+      {
+        "themeId": "long_duration_bonds",
+        "name": "장기채",
+        "score": 1.275,
+        "level": "watch"
       }
     ],
     "warnings": []
