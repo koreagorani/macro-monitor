@@ -9,7 +9,8 @@
 - Phase 4 마무리 및 Phase 5 준비 검증 완료
 - Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
-- 다음 단계: AI 보고서 생성 설계
+- AI 주간 보고서 생성 설계 완료
+- 다음 단계: AI 보고서 생성 구현
 
 ## 완료된 내용
 
@@ -153,6 +154,37 @@
   - job: `evaluate-macro-review`
   - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:macro-review` 모두 성공
 
+### AI 주간 보고서 생성 설계
+
+- `data/schema/weekly-report-output.schema.json` 추가
+  - AI 보고서 생성의 구조화 출력 계약
+  - `sourceMacroReview`, `report`, `warnings` 구조 정의
+  - 허용 행동 표현을 enum으로 제한
+- `src/validation/validate-weekly-report-output.js` 추가
+- `data/examples/weekly-report-output.example.json` 추가
+  - 합성 weekly report output 예시
+  - 실제 개인 보유 수량·평가금액 없음
+- `scripts/validate-examples.js` 확장
+  - weekly report output example을 schema로 검증
+- `prompts/weekly-analysis.md` 보강
+  - 입력은 `macroReviewOutput`
+  - 출력은 `data/schema/weekly-report-output.schema.json`에 맞는 JSON만 허용
+  - 숫자·등급·임계값 재계산 금지
+  - 입력에 없는 최신 뉴스, 일정, 가격 생성 금지
+  - 특정 종목 추천 금지
+- `docs/REPORT_SPEC.md` 보강
+  - AI 보고서 입력 계약은 `data/schema/macro-review-output.schema.json`
+  - AI 보고서 출력 계약은 `data/schema/weekly-report-output.schema.json`
+  - Markdown, Notion, Telegram 출력은 후속 렌더링 단계로 분리
+- `test/weekly-report-output.test.js` 추가
+  - weekly report example schema 검증
+  - 필수 취약도 고지 포함 확인
+  - 허용 action phrase 사용 확인
+  - 금지 투자 표현 미포함 확인
+  - 개인 보유 수량·평가금액 관련 key 미포함 확인
+- `docs/DECISIONS.md` 갱신
+  - D-024: AI 주간 보고서 출력 계약 확정
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -196,11 +228,13 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- AI 보고서 생성 설계
+- AI 주간 보고서 출력 계약 추가 후 `npm test` 및 `npm run validate:examples` 검증
+- `weekly-report-output.example.json` schema 검증
+- `test/weekly-report-output.test.js` 통과 확인
 
 ## 다음 세션이 읽을 문서
 
-AI 보고서 생성 설계 시 필수:
+AI 보고서 생성 구현 시 필수:
 - `AGENTS.md`
 - `docs/REPORT_SPEC.md`
 - `docs/RISK_MODEL.md`
@@ -210,10 +244,12 @@ AI 보고서 생성 설계 시 필수:
 
 선택:
 - 통합 출력 계약 확인 시 `data/schema/macro-review-output.schema.json`
+- AI 보고서 출력 계약 확인 시 `data/schema/weekly-report-output.schema.json`
 - 구조적 결정 확인 시 `docs/DECISIONS.md`
 - 아키텍처 원칙 확인 시 `docs/ARCHITECTURE.md`
 
 ## 미해결
 
-- AI 보고서 생성 설계
-- 이후 AI 보고서 생성 구현
+- AI 주간 보고서 출력 계약 추가 후 GitHub Actions 또는 로컬 검증
+- AI 보고서 생성 구현
+- Markdown/Notion/Telegram 렌더링 구현
