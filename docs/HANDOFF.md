@@ -9,8 +9,8 @@
 - Phase 4 마무리 및 Phase 5 준비 검증 완료
 - Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
-- AI 주간 보고서 생성 설계 완료
-- 다음 검증: `Manual Macro Review Evaluation` 재실행
+- AI 주간 보고서 생성 설계 및 검증 완료
+- 다음 단계: AI 보고서 생성 구현
 
 ## 완료된 내용
 
@@ -141,6 +141,10 @@
   - AI 보고서 표의 수치 필드는 계산용 값이 아니라 사람이 읽는 표시 문자열로 취급
 - 2차 수정 커밋
   - `cf9bcd13245c7b9eaa09358a3b33ea4f7540f717`
+- 수정 후 `Manual Macro Review Evaluation` 재실행 성공 확인
+  - run: `29088698198`
+  - job: `evaluate-macro-review`
+  - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:macro-review` 모두 성공
 
 ## 현재 실행 방법
 
@@ -180,15 +184,13 @@ Node.js 환경:
 - risk-output example과 validate-examples 확장 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
 - Phase 5 포트폴리오 취약도 첫 구현 후 `Manual Portfolio Vulnerability Evaluation` 실제 GitHub Actions 성공
 - Phase 5 live 통합 실행 경로 구현 후 `Manual Macro Review Evaluation` 실제 GitHub Actions 성공
-- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js`, `test/portfolio-vulnerability.test.js`, `test/macro-review.test.js` 통과
-- `risk-output.example.json`, `portfolio-vulnerability.example.json`, `macro-review.example.json` schema 검증 통과
+- AI 주간 보고서 출력 계약 추가 후 `Manual Macro Review Evaluation` 실제 GitHub Actions 성공
+- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js`, `test/portfolio-vulnerability.test.js`, `test/macro-review.test.js`, `test/weekly-report-output.test.js` 통과
+- `risk-output.example.json`, `portfolio-vulnerability.example.json`, `macro-review.example.json`, `weekly-report-output.example.json` schema 검증 통과
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- weekly report validator/schema 수정 후 `Manual Macro Review Evaluation` 재실행
-- `test/weekly-report-output.test.js` 통과 확인
-- `weekly-report-output.example.json` schema 검증 확인
-- `npm run validate:examples` 전체 통과 확인
+- AI 보고서 생성 구현
 
 ## 다음 세션이 읽을 문서
 
@@ -208,6 +210,5 @@ AI 보고서 생성 구현 시 필수:
 
 ## 미해결
 
-- weekly report validator/schema 수정 후 GitHub Actions 재검증
 - AI 보고서 생성 구현
 - Markdown/Notion/Telegram 렌더링 구현
