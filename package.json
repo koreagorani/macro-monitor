@@ -13,6 +13,7 @@
     "collect:all": "node scripts/run-all-indicators.js",
     "evaluate:risk": "node scripts/run-risk-model.js",
     "evaluate:portfolio": "node scripts/run-portfolio-vulnerability.js",
+    "evaluate:macro-review": "node scripts/run-macro-review.js",
     "test": "node --test",
     "validate:examples": "node scripts/validate-examples.js"
   },
