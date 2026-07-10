@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "1.0.0",
+  "asOf": "2026-07-05",
+  "quality": {
+    "shouldAbort": false,
+    "confidence": "normal",
+    "coreIndicatorIds": [
+      "us2y",
+      "core_pce",
+      "wti",
+      "usdkrw",
+      "sp500"
+    ],
+    "nonCoreIndicatorIds": [
+      "btc"
+    ],
+    "failedCoreIndicators": [],
+    "failedNonCoreIndicators": [],
+    "availableIndicatorCount": 6,
+    "unavailableIndicatorCount": 0,
+    "warnings": []
+  },
+  "indicatorStatuses": [
+    {
+      "indicatorId": "us2y",
+      "available": true,
+      "status": "watch",
+      "score": 1,
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "bp",
+        "value": 12.4,
+        "status": "watch",
+        "score": 1,
+        "matchedRuleId": "us2y_weekly_watch",
+        "signal": null
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "bp",
+          "value": 12.4,
+          "status": "watch",
+          "score": 1,
+          "matchedRuleId": "us2y_weekly_watch",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "indicatorId": "core_pce",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "selectedEvaluation": {
+        "metricPath": "metrics.currentMoM",
+        "unit": "% MoM",
+        "value": 0.22,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "core_pce_current_normal",
+        "signal": null
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.currentMoM",
+          "unit": "% MoM",
+          "value": 0.22,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "core_pce_current_normal",
+          "signal": null
+        },
+        {
+          "metricPath": "metrics.threeMonthAverageMoM",
+          "unit": "% MoM",
+          "value": 0.24,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "core_pce_3m_neutral",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "indicatorId": "wti",
+      "available": true,
+      "status": "watch",
+      "score": 1,
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": 3.6,
+        "status": "watch",
+        "score": 1,
+        "matchedRuleId": "wti_weekly_up_watch",
+        "signal": "supply_inflation_pressure"
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "value": 3.6,
+          "status": "watch",
+          "score": 1,
+          "matchedRuleId": "wti_weekly_up_watch",
+          "signal": "supply_inflation_pressure"
+        },
+        {
+          "metricPath": "metrics.fourWeekChange",
+          "unit": "%",
+          "value": 6.2,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "wti_4w_normal",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "indicatorId": "usdkrw",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": 0.4,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "usdkrw_weekly_normal",
+        "signal": null
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "value": 0.4,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "usdkrw_weekly_normal",
+          "signal": null
+        },
+        {
+          "metricPath": "metrics.fourWeekChange",
+          "unit": "%",
+          "value": 1.1,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "usdkrw_4w_normal",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "indicatorId": "sp500",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": -0.8,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "sp500_weekly_normal",
+        "signal": null
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "value": -0.8,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "sp500_weekly_normal",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "indicatorId": "btc",
+      "available": true,
+      "status": "watch",
+      "score": 1,
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": -6.4,
+        "status": "watch",
+        "score": 1,
+        "matchedRuleId": "btc_weekly_down_watch",
+        "signal": null
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "value": -6.4,
+          "status": "watch",
+          "score": 1,
+          "matchedRuleId": "btc_weekly_down_watch",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "areaRisks": [
+    {
+      "areaId": "rates_policy",
+      "name": "금리·통화정책",
+      "weight": 0.35,
+      "score": 0.625,
+      "status": "watch",
+      "contributingIndicators": [
+        {
+          "indicatorId": "us2y",
+          "status": "watch",
+          "score": 1,
+          "areaWeight": 1,
+          "weightedScore": 1
+        },
+        {
+          "indicatorId": "core_pce",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 0.6,
+          "weightedScore": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "areaId": "inflation_supply",
+      "name": "인플레이션·공급",
+      "weight": 0.25,
+      "score": 0.714285714286,
+      "status": "watch",
+      "contributingIndicators": [
+        {
+          "indicatorId": "core_pce",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 0.4,
+          "weightedScore": 0
+        },
+        {
+          "indicatorId": "wti",
+          "status": "watch",
+          "score": 1,
+          "areaWeight": 1,
+          "weightedScore": 1
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "areaId": "risk_appetite",
+      "name": "위험선호",
+      "weight": 0.3,
+      "score": 0.5,
+      "status": "watch",
+      "contributingIndicators": [
+        {
+          "indicatorId": "sp500",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 1,
+          "weightedScore": 0
+        },
+        {
+          "indicatorId": "btc",
+          "status": "watch",
+          "score": 1,
+          "areaWeight": 1,
+          "weightedScore": 1
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "areaId": "dollar_korea",
+      "name": "달러·한국 금융환경",
+      "weight": 0.1,
+      "score": 0,
+      "status": "normal",
+      "contributingIndicators": [
+        {
+          "indicatorId": "usdkrw",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 1,
+          "weightedScore": 0
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "overallRisk": {
+    "level": "high_risk",
+    "score": 0.546428571429,
+    "label": "높은 위험",
+    "reasons": [
+      "금리·인플레이션·위험선호 영역이 동시에 악화되었습니다."
+    ],
+    "triggeredRules": [
+      "HIGH_RISK_RATES_INFLATION_RISK_APPETITE_WORSENING"
+    ],
+    "confidence": "normal"
+  },
+  "warnings": []
+}
