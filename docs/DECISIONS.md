@@ -226,3 +226,16 @@
 - 음수 노출은 방어 또는 완화 가능성을 나타낼 수 있어 손실 없이 보존해야 한다.
 - 초기 보고서에서는 사용자가 우선 점검할 상위 취약 테마를 제한하는 것이 더 유용하다.
 - normal/easing 테마에 헷지 후보를 붙이면 불필요한 행동 신호로 오해될 수 있다.
+
+## D-023 통합 매크로 리뷰 실행 경로
+
+결정:
+- live 통합 실행 명령은 `npm run evaluate:macro-review -- YYYY-MM-DD`로 한다.
+- 이 명령은 실제 FRED 기반 `riskOutput`을 생성한 뒤, 같은 실행 안에서 `portfolioVulnerability`를 계산하고 `macro-review` 통합 JSON을 출력한다.
+- 통합 출력의 단일 계약은 `data/schema/macro-review-output.schema.json`으로 한다.
+- `riskOutput.quality.shouldAbort === true`이면 `portfolioVulnerability`는 `null`로 두고 통합 warning을 생성한다.
+- `riskOutput.quality.confidence === "reduced"`이면 포트폴리오 계산은 계속하되 통합 warning을 생성한다.
+
+이유:
+- 보고서 생성 전 단계에서 데이터 수집, 위험 모델, 포트폴리오 취약도 모델이 한 번의 실행으로 연결되는지 검증해야 한다.
+- 중단 조건과 신뢰도 하향 조건을 통합 출력에서 명시해야 이후 AI 보고서가 같은 계약을 안정적으로 읽을 수 있다.
