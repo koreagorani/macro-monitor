@@ -1,0 +1,170 @@
+{
+  "schemaVersion": "1.0.0",
+  "asOf": "2026-07-05",
+  "generatedAt": "2026-07-05T09:00:00.000Z",
+  "sourceMacroReview": {
+    "asOf": "2026-07-05",
+    "overallLevel": "high_risk",
+    "overallScore": 0.549285714286,
+    "confidence": "normal",
+    "topThemeIds": [
+      "crypto_altcoins",
+      "us_large_cap_growth",
+      "long_duration_bonds"
+    ]
+  },
+  "report": {
+    "title": "주간 매크로 리뷰 — 2026-07-05",
+    "oneLookConclusion": {
+      "basisDate": "2026-07-05",
+      "overallRisk": "높은 위험",
+      "coreChanges": [
+        "금리·인플레이션·위험선호 영역이 동시에 watch 이상으로 악화되었습니다.",
+        "위험선호 관련 취약도가 알트코인과 성장주 테마에 크게 반영되었습니다.",
+        "달러·한국 금융환경 영역은 상대적으로 안정적입니다."
+      ],
+      "priorityThemes": [
+        "알트코인",
+        "미국 대형 성장주",
+        "장기채"
+      ],
+      "recommendedAction": "신규매수 보류"
+    },
+    "indicatorTable": [
+      {
+        "indicatorId": "us2y",
+        "name": "미국 2년물",
+        "currentValue": null,
+        "weeklyChange": "12.4bp",
+        "secondaryMetric": "—",
+        "status": "watch",
+        "note": "금리·통화정책 영역의 watch 판정에 기여했습니다."
+      },
+      {
+        "indicatorId": "core_pce",
+        "name": "근원 PCE",
+        "currentValue": "0.22% MoM",
+        "weeklyChange": null,
+        "secondaryMetric": "3개월 평균 0.24% MoM",
+        "status": "normal",
+        "note": "—"
+      },
+      {
+        "indicatorId": "wti",
+        "name": "WTI",
+        "currentValue": null,
+        "weeklyChange": "3.6%",
+        "secondaryMetric": "4주 6.2%",
+        "status": "watch",
+        "note": "공급·인플레이션 압력 신호입니다."
+      }
+    ],
+    "macroJudgment": {
+      "riskCharacter": "mixed",
+      "directionAgreement": "금리, 공급 인플레이션, 위험선호 신호가 동시에 watch 이상입니다.",
+      "conflictingSignals": [
+        "달러·한국 금융환경은 normal로 남아 있습니다."
+      ],
+      "confidence": "normal",
+      "summary": "현재 신호는 단일 지표 충격보다 여러 영역의 동시 악화에 가깝습니다."
+    },
+    "areaRisks": [
+      {
+        "areaId": "rates_policy",
+        "name": "금리·통화정책",
+        "score": 0.625,
+        "status": "watch",
+        "keyReason": "미국 2년물 주간 상승이 영역 점수를 끌어올렸습니다."
+      },
+      {
+        "areaId": "inflation_supply",
+        "name": "인플레이션·공급",
+        "score": 0.714285714286,
+        "status": "watch",
+        "keyReason": "WTI 주간 상승이 공급 인플레이션 압력으로 반영되었습니다."
+      },
+      {
+        "areaId": "risk_appetite",
+        "name": "위험선호",
+        "score": 0.5,
+        "status": "watch",
+        "keyReason": "BTC 하락이 위험선호 약화 신호로 반영되었습니다."
+      }
+    ],
+    "portfolioThemes": [
+      {
+        "themeId": "crypto_altcoins",
+        "name": "알트코인",
+        "score": 1.980357142857,
+        "level": "alert",
+        "keyReasons": [
+          "위험선호와 금리 영역 민감도가 모두 큽니다.",
+          "현재 watch 이상 영역이 여러 개라 취약도 합산 점수가 높습니다."
+        ],
+        "action": "신규매수 보류"
+      },
+      {
+        "themeId": "us_large_cap_growth",
+        "name": "미국 대형 성장주",
+        "score": 1.339285714286,
+        "level": "watch",
+        "keyReasons": [
+          "금리와 위험선호 영역에 동시에 민감합니다."
+        ],
+        "action": "비중 확대 중단"
+      },
+      {
+        "themeId": "long_duration_bonds",
+        "name": "장기채",
+        "score": 1.275,
+        "level": "watch",
+        "keyReasons": [
+          "금리 영역 민감도가 높아 금리 상승 구간에서 취약합니다."
+        ],
+        "action": "투자 가설 재확인"
+      }
+    ],
+    "hedgeAndDefense": {
+      "needLevel": "medium",
+      "summary": "상위 취약 테마가 위험자산과 금리 민감 자산에 몰려 있어 방어 후보를 점검할 필요가 있습니다.",
+      "candidates": [
+        {
+          "candidateId": "cash_krw",
+          "name": "원화 현금",
+          "whyItFits": "매크로 취약도가 높을 때 신규 위험 노출을 늦추는 완충 역할을 합니다.",
+          "failureCondition": "위험선호가 빠르게 회복되면 현금 유지의 기회비용이 커질 수 있습니다.",
+          "cashComparison": "현금 자체이므로 가장 단순한 방어 기준점입니다."
+        }
+      ]
+    },
+    "nextWeekChecklist": {
+      "scheduledIndicators": [
+        "근원 PCE 후속 추세",
+        "미국 2년물 주간 변화",
+        "WTI 주간 변화"
+      ],
+      "riskStrengtheningConditions": [
+        "금리·인플레이션·위험선호가 다음 주에도 동시에 watch 이상 유지",
+        "S&P 500까지 위험선호 약화에 동참"
+      ],
+      "riskEasingConditions": [
+        "미국 2년물 상승폭 둔화",
+        "WTI 상승세 진정",
+        "BTC와 S&P 500 위험선호 회복"
+      ],
+      "invalidatingConditions": [
+        "현재 watch 신호가 일회성 가격 변동으로 되돌려지는 경우"
+      ]
+    },
+    "decisionLog": {
+      "baseScenario": "복합 위험이 높아진 상태이나 일부 영역은 아직 normal로 남아 있습니다.",
+      "confidence": "normal",
+      "reviewItems": [
+        "상위 취약 테마의 신규매수 여부 재점검",
+        "금리와 위험선호의 동시 악화 지속 여부 확인"
+      ]
+    },
+    "mandatoryDisclosure": "취약도는 현재 매크로 환경에 대한 노출 정도이며, 기대수익률이나 직접적인 매도 신호가 아닙니다."
+  },
+  "warnings": []
+}
