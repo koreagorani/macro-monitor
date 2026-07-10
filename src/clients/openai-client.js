@@ -8,6 +8,15 @@ class OpenAIClientError extends Error {
   }
 }
 
+function envOrDefault(value, defaultValue) {
+  return typeof value === "string" && value.trim() !== "" ? value : defaultValue;
+}
+
+function parsePositiveInteger(value, defaultValue) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
+}
+
 function requireFetch(fetchImpl) {
   if (typeof fetchImpl !== "function") {
     throw new OpenAIClientError(
@@ -146,10 +155,10 @@ class OpenAIClient {
 function createOpenAIClientFromEnv({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
   return new OpenAIClient({
     apiKey: env.OPENAI_API_KEY,
-    model: env.OPENAI_MODEL ?? "gpt-4.1",
-    baseUrl: env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
+    model: envOrDefault(env.OPENAI_MODEL, "gpt-4.1"),
+    baseUrl: envOrDefault(env.OPENAI_BASE_URL, "https://api.openai.com/v1"),
     fetchImpl,
-    maxOutputTokens: Number.parseInt(env.OPENAI_MAX_OUTPUT_TOKENS ?? "6000", 10)
+    maxOutputTokens: parsePositiveInteger(env.OPENAI_MAX_OUTPUT_TOKENS, 6000)
   });
 }
 
