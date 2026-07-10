@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/macro-review-output.schema.json",
+  "title": "Macro Review Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "asOf",
+    "generatedAt",
+    "dataSourceSummary",
+    "riskOutput",
+    "portfolioVulnerability",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "asOf": { "type": "string", "format": "date" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "dataSourceSummary": { "$ref": "#/$defs/dataSourceSummary" },
+    "riskOutput": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "portfolioVulnerability": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
+    }
+  },
+  "$defs": {
+    "dataSourceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "riskAsOf",
+        "indicatorCount",
+        "availableIndicatorCount",
+        "unavailableIndicatorCount",
+        "riskQualityConfidence",
+        "riskShouldAbort",
+        "portfolioVulnerabilityCalculated"
+      ],
+      "properties": {
+        "source": { "type": "string" },
+        "riskAsOf": { "type": "string", "format": "date" },
+        "indicatorCount": { "type": "integer", "minimum": 0 },
+        "availableIndicatorCount": { "type": "integer", "minimum": 0 },
+        "unavailableIndicatorCount": { "type": "integer", "minimum": 0 },
+        "riskQualityConfidence": { "type": "string", "enum": ["normal", "reduced", "aborted"] },
+        "riskShouldAbort": { "type": "boolean" },
+        "portfolioVulnerabilityCalculated": { "type": "boolean" }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
