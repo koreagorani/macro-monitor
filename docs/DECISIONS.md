@@ -239,3 +239,17 @@
 이유:
 - 보고서 생성 전 단계에서 데이터 수집, 위험 모델, 포트폴리오 취약도 모델이 한 번의 실행으로 연결되는지 검증해야 한다.
 - 중단 조건과 신뢰도 하향 조건을 통합 출력에서 명시해야 이후 AI 보고서가 같은 계약을 안정적으로 읽을 수 있다.
+
+## D-024 AI 주간 보고서 출력 계약
+
+결정:
+- AI 보고서 생성의 단일 입력은 `macro-review` JSON으로 한다.
+- AI 보고서 생성의 단일 출력 계약은 `data/schema/weekly-report-output.schema.json`으로 한다.
+- AI는 자유 형식 Markdown이 아니라 schema 검증 가능한 weekly-report-output JSON을 반환한다.
+- Markdown, Notion, Telegram 출력은 weekly-report-output JSON을 렌더링하는 후속 단계에서 처리한다.
+- AI는 숫자, 위험 등급, 취약도 점수, 임계값을 재계산하거나 변경하지 않는다.
+
+이유:
+- AI가 숫자 판정과 임계값을 자의적으로 바꾸는 것을 방지하기 위해서다.
+- 구조화 출력으로 검증해야 후속 Notion·Telegram 렌더링을 안정적으로 연결할 수 있다.
+- 보고서 문장화와 숫자 계산 책임을 분리하기 위해서다.
