@@ -10,7 +10,7 @@
 - Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 완료
-- 다음 단계: AI 보고서 생성 구현
+- 다음 검증: `Manual Macro Review Evaluation` 재실행
 
 ## 완료된 내용
 
@@ -55,99 +55,26 @@
   - `overallRisk` populated
   - `risk-output` schema 통과
 
-### Phase 4 마무리 및 Phase 5 준비
-
-- `data/examples/risk-output.example.json` 추가
-  - 실제 운영 데이터가 아닌 합성 예시
-  - `indicatorStatuses`, `areaRisks`, `overallRisk`가 모두 채워진 risk-output 예시
-- `scripts/validate-examples.js` 확장
-  - 기존 indicator examples 검증 유지
-  - `risk-output.example.json`을 `data/schema/risk-output.schema.json`으로 검증하도록 추가
-- `docs/RISK_MODEL.md` 보강
-  - 전체 위험 단계의 `overallRisk.level`은 discrete rule 우선
-  - weighted score는 보조 지표
-  - 충돌 시 discrete rule 우선
-  - 현재 MVP에서 지속성·이례성 기반 high-risk 후보는 future rule로 명시
-- `docs/PORTFOLIO.md` 추가 및 갱신
-  - Phase 5 포트폴리오 취약도 모델 목적
-  - `risk-output` 입력 계약
-  - 포트폴리오 테마 설정 계약
-  - 헷지 후보 설정 계약
-  - Phase 5 출력 구조와 취약도 단계
-  - 통합 실행 계약
-  - 공개 저장소에 실제 개인 보유 수량·평가금액을 저장하지 않는 원칙
-- `config/portfolio-themes.json` 추가
-  - 테마별 일반적 매크로 민감도 초안
-  - 실제 개인 보유 종목·수량·평가금액 없음
-- `config/hedge-candidates.json` 추가
-  - 테마 단위 헷지 후보 초안
-  - 자동매매나 구체적 매수·매도 지시 아님
-- `AGENTS.md` 갱신
-  - Phase 5 라우팅을 `docs/PORTFOLIO.md`, `config/portfolio-themes.json`, `config/hedge-candidates.json` 기준으로 정리
-- `docs/DECISIONS.md` 갱신
-  - D-019: 전체 위험 단계 판정은 discrete rule 우선, weighted score 보조
-  - D-020: Phase 5 포트폴리오 계약 파일명 확정
-  - D-021: 공개 저장소의 포트폴리오 데이터 범위 확정
-  - D-022: Phase 5 취약도 점수와 출력 범위 확정
-  - D-023: 통합 매크로 리뷰 실행 경로 확정
-
-### Phase 5 포트폴리오 취약도 첫 구현
+### Phase 5 포트폴리오 취약도 및 통합 실행 경로
 
 - `data/schema/portfolio-vulnerability-output.schema.json` 추가
-  - `sourceRisk`, `selection`, `themeVulnerabilities`, `warnings` 구조 정의
 - `src/portfolio/evaluate-portfolio-vulnerability.js` 구현
-  - `areaRisk.score × theme.macroExposures[areaId]`로 영역별 기여도 계산
-  - 테마 취약도 점수는 기여도 합산
-  - 음수 점수는 `easing`으로 보존
-  - 상위 3개 enabled 테마만 출력
-  - `watch` 이상 테마에만 헷지 후보 ID 연결
-  - `quality.shouldAbort === true`이면 계산 중단 및 warning 생성
-- `src/validation/validate-portfolio-vulnerability-output.js` 추가
 - `scripts/run-portfolio-vulnerability.js` 추가
-  - 입력 risk-output 경로를 받아 포트폴리오 취약도 출력 생성
-  - 기본 입력은 `data/examples/risk-output.example.json`
 - `package.json`에 `evaluate:portfolio` 명령 추가
 - `data/examples/portfolio-vulnerability.example.json` 추가
-- `scripts/validate-examples.js` 확장
-  - portfolio vulnerability example을 schema로 검증
 - `test/portfolio-vulnerability.test.js` 추가
-  - 상위 3개 테마 정렬
-  - 매크로 노출 기여도 계산
-  - 음수 노출/easing 보존
-  - reduced confidence 전달
-  - abort 시 계산 생략
-  - level band
-  - output schema 검증
 - `.github/workflows/manual-portfolio-vulnerability.yml` 추가
 - `Manual Portfolio Vulnerability Evaluation` 실제 실행 성공 확인
   - run: `29087059587`
   - job: `evaluate-portfolio-vulnerability`
   - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:portfolio` 모두 성공
-
-### Phase 5 live 통합 실행 경로
-
 - `data/schema/macro-review-output.schema.json` 추가
-  - `schemaVersion`, `asOf`, `generatedAt`, `dataSourceSummary`, `riskOutput`, `portfolioVulnerability`, `warnings` 구조 정의
 - `src/review/build-macro-review-output.js` 구현
-  - `riskOutput`과 `portfolioVulnerability`를 통합 출력으로 결합
-  - `riskOutput.quality.shouldAbort === true`이면 `portfolioVulnerability: null` 유지 및 warning 생성
-  - `riskOutput.quality.confidence === "reduced"`이면 통합 warning 생성
 - `src/validation/validate-macro-review-output.js` 추가
 - `scripts/run-macro-review.js` 추가
-  - 실제 FRED 기반 `collectAllIndicators` 실행
-  - Phase 4 risk model 생성
-  - Phase 5 portfolio vulnerability 생성
-  - 통합 macro-review JSON 생성 및 schema 검증
 - `package.json`에 `evaluate:macro-review` 명령 추가
 - `data/examples/macro-review.example.json` 추가
-- `scripts/validate-examples.js` 확장
-  - macro review example을 schema로 검증
 - `test/macro-review.test.js` 추가
-  - 정상 흐름에서 riskOutput과 portfolioVulnerability 모두 생성
-  - `quality.shouldAbort === true`일 때 portfolio 계산 생략
-  - reduced confidence warning 전달
-  - schema 검증
-  - 개인 보유 수량·평가금액 관련 key 미포함 확인
 - `.github/workflows/manual-macro-review.yml` 추가
 - `Manual Macro Review Evaluation` 실제 실행 성공 확인
   - run: `29087571966`
@@ -160,7 +87,6 @@
   - AI 보고서 생성의 구조화 출력 계약
   - `sourceMacroReview`, `report`, `warnings` 구조 정의
   - 허용 행동 표현을 enum으로 제한
-- `src/validation/validate-weekly-report-output.js` 추가
 - `data/examples/weekly-report-output.example.json` 추가
   - 합성 weekly report output 예시
   - 실제 개인 보유 수량·평가금액 없음
@@ -184,6 +110,23 @@
   - 개인 보유 수량·평가금액 관련 key 미포함 확인
 - `docs/DECISIONS.md` 갱신
   - D-024: AI 주간 보고서 출력 계약 확정
+
+### AI 주간 보고서 검증 실패 수정
+
+- `Manual Macro Review Evaluation` 재실행 실패 확인
+  - run: `29088104445`
+  - job: `evaluate-macro-review`
+  - `npm ci` 성공
+  - `npm test` 실패
+  - 이후 `npm run validate:examples`, `npm run evaluate:macro-review` skipped
+- 실패 원인
+  - `test/weekly-report-output.test.js`와 `scripts/validate-examples.js`가 `src/validation/validate-weekly-report-output.js`를 import했지만 해당 파일이 누락되어 있었다.
+- 수정 내용
+  - `src/validation/validate-weekly-report-output.js` 추가
+  - 기존 validator들과 동일한 Ajv2020 + ajv-formats 패턴으로 수정
+- 수정 커밋
+  - 최초 validator 추가: `bd3d1e03ac1eac61f5e5012d7eafbe81236d5641`
+  - 기존 Ajv 패턴 정렬: `7486835b65c16ad31d196a69a11a6f3cef149de5`
 
 ## 현재 실행 방법
 
@@ -228,9 +171,10 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- AI 주간 보고서 출력 계약 추가 후 `npm test` 및 `npm run validate:examples` 검증
-- `weekly-report-output.example.json` schema 검증
+- validator 누락 수정 후 `Manual Macro Review Evaluation` 재실행
 - `test/weekly-report-output.test.js` 통과 확인
+- `weekly-report-output.example.json` schema 검증 확인
+- `npm run validate:examples` 전체 통과 확인
 
 ## 다음 세션이 읽을 문서
 
@@ -250,6 +194,6 @@ AI 보고서 생성 구현 시 필수:
 
 ## 미해결
 
-- AI 주간 보고서 출력 계약 추가 후 GitHub Actions 또는 로컬 검증
+- validator 누락 수정 후 GitHub Actions 재검증
 - AI 보고서 생성 구현
 - Markdown/Notion/Telegram 렌더링 구현
