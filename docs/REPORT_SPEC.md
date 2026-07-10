@@ -16,6 +16,36 @@ AI의 출력은 자유 형식 Markdown이 아니라 구조화된 JSON이다.
 
 이후 Markdown, Notion, Telegram용 문장은 이 구조화된 JSON을 렌더링해서 만든다.
 
+### 실행 계약
+
+AI 주간 보고서 생성 명령:
+
+```bash
+npm run generate:weekly-report -- YYYY-MM-DD
+```
+
+입력 날짜를 생략하면 UTC 오늘 기준으로 실행한다.
+
+```bash
+npm run generate:weekly-report
+```
+
+내부 흐름:
+
+```text
+collectAllIndicators
+→ risk model evaluation
+→ portfolio vulnerability evaluation
+→ macro-review output validation
+→ OpenAI Responses API 호출
+→ weekly-report-output JSON 파싱
+→ weekly-report-output schema 검증
+→ macro-review 원본과 consistency 검증
+→ JSON 출력
+```
+
+OpenAI API 키는 `OPENAI_API_KEY` 환경변수 또는 GitHub Secret으로만 전달한다. API 키와 OpenAI 원문 응답 전체는 로그에 남기지 않는다.
+
 ### AI 역할
 
 AI는 다음만 수행한다.
@@ -44,6 +74,18 @@ AI는 다음을 수행하지 않는다.
 - 신뢰도는 `macroReviewOutput.riskOutput.quality.confidence`를 따른다.
 - warnings는 삭제하지 않고 보고서 warnings로 전달한다.
 
+### 출력 검증
+
+AI 응답은 다음 검증을 모두 통과해야 한다.
+
+1. JSON 파싱 가능
+2. `data/schema/weekly-report-output.schema.json` 통과
+3. `sourceMacroReview.asOf`, `overallLevel`, `overallScore`, `confidence`, `topThemeIds`가 입력 `macroReviewOutput`과 일치
+4. 보고서 내 영역별 `score`, `status`가 입력 `riskOutput.areaRisks[]`와 일치
+5. 보고서 내 테마별 `score`, `level`이 입력 `portfolioVulnerability.themeVulnerabilities[]`와 일치
+
+검증 실패 시 임의로 보정하지 않고 명확한 error code와 요약 메시지만 출력한다.
+
 ## 1. 한눈에 보는 결론
 
 - 기준일
@@ -60,6 +102,8 @@ AI는 다음을 수행하지 않는다.
 
 특이사항이 없으면 `—`.
 지표별 장문 해설은 작성하지 않는다.
+
+보고서 표의 `현재값`, `주간 변화`, `4주 변화/보조지표`는 계산용 숫자가 아니라 사람이 읽는 표시 문자열 또는 `null`이다.
 
 ## 3. 이번 주 매크로 판단
 
