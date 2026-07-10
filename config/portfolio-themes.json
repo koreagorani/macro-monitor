@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "Generic portfolio theme exposure draft for Phase 5. This file does not store personal holdings, quantities, or account values.",
+  "areaIds": [
+    "rates_policy",
+    "inflation_supply",
+    "risk_appetite",
+    "dollar_korea"
+  ],
+  "themes": [
+    {
+      "themeId": "ai_infrastructure",
+      "name": "AI 인프라",
+      "description": "데이터센터, 전력망, 냉각, 반도체 인프라 등 AI 설비투자 수혜 테마",
+      "enabled": true,
+      "macroExposures": {
+        "rates_policy": 0.7,
+        "inflation_supply": 0.4,
+        "risk_appetite": 0.8,
+        "dollar_korea": 0.2
+      },
+      "positionWeightPolicy": "apply_later_from_private_input",
+      "notes": [
+        "Growth-oriented infrastructure theme with moderate rate sensitivity and high risk-appetite sensitivity."
+      ]
+    },
+    {
+      "themeId": "us_large_cap_growth",
+      "name": "미국 대형 성장주",
+      "description": "미국 대형 기술주와 성장주 중심 테마",
+      "enabled": true,
+      "macroExposures": {
+        "rates_policy": 1.0,
+        "inflation_supply": 0.3,
+        "risk_appetite": 1.0,
+        "dollar_korea": 0.1
+      },
+      "positionWeightPolicy": "apply_later_from_private_input",
+      "notes": [
+        "Sensitive to rates and broad risk appetite."
+      ]
+    },
+    {
+      "themeId": "korean_small_biotech",
+      "name": "국내 소형 바이오",
+      "description": "국내 바이오·플랫폼·기술이전 기대 테마",
+      "enabled": true,
+      "macroExposures": {
+        "rates_policy": 0.5,
+        "inflation_supply": 0.5,
+        "risk_appetite": 1.2,
+        "dollar_korea": 0.6
+      },
+      "positionWeightPolicy": "apply_later_from_private_input",
+      "notes": [
+        "Small-cap biotech tends to be liquidity and risk-appetite sensitive."
+      ]
+    },
+    {
+      "themeId": "crypto_altcoins",
+      "name": "알트코인",
+      "description": "비트코인을 제외한 고변동성 암호자산 테마",
+      "enabled": true,
+      "macroExposures": {
+        "rates_policy": 1.5,
+        "inflation_supply": 0.2,
+        "risk_appetite": 1.8,
+        "dollar_korea": 0.4
+      },
+      "positionWeightPolicy": "apply_later_from_private_input",
+      "notes": [
+        "Highest sensitivity to risk appetite and liquidity conditions among MVP themes."
+      ]
+    },
+    {
+      "themeId": "long_duration_bonds",
+      "name": "장기채",
+      "description": "장기 듀레이션 채권 및 장기채 ETF 테마",
+      "enabled": true,
+      "macroExposures": {
+        "rates_policy": 1.4,
+        "inflation_supply": 0.7,
+        "risk_appetite": -0.2,
+        "dollar_korea": 0.3
+      },
+      "positionWeightPolicy": "apply_later_from_private_input",
+      "notes": [
+        "Vulnerable to rate increases; may partially offset risk-off pressure in some regimes."
+      ]
+    },
+    {
+      "themeId": "cash_and_short_duration",
+      "name": "현금·단기채",
+      "description": "현금, MMF, 단기채 등 방어적 유동성 테마",
+      "enabled": true,
+      "macroExposures": {
+        "rates_policy": -0.2,
+        "inflation_supply": -0.1,
+        "risk_appetite": -0.5,
+        "dollar_korea": -0.1
+      },
+      "positionWeightPolicy": "apply_later_from_private_input",
+      "notes": [
+        "Defensive liquidity theme; negative exposures are intended to preserve diversification signals."
+      ]
+    }
+  ]
+}
