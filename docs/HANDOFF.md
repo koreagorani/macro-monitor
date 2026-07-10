@@ -119,14 +119,28 @@
   - `npm ci` 성공
   - `npm test` 실패
   - 이후 `npm run validate:examples`, `npm run evaluate:macro-review` skipped
-- 실패 원인
+- 1차 실패 원인
   - `test/weekly-report-output.test.js`와 `scripts/validate-examples.js`가 `src/validation/validate-weekly-report-output.js`를 import했지만 해당 파일이 누락되어 있었다.
-- 수정 내용
+- 1차 수정 내용
   - `src/validation/validate-weekly-report-output.js` 추가
   - 기존 validator들과 동일한 Ajv2020 + ajv-formats 패턴으로 수정
-- 수정 커밋
+- 1차 수정 커밋
   - 최초 validator 추가: `bd3d1e03ac1eac61f5e5012d7eafbe81236d5641`
   - 기존 Ajv 패턴 정렬: `7486835b65c16ad31d196a69a11a6f3cef149de5`
+- `Manual Macro Review Evaluation` 재실행 실패 확인
+  - run: `29088328224`
+  - job: `evaluate-macro-review`
+  - `npm ci` 성공
+  - `npm test` 실패
+  - 이후 `npm run validate:examples`, `npm run evaluate:macro-review` skipped
+- 2차 실패 원인
+  - `weekly-report-output.schema.json`의 `indicatorRow` 표시 필드가 `string | number | null` union type을 사용했다.
+  - 기존 validator는 Ajv2020 strict 모드이므로 표시 필드는 strict schema에 맞춰 단순화해야 한다.
+- 2차 수정 내용
+  - `indicatorRow.currentValue`, `indicatorRow.weeklyChange`, `indicatorRow.secondaryMetric`을 `string | null`로 제한
+  - AI 보고서 표의 수치 필드는 계산용 값이 아니라 사람이 읽는 표시 문자열로 취급
+- 2차 수정 커밋
+  - `cf9bcd13245c7b9eaa09358a3b33ea4f7540f717`
 
 ## 현재 실행 방법
 
@@ -171,7 +185,7 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- validator 누락 수정 후 `Manual Macro Review Evaluation` 재실행
+- weekly report validator/schema 수정 후 `Manual Macro Review Evaluation` 재실행
 - `test/weekly-report-output.test.js` 통과 확인
 - `weekly-report-output.example.json` schema 검증 확인
 - `npm run validate:examples` 전체 통과 확인
@@ -194,6 +208,6 @@ AI 보고서 생성 구현 시 필수:
 
 ## 미해결
 
-- validator 누락 수정 후 GitHub Actions 재검증
+- weekly report validator/schema 수정 후 GitHub Actions 재검증
 - AI 보고서 생성 구현
 - Markdown/Notion/Telegram 렌더링 구현
