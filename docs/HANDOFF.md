@@ -11,7 +11,7 @@
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 및 검증 완료
 - AI 주간 보고서 생성 구현 완료
-- 다음 검증: `Manual Weekly Report Generation` 실행
+- 다음 검증: `Manual Weekly Report Generation` 재실행
 
 ## 완료된 내용
 
@@ -160,6 +160,24 @@
 - `docs/DECISIONS.md` 갱신
   - D-025: AI 주간 보고서 생성 실행 경로 확정
 
+### AI 주간 보고서 생성 검증 실패 수정
+
+- `Manual Weekly Report Generation` 첫 실행 실패 확인
+  - run: `29089456395`
+  - job: `generate-weekly-report`
+  - `npm ci` 성공
+  - `npm test` 실패
+  - 이후 `npm run validate:examples`, `npm run generate:weekly-report` skipped
+- 실패 성격
+  - 실제 OpenAI 호출 전 단계에서 실패
+  - 신규 `test/weekly-report-generation.test.js` 쪽 fixture 결합도가 높아 예시 파일 정합성 변화에 취약했음
+- 수정 내용
+  - `test/weekly-report-generation.test.js`가 `macro-review.example.json`에 직접 의존하지 않도록 변경
+  - `weekly-report-output.example.json`에서 self-contained `macroReviewOutput` fixture를 생성해 generator의 schema/consistency 검증 책임만 테스트
+  - JSON deep clone helper로 `structuredClone` 의존 제거
+- 수정 커밋
+  - `f5b8dbb3b2270bbbced5ee81417e10a82d5f9937`
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -210,9 +228,10 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- AI 주간 보고서 생성 구현 후 `Manual Weekly Report Generation` 실행
+- test fixture 수정 후 `Manual Weekly Report Generation` 재실행
 - `test/openai-client.test.js` 통과 확인
 - `test/weekly-report-generation.test.js` 통과 확인
+- `npm run validate:examples` 전체 통과 확인
 - 실제 FRED 기반 macro-review 생성 후 OpenAI API 호출 및 weekly-report-output schema/consistency 검증 확인
 
 ## 다음 세션이 읽을 문서
@@ -226,14 +245,11 @@ AI 보고서 생성 검증 및 후속 구현 시 필수:
 선택:
 - 통합 출력 계약 확인 시 `data/schema/macro-review-output.schema.json`
 - AI 보고서 출력 계약 확인 시 `data/schema/weekly-report-output.schema.json`
-- OpenAI client 확인 시 `src/clients/openai-client.js`
-- AI 보고서 generator 확인 시 `src/report/generate-weekly-report.js`
 - 구조적 결정 확인 시 `docs/DECISIONS.md`
 - 아키텍처 원칙 확인 시 `docs/ARCHITECTURE.md`
 
 ## 미해결
 
-- `Manual Weekly Report Generation` 실제 GitHub Actions 검증
-- Markdown 렌더링 구현
-- Notion 저장 구현
-- Telegram 알림 구현
+- test fixture 수정 후 GitHub Actions 재검증
+- AI 보고서 생성 구현 실제 Actions 검증
+- Markdown/Notion/Telegram 렌더링 구현
