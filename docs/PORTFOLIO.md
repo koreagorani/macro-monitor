@@ -116,6 +116,50 @@ Phase 5 MVP 출력은 다음 형태를 따른다.
 }
 ```
 
+## 통합 실행 계약
+
+단일 출처:
+
+- `data/schema/macro-review-output.schema.json`
+
+통합 실행 명령:
+
+```bash
+npm run evaluate:macro-review -- YYYY-MM-DD
+```
+
+입력 날짜를 생략하면 UTC 오늘 기준으로 실행한다.
+
+```bash
+npm run evaluate:macro-review
+```
+
+내부 흐름:
+
+```text
+collectAllIndicators
+→ risk model evaluation
+→ portfolio vulnerability evaluation
+→ macro-review output validation
+→ JSON 출력
+```
+
+통합 출력은 다음 상위 필드를 가진다.
+
+```text
+schemaVersion
+asOf
+generatedAt
+dataSourceSummary
+riskOutput
+portfolioVulnerability
+warnings
+```
+
+`riskOutput.quality.shouldAbort === true`이면 `portfolioVulnerability`는 `null`로 두고, `warnings`에 `MACRO_REVIEW_PORTFOLIO_SKIPPED`를 추가한다.
+
+`riskOutput.quality.confidence === "reduced"`이면 포트폴리오 취약도 계산은 계속하되, 통합 출력 `warnings`에 `MACRO_REVIEW_REDUCED_CONFIDENCE`를 추가한다.
+
 ## 취약도 계산 MVP 원칙
 
 1. `areaRisks`의 영역 점수를 입력으로 사용한다.
@@ -170,6 +214,9 @@ score < 0: easing
 3. `risk-output`을 입력으로 받는 실행 스크립트
 4. 합성 테스트
 5. 수동 검증 workflow
+6. live `risk-output`과 portfolio vulnerability를 연결하는 통합 실행 스크립트
+7. 통합 출력 스키마와 합성 테스트
+8. 통합 수동 검증 workflow
 
 아직 구현하지 않을 것:
 
