@@ -8,8 +8,8 @@
 - Phase 4 위험 모델 핵심 구현 및 검증 완료
 - Phase 4 마무리 및 Phase 5 준비 검증 완료
 - Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
-- Phase 5 live risk-output 통합 실행 경로 구현 완료
-- 다음 검증: `Manual Macro Review Evaluation` 실행
+- Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
+- 다음 단계: AI 보고서 생성 설계
 
 ## 완료된 내용
 
@@ -148,6 +148,10 @@
   - schema 검증
   - 개인 보유 수량·평가금액 관련 key 미포함 확인
 - `.github/workflows/manual-macro-review.yml` 추가
+- `Manual Macro Review Evaluation` 실제 실행 성공 확인
+  - run: `29087571966`
+  - job: `evaluate-macro-review`
+  - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:macro-review` 모두 성공
 
 ## 현재 실행 방법
 
@@ -186,32 +190,30 @@ Node.js 환경:
 - overallRisk 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
 - risk-output example과 validate-examples 확장 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
 - Phase 5 포트폴리오 취약도 첫 구현 후 `Manual Portfolio Vulnerability Evaluation` 실제 GitHub Actions 성공
-- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js`, `test/portfolio-vulnerability.test.js` 통과
-- `risk-output.example.json`과 `portfolio-vulnerability.example.json` schema 검증 통과
-- `npm run evaluate:portfolio` 출력 schema 통과
+- Phase 5 live 통합 실행 경로 구현 후 `Manual Macro Review Evaluation` 실제 GitHub Actions 성공
+- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js`, `test/portfolio-vulnerability.test.js`, `test/macro-review.test.js` 통과
+- `risk-output.example.json`, `portfolio-vulnerability.example.json`, `macro-review.example.json` schema 검증 통과
+- 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- `Manual Macro Review Evaluation` 실제 GitHub Actions 실행
-- `test/macro-review.test.js` 통과 확인
-- `macro-review.example.json` schema 검증 확인
-- 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과 확인
+- AI 보고서 생성 설계
 
 ## 다음 세션이 읽을 문서
 
-통합 매크로 리뷰 검증 및 후속 구현 시 필수:
+AI 보고서 생성 설계 시 필수:
 - `AGENTS.md`
+- `docs/REPORT_SPEC.md`
+- `docs/RISK_MODEL.md`
 - `docs/PORTFOLIO.md`
+- `prompts/weekly-analysis.md`
 - `docs/HANDOFF.md`
 
 선택:
-- 영역 점수 형식 확인 시 `docs/RISK_MODEL.md`
-- risk-output 입력 계약 확인 시 `data/schema/risk-output.schema.json`
-- 포트폴리오 취약도 출력 계약 확인 시 `data/schema/portfolio-vulnerability-output.schema.json`
 - 통합 출력 계약 확인 시 `data/schema/macro-review-output.schema.json`
 - 구조적 결정 확인 시 `docs/DECISIONS.md`
 - 아키텍처 원칙 확인 시 `docs/ARCHITECTURE.md`
 
 ## 미해결
 
-- `Manual Macro Review Evaluation` 실제 GitHub Actions 검증
-- 이후 AI 보고서 생성 단계 설계
+- AI 보고서 생성 설계
+- 이후 AI 보고서 생성 구현
