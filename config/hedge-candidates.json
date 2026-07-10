@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "Generic hedge candidate draft for Phase 5. Candidates are informational categories, not automated trade instructions.",
+  "candidates": [
+    {
+      "candidateId": "cash_krw",
+      "name": "원화 현금",
+      "type": "cash",
+      "enabled": true,
+      "helpsWhen": [
+        "risk_appetite",
+        "rates_policy"
+      ],
+      "notes": [
+        "Basic liquidity buffer for broad portfolio vulnerability."
+      ]
+    },
+    {
+      "candidateId": "short_duration_bonds",
+      "name": "단기채",
+      "type": "bond_duration",
+      "enabled": true,
+      "helpsWhen": [
+        "rates_policy",
+        "risk_appetite"
+      ],
+      "notes": [
+        "Lower duration alternative when long-duration bond exposure is vulnerable."
+      ]
+    },
+    {
+      "candidateId": "gold",
+      "name": "금",
+      "type": "commodity",
+      "enabled": true,
+      "helpsWhen": [
+        "inflation_supply",
+        "dollar_korea"
+      ],
+      "notes": [
+        "Potential hedge candidate for inflation or currency stress regimes."
+      ]
+    },
+    {
+      "candidateId": "value_defensive_equity",
+      "name": "가치·방어주",
+      "type": "equity_style",
+      "enabled": true,
+      "helpsWhen": [
+        "rates_policy",
+        "risk_appetite"
+      ],
+      "notes": [
+        "Equity style hedge candidate against high-growth vulnerability."
+      ]
+    },
+    {
+      "candidateId": "energy_equity",
+      "name": "에너지주",
+      "type": "equity_sector",
+      "enabled": true,
+      "helpsWhen": [
+        "inflation_supply"
+      ],
+      "notes": [
+        "Candidate for supply/inflation pressure regimes; not a universal hedge."
+      ]
+    },
+    {
+      "candidateId": "usd_cash_or_hedged_usd",
+      "name": "달러 현금·달러성 자산",
+      "type": "currency",
+      "enabled": true,
+      "helpsWhen": [
+        "dollar_korea"
+      ],
+      "notes": [
+        "Candidate for KRW stress or USD/KRW jump regimes."
+      ]
+    }
+  ],
+  "themeCandidateMap": {
+    "ai_infrastructure": [
+      "cash_krw",
+      "value_defensive_equity"
+    ],
+    "us_large_cap_growth": [
+      "cash_krw",
+      "short_duration_bonds",
+      "value_defensive_equity"
+    ],
+    "korean_small_biotech": [
+      "cash_krw",
+      "usd_cash_or_hedged_usd"
+    ],
+    "crypto_altcoins": [
+      "cash_krw",
+      "short_duration_bonds"
+    ],
+    "long_duration_bonds": [
+      "cash_krw",
+      "short_duration_bonds"
+    ],
+    "cash_and_short_duration": []
+  }
+}
