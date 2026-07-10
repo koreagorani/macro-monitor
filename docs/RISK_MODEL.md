@@ -162,6 +162,15 @@ PCE 배분:
 - 또는 심각한 충격 2주 이상
 - 또는 여러 시장의 극단적 움직임 동시 발생
 
+### MVP 구현 원칙
+
+- 전체 위험 단계의 `overallRisk.level`은 discrete rule을 우선 적용해 판정한다.
+- 영역 weight 기반 `overallRisk.score`는 보조 지표로 사용하며, level을 단독으로 덮어쓰지 않는다.
+- weighted score와 discrete rule이 충돌하면 discrete rule을 우선한다.
+- 현재 MVP에서 `high_risk`는 `rates_policy`, `inflation_supply`, `risk_appetite`가 모두 watch 이상일 때 판정한다.
+- 현재 MVP에서 “심각한 충격 2주 이상”과 “여러 시장의 극단적 움직임 동시 발생”은 지속성·이례성 데이터가 준비되기 전까지 별도 future rule로 둔다.
+- `quality.shouldAbort === true`이면 `overallRisk`는 계산하지 않고 `null`로 둔다.
+
 ## 지속 신호
 
 - 같은 영역이 2주 연속 주의 이상
