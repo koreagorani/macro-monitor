@@ -7,8 +7,8 @@
 - Phase 3 데이터 자동 수집 MVP 완료
 - Phase 4 위험 모델 핵심 구현 및 검증 완료
 - Phase 4 마무리 및 Phase 5 준비 검증 완료
-- Phase 5 포트폴리오 취약도 모델 첫 구현 완료
-- 다음 검증: `Manual Portfolio Vulnerability Evaluation` 실행
+- Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
+- 다음 단계: live risk-output과 포트폴리오 취약도 모델을 연결하는 통합 실행 경로 설계
 
 ## 완료된 내용
 
@@ -115,6 +115,10 @@
   - level band
   - output schema 검증
 - `.github/workflows/manual-portfolio-vulnerability.yml` 추가
+- `Manual Portfolio Vulnerability Evaluation` 실제 실행 성공 확인
+  - run: `29087059587`
+  - job: `evaluate-portfolio-vulnerability`
+  - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:portfolio` 모두 성공
 
 ## 현재 실행 방법
 
@@ -150,18 +154,14 @@ Node.js 환경:
 - area risk aggregation 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
 - overallRisk 추가 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
 - risk-output example과 validate-examples 확장 후 `Manual Risk Model Evaluation` 실제 GitHub Actions 성공
-- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js` 통과
-- 실제 FRED 수집 결과 기반 populated `overallRisk` 포함 risk-output schema 통과
-
-검증 대기:
-- Phase 5 포트폴리오 취약도 첫 구현 후 `Manual Portfolio Vulnerability Evaluation` 실행
-- `test/portfolio-vulnerability.test.js` 통과 확인
-- `portfolio-vulnerability.example.json` schema 검증 확인
-- `npm run evaluate:portfolio` 출력 schema 통과 확인
+- Phase 5 포트폴리오 취약도 첫 구현 후 `Manual Portfolio Vulnerability Evaluation` 실제 GitHub Actions 성공
+- `test/risk-model.test.js`, `test/area-aggregation.test.js`, `test/overall-risk.test.js`, `test/portfolio-vulnerability.test.js` 통과
+- `risk-output.example.json`과 `portfolio-vulnerability.example.json` schema 검증 통과
+- `npm run evaluate:portfolio` 출력 schema 통과
 
 ## 다음 세션이 읽을 문서
 
-Phase 5 포트폴리오 취약도 검증 및 후속 구현 시 필수:
+Phase 5 통합 실행 경로 설계 및 후속 구현 시 필수:
 - `AGENTS.md`
 - `docs/PORTFOLIO.md`
 - `config/portfolio-themes.json`
@@ -177,6 +177,5 @@ Phase 5 포트폴리오 취약도 검증 및 후속 구현 시 필수:
 
 ## 미해결
 
-- `Manual Portfolio Vulnerability Evaluation` 실제 GitHub Actions 검증
 - Phase 5를 실제 live risk-output과 연결하는 통합 실행 경로 설계
 - 이후 AI 보고서 생성 단계 설계
