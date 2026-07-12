@@ -15,7 +15,7 @@ test("OpenAI client requires OPENAI_API_KEY", () => {
   );
 });
 
-test("OpenAI client sends authorization without exposing key in errors", async () => {
+test("OpenAI client sends authorization and requests JSON output without exposing key", async () => {
   let capturedRequest;
   const client = new OpenAIClient({
     apiKey: "secret-test-key",
@@ -50,8 +50,11 @@ test("OpenAI client sends authorization without exposing key in errors", async (
     input: "user"
   });
 
+  const body = JSON.parse(capturedRequest.request.body);
+
   assert.equal(capturedRequest.url, "https://api.openai.com/v1/responses");
   assert.equal(capturedRequest.request.headers.Authorization, "Bearer secret-test-key");
+  assert.deepEqual(body.text.format, { type: "json_object" });
   assert.equal(response.text, "{\"ok\":true}");
 });
 
