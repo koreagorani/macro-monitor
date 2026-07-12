@@ -38,6 +38,19 @@ function buildWeeklyReportUserMessage(macroReviewOutput) {
   ].join("\n");
 }
 
+function buildWeeklyReportResponseFormat(schema) {
+  const apiSchema = JSON.parse(JSON.stringify(schema));
+  delete apiSchema.$schema;
+  delete apiSchema.$id;
+
+  return {
+    type: "json_schema",
+    name: "weekly_report_output",
+    strict: true,
+    schema: apiSchema
+  };
+}
+
 function parseWeeklyReportJson(rawText) {
   try {
     return JSON.parse(rawText.trim());
@@ -161,14 +174,20 @@ function validateWeeklyReportConsistency({ weeklyReportOutput, macroReviewOutput
 async function generateWeeklyReport({
   macroReviewOutput,
   openaiClient,
-  promptPath = "prompts/weekly-analysis.md"
+  promptPath = "prompts/weekly-analysis.md",
+  schemaPath = "data/schema/weekly-report-output.schema.json"
 }) {
-  const promptText = await readFile(promptPath, "utf8");
+  const [promptText, schemaText] = await Promise.all([
+    readFile(promptPath, "utf8"),
+    readFile(schemaPath, "utf8")
+  ]);
+  const responseFormat = buildWeeklyReportResponseFormat(JSON.parse(schemaText));
   const userMessage = buildWeeklyReportUserMessage(macroReviewOutput);
 
   const aiResponse = await openaiClient.createResponse({
     instructions: promptText,
-    input: userMessage
+    input: userMessage,
+    responseFormat
   });
 
   const weeklyReportOutput = parseWeeklyReportJson(aiResponse.text);
@@ -198,6 +217,7 @@ async function generateWeeklyReport({
 
 export {
   WeeklyReportGenerationError,
+  buildWeeklyReportResponseFormat,
   buildWeeklyReportUserMessage,
   compactValidationErrors,
   generateWeeklyReport,
