@@ -10,8 +10,8 @@
 - Phase 5 포트폴리오 취약도 모델 첫 구현 및 검증 완료
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 및 검증 완료
-- AI 주간 보고서 생성 구현 완료
-- 다음 검증: `Manual Weekly Report Generation` 최신 main에서 재실행
+- AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
+- 다음 작업: weekly-report-output → Markdown 렌더링 구현
 
 ## 완료된 내용
 
@@ -216,6 +216,27 @@
   - 최신 main에서 `Manual Weekly Report Generation` 재검증 대기
   - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
 
+### AI 주간 보고서 생성 실제 Actions 검증 완료
+
+- `Manual Weekly Report Generation` 최신 main 실행 성공
+  - run: `29189858304`
+  - job: `generate-weekly-report`
+  - conclusion: `success`
+- 필수 단계 전체 성공
+  - Install dependencies
+  - Run tests
+  - Validate synthetic examples
+  - Generate weekly report
+- 실제 검증 범위
+  - 실제 FRED 기반 macro-review 생성
+  - OpenAI Responses API Structured Outputs 호출
+  - weekly-report-output JSON 생성
+  - weekly-report-output schema 검증
+  - macro-review consistency 검증
+- 완료 판정
+  - AI 주간 보고서 생성 단계 완료
+  - 다음 구현은 weekly-report-output → Markdown 렌더링
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -265,16 +286,17 @@ Node.js 환경:
 - `risk-output.example.json`, `portfolio-vulnerability.example.json`, `macro-review.example.json`, `weekly-report-output.example.json` schema 검증 통과
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
-검증 대기:
-- test fixture 수정 및 JSON mode 보강 후 `Manual Weekly Report Generation` 최신 main에서 재실행
-- `test/openai-client.test.js` 통과 확인
-- `test/weekly-report-generation.test.js` 통과 확인
-- `npm run validate:examples` 전체 통과 확인
-- 실제 FRED 기반 macro-review 생성 후 OpenAI API 호출 및 weekly-report-output schema/consistency 검증 확인
+추가 확인 완료:
+- `test/openai-client.test.js` 통과
+- `test/weekly-report-generation.test.js` 통과
+- `npm run validate:examples` 전체 통과
+- 실제 FRED 기반 macro-review 생성 후 OpenAI Structured Outputs 호출 성공
+- weekly-report-output schema 및 macro-review consistency 검증 성공
+- `Manual Weekly Report Generation` run `29189858304` 성공
 
 ## 다음 세션이 읽을 문서
 
-AI 보고서 생성 검증 및 후속 구현 시 필수:
+Markdown 렌더링 후속 구현 시 필수:
 - `AGENTS.md`
 - `docs/REPORT_SPEC.md`
 - `prompts/weekly-analysis.md`
@@ -292,6 +314,8 @@ Markdown 렌더링 구현 시 추가 확인:
 
 ## 미해결
 
-- test fixture 수정 및 JSON mode 보강 후 GitHub Actions 재검증
-- AI 보고서 생성 구현 실제 Actions 검증
-- Markdown/Notion/Telegram 렌더링 구현
+- weekly-report-output → Markdown 렌더링 구현 및 테스트
+- Markdown 출력 계약을 docs/REPORT_SPEC.md에 반영
+- Markdown 렌더링 실제 GitHub Actions 검증
+- 이후 Notion 저장 구현
+- 이후 Telegram 알림 구현
