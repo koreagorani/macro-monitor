@@ -58,6 +58,47 @@ test("OpenAI client sends authorization and requests JSON output without exposin
   assert.equal(response.text, "{\"ok\":true}");
 });
 
+test("OpenAI client accepts a strict JSON schema response format override", async () => {
+  let capturedRequest;
+  const responseFormat = {
+    type: "json_schema",
+    name: "weekly_report_output",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["ok"],
+      properties: {
+        ok: { type: "boolean" }
+      }
+    }
+  };
+  const client = new OpenAIClient({
+    apiKey: "secret-test-key",
+    fetchImpl: async (url, request) => {
+      capturedRequest = { url, request };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: "resp_structured",
+          status: "completed",
+          output_text: "{\"ok\":true}"
+        })
+      };
+    }
+  });
+
+  await client.createResponse({
+    instructions: "system",
+    input: "user",
+    responseFormat
+  });
+
+  const body = JSON.parse(capturedRequest.request.body);
+  assert.deepEqual(body.text.format, responseFormat);
+});
+
 test("OpenAI client reports request failures with safe error message", async () => {
   const client = new OpenAIClient({
     apiKey: "secret-test-key",
