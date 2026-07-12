@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { loadIndicatorConfig, loadJsonFile } from "../src/config/load-config.js";
 import { collectAllIndicators } from "../src/collectors/collect-all-indicators.js";
 import { evaluateQualityGate } from "../src/risk/quality-gate.js";
@@ -141,8 +142,7 @@ async function buildMacroReview({ asOf }) {
   return macroReviewOutput;
 }
 
-try {
-  const asOf = process.argv[2] ?? new Date().toISOString().slice(0, 10);
+async function generateLiveWeeklyReport({ asOf }) {
   const macroReviewOutput = await buildMacroReview({ asOf });
   const openaiClient = createOpenAIClientFromEnv();
   const weeklyReportOutput = await generateWeeklyReport({
@@ -152,25 +152,44 @@ try {
 
   const weeklyReportValidation = await validateWeeklyReportOutput(weeklyReportOutput);
   if (!weeklyReportValidation.valid) {
-    fail({
-      code: "WEEKLY_REPORT_OUTPUT_SCHEMA_VALIDATION_FAILED",
-      message: "Weekly report output failed final schema validation.",
-      errors: compactErrors(weeklyReportValidation.errors)
-    });
-  } else {
-    console.log(JSON.stringify(weeklyReportOutput, null, 2));
+    throw new WeeklyReportGenerationError(
+      "WEEKLY_REPORT_OUTPUT_SCHEMA_VALIDATION_FAILED",
+      "Weekly report output failed final schema validation.",
+      { errors: compactErrors(weeklyReportValidation.errors) }
+    );
   }
-} catch (error) {
-  if (error instanceof OpenAIClientError || error instanceof WeeklyReportGenerationError) {
-    fail({
-      code: error.code,
-      message: error.message,
-      errors: error.errors ?? []
-    });
-  } else {
-    fail({
-      code: "WEEKLY_REPORT_GENERATION_UNEXPECTED_ERROR",
-      message: "Weekly report generation failed unexpectedly."
-    });
+
+  return weeklyReportOutput;
+}
+
+async function main() {
+  try {
+    const asOf = process.argv[2] ?? new Date().toISOString().slice(0, 10);
+    const weeklyReportOutput = await generateLiveWeeklyReport({ asOf });
+    console.log(JSON.stringify(weeklyReportOutput, null, 2));
+  } catch (error) {
+    if (error instanceof OpenAIClientError || error instanceof WeeklyReportGenerationError) {
+      fail({
+        code: error.code,
+        message: error.message,
+        errors: error.errors ?? []
+      });
+    } else {
+      fail({
+        code: "WEEKLY_REPORT_GENERATION_UNEXPECTED_ERROR",
+        message: "Weekly report generation failed unexpectedly."
+      });
+    }
   }
 }
+
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  await main();
+}
+
+export {
+  buildMacroReview,
+  compactErrors,
+  generateLiveWeeklyReport
+};
