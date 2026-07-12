@@ -12,6 +12,7 @@
 - AI 주간 보고서 생성 설계 및 검증 완료
 - AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
 - weekly-report-output → Markdown 렌더링 구현 및 실제 GitHub Actions 검증 완료
+- Notion 저장 완료 조건 및 저장 계약 설계 완료
 - 다음 작업: Notion 저장 구현
 
 ## 완료된 내용
@@ -295,6 +296,41 @@
   - weekly-report-output → Markdown 렌더링 단계 완료
   - 다음 구현은 Notion 저장
 
+### Notion 저장 계약 및 완료 조건 설계
+
+- 구현 전 저장 계약 확정
+- 저장 입력
+  - 본문: weekly-report-output 기반 Markdown
+  - properties: 기준일, 생성시각, 전체 위험 단계·점수, 신뢰도, schema version, Report Key
+  - weekly-report-output 전체 JSON은 Notion에 중복 저장하지 않음
+- 저장 대상
+  - 주간 보고서 archive database의 data source
+  - runtime parent는 `NOTION_DATA_SOURCE_ID`
+- 중복 처리
+  - `Report Key = weekly-report:{asOf}`
+  - 기존 page가 없으면 create, 하나면 update, 둘 이상이면 실패
+- Notion API
+  - version `2026-03-11`
+  - native Markdown create 및 `replace_content` update
+  - 자체 Markdown-to-block parser 미구현
+- 필수 Secrets
+  - `NOTION_API_KEY`
+  - `NOTION_DATA_SOURCE_ID`
+  - 기존 `FRED_API_KEY`, `OPENAI_API_KEY`
+- 선택 Variables
+  - `OPENAI_MODEL`
+  - `NOTION_API_VERSION` (기본 `2026-03-11`)
+- 완료 조건
+  - mock 단위 테스트와 create/update/idempotency/read-back 검증
+  - `Manual Weekly Report Notion Save` 최신 main 성공
+  - 실제 보고서·JSON·Secret의 저장소 및 artifact 비보관
+  - HANDOFF에 run과 저장 검증 결과 기록
+- 담당 문서 갱신
+  - `docs/ARCHITECTURE.md`
+  - `docs/REPORT_SPEC.md`
+  - `docs/DECISIONS.md` D-028
+- 아직 Notion API 호출 코드와 workflow는 구현하지 않음
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -356,24 +392,21 @@ Node.js 환경:
 
 ## 다음 세션이 읽을 문서
 
-Markdown 렌더링 후속 구현 시 필수:
+Notion 저장 구현 시 필수:
 - `AGENTS.md`
+- `docs/ARCHITECTURE.md`
 - `docs/REPORT_SPEC.md`
-- `prompts/weekly-analysis.md`
 - `docs/HANDOFF.md`
 
-Markdown 렌더링 구현 시 추가 확인:
+추가 확인:
+- `docs/DECISIONS.md` D-028
 - `data/schema/weekly-report-output.schema.json`
-- `docs/DECISIONS.md`
-
-선택:
-- 통합 출력 계약 확인 시 `data/schema/macro-review-output.schema.json`
-- AI 보고서 출력 계약 확인 시 `data/schema/weekly-report-output.schema.json`
-- 구조적 결정 확인 시 `docs/DECISIONS.md`
-- 아키텍처 원칙 확인 시 `docs/ARCHITECTURE.md`
+- `src/render/render-weekly-report-markdown.js`
+- `scripts/run-weekly-report.js`
 
 ## 미해결
 
-- Notion 저장 구현
-- Notion 저장 실제 GitHub Actions 검증
+- Notion client, payload adapter, upsert orchestration 구현
+- Notion mock 테스트와 live 저장 script 구현
+- `Manual Weekly Report Notion Save` workflow 구현 및 실제 검증
 - 이후 Telegram 알림 구현
