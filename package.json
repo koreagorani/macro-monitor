@@ -16,7 +16,8 @@
     "evaluate:macro-review": "node scripts/run-macro-review.js",
     "generate:weekly-report": "node scripts/run-weekly-report.js",
     "test": "node --test",
-    "validate:examples": "node scripts/validate-examples.js"
+    "validate:examples": "node scripts/validate-examples.js",
+    "render:weekly-report": "node scripts/render-weekly-report-markdown.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
