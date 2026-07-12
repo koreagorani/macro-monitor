@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 import { loadJsonFile } from "../src/config/load-config.js";
 import {
+  buildWeeklyReportResponseFormat,
   buildWeeklyReportUserMessage,
   generateWeeklyReport,
   parseWeeklyReportJson,
@@ -83,14 +84,31 @@ async function loadFixtures() {
 
 function fakeOpenAIClient(text) {
   return {
-    async createResponse({ instructions, input }) {
+    async createResponse({ instructions, input, responseFormat }) {
       assert.ok(instructions.includes("숫자를 재계산하지 않는다"));
       assert.ok(input.includes("숫자를 재계산하지 마라"));
       assert.ok(input.includes("위험 등급을 재판정하지 마라"));
+      assert.equal(responseFormat.type, "json_schema");
+      assert.equal(responseFormat.name, "weekly_report_output");
+      assert.equal(responseFormat.strict, true);
+      assert.equal(responseFormat.schema.type, "object");
       return { text };
     }
   };
 }
+
+test("weekly report response format uses the local schema without metadata-only keywords", async () => {
+  const schema = await loadJsonFile("data/schema/weekly-report-output.schema.json");
+  const responseFormat = buildWeeklyReportResponseFormat(schema);
+
+  assert.equal(responseFormat.type, "json_schema");
+  assert.equal(responseFormat.name, "weekly_report_output");
+  assert.equal(responseFormat.strict, true);
+  assert.equal(responseFormat.schema.$schema, undefined);
+  assert.equal(responseFormat.schema.$id, undefined);
+  assert.deepEqual(responseFormat.schema.required, schema.required);
+  assert.deepEqual(responseFormat.schema.$defs, schema.$defs);
+});
 
 test("weekly report generator parses normal JSON and validates schema", async () => {
   const { macroReviewOutput, weeklyReportOutput } = await loadFixtures();
