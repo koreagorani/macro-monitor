@@ -72,7 +72,7 @@ class OpenAIClient {
     this.responseFormat = responseFormat;
   }
 
-  async createResponse({ instructions, input }) {
+  async createResponse({ instructions, input, responseFormat = this.responseFormat }) {
     let response;
 
     try {
@@ -88,7 +88,7 @@ class OpenAIClient {
           input,
           max_output_tokens: this.maxOutputTokens,
           text: {
-            format: this.responseFormat
+            format: responseFormat
           }
         })
       });
