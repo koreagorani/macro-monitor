@@ -271,3 +271,18 @@
 - JSON mode를 사용해 코드펜스나 설명문이 섞여 JSON 파싱이 실패할 위험을 낮추기 위해서다.
 - 후속 Markdown/Notion/Telegram 렌더링 전에 구조화 보고서 JSON의 신뢰성을 확보해야 한다.
 - API 키와 원문 응답을 로그에 남기지 않아 운영 보안을 유지하기 위해서다.
+
+## D-026 AI 주간 보고서 Structured Outputs 적용
+
+결정:
+- OpenAI Responses API 호출은 기존 JSON mode(`text.format.type = "json_object"`) 대신 Structured Outputs(`text.format.type = "json_schema"`, `strict: true`)를 사용한다.
+- 단일 출력 계약인 `data/schema/weekly-report-output.schema.json`을 API 요청의 schema로 전달한다.
+- API의 strict schema 강제 이후에도 로컬 weekly-report-output schema 검증과 macro-review consistency 검증을 최종 안전장치로 유지한다.
+- OpenAI API 요청용 schema에서는 문서 식별용 `$schema`, `$id` 메타데이터만 제거하고 실제 출력 계약은 변경하지 않는다.
+
+이유:
+- JSON mode는 유효한 JSON만 보장하며 필드명, 필수 필드, 중첩 구조까지 보장하지 않는다.
+- run `29189631808`에서 OpenAI 호출은 성공했지만 AI 출력이 weekly-report-output 필드 계약과 달라 로컬 schema 검증에서 실패했다.
+- Structured Outputs로 API 단계부터 출력 구조를 강제해 반복적인 schema 불일치 실패를 줄이기 위해서다.
+- 숫자·등급 변조 방지는 schema 준수만으로 충분하지 않으므로 기존 consistency 검증을 계속 유지해야 한다.
+
