@@ -125,6 +125,117 @@ MVP 필수 섹션:
 
 운영 보고서는 공개 저장소에 커밋하지 않는다. GitHub Actions에서는 전체 Markdown을 로그에 출력하지 않고 앞부분 24줄만 preview하며, 전체 파일은 7일 보관 artifact `weekly-report-markdown`으로만 제공한다.
 
+## 0-2. Notion 저장 계약
+
+### 저장 입력과 대상
+
+Notion 저장 단계는 다음 두 입력을 사용한다.
+
+- page 본문: `renderWeeklyReportMarkdown(weeklyReportOutput)` 결과
+- page properties: weekly-report-output의 검증된 메타데이터
+
+weekly-report-output 전체 JSON은 MVP에서 Notion에 별도 저장하지 않는다. 사람이 읽는 보고서 보관이 목적이므로 Markdown을 본문으로 저장하고, 검색·정렬·중복 방지에 필요한 값만 properties에 기록한다.
+
+저장 대상은 특정 page 아래의 child page가 아니라 주간 보고서 아카이브용 database의 data source다. page 생성 parent는 최신 Notion API 계약에 따라 `data_source_id`를 사용한다.
+
+### data source property 계약
+
+대상 data source에는 다음 properties가 정확한 이름과 타입으로 존재해야 한다.
+
+| Property | Notion type | weekly-report-output source |
+|---|---|---|
+| Name | title | `report.title` |
+| Report Date | date | `asOf` |
+| Generated At | date | `generatedAt` |
+| Overall Risk | select | `sourceMacroReview.overallLevel` |
+| Overall Score | number | `sourceMacroReview.overallScore` |
+| Confidence | select | `sourceMacroReview.confidence` |
+| Schema Version | rich_text | `schemaVersion` |
+| Report Key | rich_text | `weekly-report:{asOf}` |
+
+properties는 입력값을 그대로 매핑하며 점수·등급을 재계산하거나 재판정하지 않는다.
+
+### 생성 및 갱신
+
+- 저장 전 `Report Key`로 data source를 조회한다.
+- 일치 page가 없으면 Markdown 본문과 properties로 새 page를 생성하고 결과를 `created`로 기록한다.
+- 일치 page가 하나면 properties를 갱신하고 Markdown 본문 전체를 `replace_content`로 교체하며 결과를 `updated`로 기록한다.
+- 일치 page가 둘 이상이면 임의 page를 선택하지 않고 `NOTION_DUPLICATE_REPORT_KEY`로 실패한다.
+- Notion native Markdown 입력을 사용하고 자체 Markdown-to-block 변환기는 구현하지 않는다.
+
+### 환경변수
+
+필수 GitHub Secrets:
+
+- `NOTION_API_KEY`: Notion connection 또는 personal access token
+- `NOTION_DATA_SOURCE_ID`: 주간 보고서 archive data source ID
+- 기존 live 생성용 `FRED_API_KEY`
+- 기존 live 생성용 `OPENAI_API_KEY`
+
+선택 Repository Variables:
+
+- `OPENAI_MODEL`: 기존 OpenAI 모델 override
+- `NOTION_API_VERSION`: 기본값 `2026-03-11`; 명시적 호환성 검증 없이 자동 최신 버전으로 올리지 않음
+
+`NOTION_DATABASE_ID`와 `NOTION_PAGE_ID`는 MVP runtime 입력으로 사용하지 않는다. database ID는 data source ID를 찾는 초기 설정 과정에서만 필요할 수 있다.
+
+### 보안 및 오류
+
+- Secret 값과 Notion 원문 응답 전체를 출력하지 않는다.
+- page ID, page URL, data source ID도 공개 Actions 로그에 출력하지 않는다.
+- 성공 로그는 `created|updated`, 기준일, 검증 성공 여부만 포함한다.
+- 실패 로그는 안전한 내부 error code, HTTP status, 요약 message만 포함한다.
+- 401, 403, 404, 409, 429와 5xx를 구분하고 429 및 일시적 5xx만 제한적으로 재시도한다.
+
+### 완료 조건
+
+단위·mock 테스트:
+
+1. Markdown과 properties payload가 weekly-report-output 값만 사용
+2. 숫자·등급 재계산 없음
+3. create 경로와 update 경로
+4. 같은 Report Key 재실행 시 중복 page 미생성
+5. 중복 Report Key가 둘 이상이면 안전하게 실패
+6. 빈 optional 배열과 null score 처리
+7. 개인 보유 수량·평가금액 field 비전송
+8. Secret 및 원문 API 오류 비노출
+9. 401·403·404·429·5xx 오류 분류
+10. 실제 네트워크 없이 mock fetch로 전체 저장 orchestration 검증
+
+GitHub Actions 완료 기준:
+
+1. 최신 main의 `Manual Weekly Report Notion Save` 실행
+2. `npm ci` 성공
+3. `npm test` 성공
+4. `npm run validate:examples` 성공
+5. 실제 weekly-report-output 및 Markdown 생성 성공
+6. Notion create 또는 update 성공
+7. 저장 후 properties와 Markdown 최소 read-back 검증 성공
+8. job conclusion `success`
+9. 실제 보고서·JSON·Secret이 저장소 또는 Actions artifact에 남지 않음
+10. `docs/HANDOFF.md`에 run ID, create/update 결과, 검증 범위, 다음 단계 기록
+
+### 구현 파일 계획
+
+- `src/clients/notion-client.js`
+  - 인증, API version header, query/create/update/read-back, 안전한 오류와 제한적 retry
+- `src/notion/build-notion-report-payload.js`
+  - Markdown과 weekly-report-output metadata를 Notion properties 및 native Markdown payload로 매핑
+- `src/notion/save-weekly-report-to-notion.js`
+  - Report Key 조회, create/update 분기, 중복 감지, read-back 검증
+- `scripts/save-weekly-report-to-notion.js`
+  - live FRED → macro-review → weekly-report-output → Markdown → Notion 저장
+- `test/notion-client.test.js`
+  - HTTP 요청·오류·Secret 비노출·retry mock
+- `test/notion-report-payload.test.js`
+  - properties/native Markdown payload 매핑과 개인 field 비전송
+- `test/notion-save.test.js`
+  - create/update/idempotency/duplicate/read-back orchestration mock
+- `package.json`
+  - `save:weekly-report:notion` command
+- `.github/workflows/manual-weekly-report-notion.yml`
+  - `Manual Weekly Report Notion Save` live 검증
+
 ## 1. 한눈에 보는 결론
 
 - 기준일
