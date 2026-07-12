@@ -286,3 +286,17 @@
 - Structured Outputs로 API 단계부터 출력 구조를 강제해 반복적인 schema 불일치 실패를 줄이기 위해서다.
 - 숫자·등급 변조 방지는 schema 준수만으로 충분하지 않으므로 기존 consistency 검증을 계속 유지해야 한다.
 
+## D-027 weekly-report-output 기반 Markdown 렌더링
+
+결정:
+- Markdown 렌더링의 단일 입력은 검증을 통과한 weekly-report-output JSON으로 한다.
+- 렌더러는 AI나 외부 API를 호출하지 않는 순수 동기 함수로 구현한다.
+- 실제 live 실행 명령은 기존 FRED → macro-review → OpenAI weekly-report-output 파이프라인을 재사용한 뒤 Markdown을 렌더링한다.
+- 기본 출력은 stdout으로 하고, `REPORT_MARKDOWN_OUTPUT`이 지정된 경우에만 해당 임시 경로에 파일을 쓴다.
+- GitHub Actions의 전체 Markdown은 저장소에 커밋하지 않고 7일 보관 artifact로만 제공하며 로그에는 앞부분 preview만 출력한다.
+
+이유:
+- 숫자 판정, AI 문장화, 채널별 표현을 분리해 Notion과 Telegram에서도 같은 구조화 출력을 재사용하기 위해서다.
+- 순수 렌더러는 AI 재호출 없이 결정론적으로 테스트할 수 있다.
+- 공개 저장소에 개인 운영 보고서가 남는 것을 방지하면서 실제 결과물을 검증할 수 있어야 한다.
+
