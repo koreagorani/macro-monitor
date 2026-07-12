@@ -11,7 +11,7 @@
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 및 검증 완료
 - AI 주간 보고서 생성 구현 완료
-- 다음 검증: `Manual Weekly Report Generation` 재실행
+- 다음 검증: `Manual Weekly Report Generation` 최신 main에서 재실행
 
 ## 완료된 내용
 
@@ -50,11 +50,6 @@
   - area aggregation run: `28736992100`
   - overallRisk run: `28737269543`
   - risk-output example 검증 run: `29086600175`
-- 최종 확인된 Phase 4 출력:
-  - `indicatorStatuses` populated
-  - `areaRisks` populated
-  - `overallRisk` populated
-  - `risk-output` schema 통과
 
 ### Phase 5 포트폴리오 취약도 및 통합 실행 경로
 
@@ -62,8 +57,6 @@
 - `src/portfolio/evaluate-portfolio-vulnerability.js` 구현
 - `scripts/run-portfolio-vulnerability.js` 추가
 - `package.json`에 `evaluate:portfolio` 명령 추가
-- `data/examples/portfolio-vulnerability.example.json` 추가
-- `test/portfolio-vulnerability.test.js` 추가
 - `.github/workflows/manual-portfolio-vulnerability.yml` 추가
 - `Manual Portfolio Vulnerability Evaluation` 실제 실행 성공 확인
   - run: `29087059587`
@@ -71,11 +64,8 @@
   - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:portfolio` 모두 성공
 - `data/schema/macro-review-output.schema.json` 추가
 - `src/review/build-macro-review-output.js` 구현
-- `src/validation/validate-macro-review-output.js` 추가
 - `scripts/run-macro-review.js` 추가
 - `package.json`에 `evaluate:macro-review` 명령 추가
-- `data/examples/macro-review.example.json` 추가
-- `test/macro-review.test.js` 추가
 - `.github/workflows/manual-macro-review.yml` 추가
 - `Manual Macro Review Evaluation` 실제 실행 성공 확인
   - run: `29087571966`
@@ -85,30 +75,11 @@
 ### AI 주간 보고서 생성 설계
 
 - `data/schema/weekly-report-output.schema.json` 추가
-  - AI 보고서 생성의 구조화 출력 계약
-  - `sourceMacroReview`, `report`, `warnings` 구조 정의
-  - 허용 행동 표현을 enum으로 제한
 - `data/examples/weekly-report-output.example.json` 추가
-  - 합성 weekly report output 예시
-  - 실제 개인 보유 수량·평가금액 없음
 - `scripts/validate-examples.js` 확장
-  - weekly report output example을 schema로 검증
 - `prompts/weekly-analysis.md` 보강
-  - 입력은 `macroReviewOutput`
-  - 출력은 `data/schema/weekly-report-output.schema.json`에 맞는 JSON만 허용
-  - 숫자·등급·임계값 재계산 금지
-  - 입력에 없는 최신 뉴스, 일정, 가격 생성 금지
-  - 특정 종목 추천 금지
 - `docs/REPORT_SPEC.md` 보강
-  - AI 보고서 입력 계약은 `data/schema/macro-review-output.schema.json`
-  - AI 보고서 출력 계약은 `data/schema/weekly-report-output.schema.json`
-  - Markdown, Notion, Telegram 출력은 후속 렌더링 단계로 분리
 - `test/weekly-report-output.test.js` 추가
-  - weekly report example schema 검증
-  - 필수 취약도 고지 포함 확인
-  - 허용 action phrase 사용 확인
-  - 금지 투자 표현 미포함 확인
-  - 개인 보유 수량·평가금액 관련 key 미포함 확인
 - `docs/DECISIONS.md` 갱신
   - D-024: AI 주간 보고서 출력 계약 확정
 - 설계 검증 완료
@@ -141,26 +112,12 @@
   - `Manual Weekly Report Generation`
   - `FRED_API_KEY`, `OPENAI_API_KEY` 사용
 - `test/openai-client.test.js` 추가
-  - API key 누락
-  - Authorization header 구성
-  - 안전한 에러 메시지
-  - output text 추출
 - `test/weekly-report-generation.test.js` 추가
-  - mock OpenAI client 기반 정상 JSON 응답 파싱
-  - schema 검증 통과
-  - JSON 파싱 실패 처리
-  - schema 검증 실패 처리
-  - consistency 검증 실패 처리
-  - prompt/user message의 재계산·재판정 금지 규칙 확인
-- `data/examples/macro-review.example.json` 갱신
-  - weekly report consistency 테스트가 참조할 수 있도록 area/theme score와 level을 합성 예시에 명시
 - `docs/REPORT_SPEC.md` 갱신
-  - `generate:weekly-report` 실행 계약
-  - OpenAI 호출 후 schema/consistency 검증 계약
 - `docs/DECISIONS.md` 갱신
   - D-025: AI 주간 보고서 생성 실행 경로 확정
 
-### AI 주간 보고서 생성 검증 실패 수정
+### AI 주간 보고서 생성 검증 실패 및 보강
 
 - `Manual Weekly Report Generation` 첫 실행 실패 확인
   - run: `29089456395`
@@ -171,12 +128,20 @@
 - 실패 성격
   - 실제 OpenAI 호출 전 단계에서 실패
   - 신규 `test/weekly-report-generation.test.js` 쪽 fixture 결합도가 높아 예시 파일 정합성 변화에 취약했음
-- 수정 내용
+- 1차 수정
   - `test/weekly-report-generation.test.js`가 `macro-review.example.json`에 직접 의존하지 않도록 변경
   - `weekly-report-output.example.json`에서 self-contained `macroReviewOutput` fixture를 생성해 generator의 schema/consistency 검증 책임만 테스트
   - JSON deep clone helper로 `structuredClone` 의존 제거
-- 수정 커밋
-  - `f5b8dbb3b2270bbbced5ee81417e10a82d5f9937`
+  - 수정 커밋: `f5b8dbb3b2270bbbced5ee81417e10a82d5f9937`
+- 2차 보강
+  - OpenAI client가 `text.format.type = "json_object"`를 사용하도록 변경
+  - OpenAI client 테스트에서 JSON output 요청 여부를 검증하도록 추가
+  - `docs/REPORT_SPEC.md`, `docs/DECISIONS.md`에 JSON mode 사용 방침 기록
+  - 수정 커밋:
+    - `3a7a401b807a72db242625e21fa4a30d253ba0f9`
+    - `2cb5645958f4c650e2d04af6393d65a1e530f8e7`
+    - `d78f7beca5452c542364899f9dd4bd8b41cb3ea3`
+    - `a9683a4db20a13c657b33bcdd2a077f7e440b86e`
 
 ## 현재 실행 방법
 
@@ -228,7 +193,7 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 검증 대기:
-- test fixture 수정 후 `Manual Weekly Report Generation` 재실행
+- test fixture 수정 및 JSON mode 보강 후 `Manual Weekly Report Generation` 최신 main에서 재실행
 - `test/openai-client.test.js` 통과 확인
 - `test/weekly-report-generation.test.js` 통과 확인
 - `npm run validate:examples` 전체 통과 확인
@@ -242,6 +207,10 @@ AI 보고서 생성 검증 및 후속 구현 시 필수:
 - `prompts/weekly-analysis.md`
 - `docs/HANDOFF.md`
 
+Markdown 렌더링 구현 시 추가 확인:
+- `data/schema/weekly-report-output.schema.json`
+- `docs/DECISIONS.md`
+
 선택:
 - 통합 출력 계약 확인 시 `data/schema/macro-review-output.schema.json`
 - AI 보고서 출력 계약 확인 시 `data/schema/weekly-report-output.schema.json`
@@ -250,6 +219,6 @@ AI 보고서 생성 검증 및 후속 구현 시 필수:
 
 ## 미해결
 
-- test fixture 수정 후 GitHub Actions 재검증
+- test fixture 수정 및 JSON mode 보강 후 GitHub Actions 재검증
 - AI 보고서 생성 구현 실제 Actions 검증
 - Markdown/Notion/Telegram 렌더링 구현
