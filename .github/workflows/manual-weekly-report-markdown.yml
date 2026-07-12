@@ -1,0 +1,60 @@
+name: Manual Weekly Report Markdown Render
+
+on:
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: Report date in YYYY-MM-DD format. Leave blank for UTC today.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  render-weekly-report-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate synthetic examples
+        run: npm run validate:examples
+
+      - name: Render weekly report Markdown
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          AS_OF: ${{ inputs.as_of }}
+          REPORT_MARKDOWN_OUTPUT: ${{ runner.temp }}/weekly-report.md
+        run: |
+          if [ -n "$AS_OF" ]; then
+            npm run render:weekly-report -- "$AS_OF"
+          else
+            npm run render:weekly-report
+          fi
+
+      - name: Preview Markdown
+        run: |
+          echo "Markdown preview (first 24 lines):"
+          head -n 24 "${{ runner.temp }}/weekly-report.md"
+
+      - name: Upload Markdown artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-report-markdown
+          path: ${{ runner.temp }}/weekly-report.md
+          if-no-files-found: error
+          retention-days: 7
