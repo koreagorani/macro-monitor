@@ -164,6 +164,28 @@
   - 최신 main에서 `Manual Weekly Report Generation` 재검증 대기
   - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
 
+### AI 주간 보고서 생성 3차 Actions 실패 — OpenAI API 429
+
+- `Manual Weekly Report Generation` 재실행 실패 확인
+  - run: `29189293756`
+  - job: `generate-weekly-report`
+  - `npm ci` 성공
+  - `npm test` 성공: 58개 전체 통과
+  - `npm run validate:examples` 성공
+  - `npm run generate:weekly-report`에서 실패
+- 안전한 오류 요약
+  - code: `OPENAI_API_REQUEST_FAILED`
+  - message: `OpenAI API request failed with status 429.`
+  - API key와 OpenAI 원문 응답은 로그에 노출되지 않음
+- 판단
+  - 이전 테스트 결합도 문제는 해결됨
+  - 실제 FRED 기반 파이프라인 뒤 OpenAI API 호출 단계까지 도달함
+  - HTTP 429는 OpenAI API 사용량 한도, rate limit 또는 API 결제·크레딧 상태 확인이 필요함
+  - ChatGPT 구독과 OpenAI API 결제·크레딧은 별도일 수 있음
+- 현재 상태
+  - OpenAI API 계정의 Billing/Usage/Limits 확인 후 최신 main에서 재실행 대기
+  - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
+
 ## 현재 실행 방법
 
 GitHub Actions:
