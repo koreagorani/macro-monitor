@@ -170,14 +170,33 @@ test("weekly report prompt and user message enforce no recalculation", async () 
   const { macroReviewOutput } = await loadFixtures();
   const userMessage = buildWeeklyReportUserMessage(macroReviewOutput);
 
-  for (const phrase of [
-    "숫자를 재계산하지 않는다",
-    "임계값과 위험 등급을 바꾸지 않는다",
-    "입력에 없는 최신 뉴스",
-    "특정 종목 추천",
-    "실제 개인 보유 수량"
-  ]) {
-    assert.ok(promptText.includes(phrase), `${phrase} missing from prompt`);
+  const promptSafetyRules = [
+    {
+      label: "숫자 재계산 금지",
+      requiredFragments: ["숫자를 재계산하지 않는다"]
+    },
+    {
+      label: "임계값 및 위험 등급 변경 금지",
+      requiredFragments: ["임계값과 위험 등급을 바꾸지 않는다"]
+    },
+    {
+      label: "입력에 없는 최신 뉴스 생성 금지",
+      requiredFragments: ["입력에 없는", "최신 뉴스"]
+    },
+    {
+      label: "특정 종목 추천 금지",
+      requiredFragments: ["특정 종목 추천"]
+    },
+    {
+      label: "개인 보유정보 추정 금지",
+      requiredFragments: ["실제 개인 보유 수량"]
+    }
+  ];
+
+  for (const { label, requiredFragments } of promptSafetyRules) {
+    for (const fragment of requiredFragments) {
+      assert.ok(promptText.includes(fragment), `${label}: "${fragment}" missing from prompt`);
+    }
   }
 
   assert.ok(userMessage.includes("숫자를 재계산하지 마라"));
