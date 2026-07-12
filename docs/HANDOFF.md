@@ -11,8 +11,8 @@
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 및 검증 완료
 - AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
-- weekly-report-output → Markdown 렌더링 구현 완료
-- 다음 검증: `Manual Weekly Report Markdown Render` 최신 main에서 실행
+- weekly-report-output → Markdown 렌더링 구현 및 실제 GitHub Actions 검증 완료
+- 다음 작업: Notion 저장 구현
 
 ## 완료된 내용
 
@@ -265,6 +265,36 @@
 - `docs/DECISIONS.md`에 D-027 기록
 - 실제 GitHub Actions 검증 대기
 
+### Markdown 렌더링 실제 Actions 검증 완료
+
+- `Manual Weekly Report Markdown Render` 최신 main 실행 성공
+  - run: `29190592678`
+  - commit: `5ac3c127cf3939b289679761ad9cf9f03c989bb2`
+  - job: `render-weekly-report-markdown`
+  - conclusion: `success`
+- 필수 단계 전체 성공
+  - Install dependencies
+  - Run tests
+  - Validate synthetic examples
+  - Render weekly report Markdown
+  - Preview Markdown
+  - Upload Markdown artifact
+- 실제 출력 확인
+  - 기준일: `2026-07-12`
+  - 전체 위험: `정상`
+  - 전체 위험 점수: `0.202678571429`
+  - 권장 대응: `유지`
+  - Markdown 표와 필수 섹션 preview 정상
+- artifact 확인
+  - name: `weekly-report-markdown`
+  - artifact id: `8259382369`
+  - size: 1,722 bytes
+  - expires: `2026-07-19T11:18:40Z`
+  - 저장소 커밋 없이 Actions artifact로만 보관
+- 완료 판정
+  - weekly-report-output → Markdown 렌더링 단계 완료
+  - 다음 구현은 Notion 저장
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -344,7 +374,6 @@ Markdown 렌더링 구현 시 추가 확인:
 
 ## 미해결
 
-- `Manual Weekly Report Markdown Render` 실제 GitHub Actions 검증
-- Markdown preview와 artifact 생성 확인
-- 검증 성공 후 Notion 저장 구현
+- Notion 저장 구현
+- Notion 저장 실제 GitHub Actions 검증
 - 이후 Telegram 알림 구현
