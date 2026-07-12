@@ -11,7 +11,8 @@
 - Phase 5 live risk-output 통합 실행 경로 구현 및 검증 완료
 - AI 주간 보고서 생성 설계 및 검증 완료
 - AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
-- 다음 작업: weekly-report-output → Markdown 렌더링 구현
+- weekly-report-output → Markdown 렌더링 구현 완료
+- 다음 검증: `Manual Weekly Report Markdown Render` 최신 main에서 실행
 
 ## 완료된 내용
 
@@ -237,9 +238,37 @@
   - AI 주간 보고서 생성 단계 완료
   - 다음 구현은 weekly-report-output → Markdown 렌더링
 
+### weekly-report-output → Markdown 렌더링 구현
+
+- `src/render/render-weekly-report-markdown.js` 추가
+  - weekly-report-output만 입력받는 순수 동기 렌더러
+  - AI 및 외부 API 재호출 없음
+  - 숫자·등급·임계값 재계산 없음
+  - 빈 배열과 일부 누락 필드 안전 처리
+- `scripts/run-weekly-report.js`의 live weekly-report 파이프라인을 재사용 가능하도록 분리
+- `scripts/render-weekly-report-markdown.js` 추가
+  - 실제 FRED → macro-review → OpenAI weekly-report-output → Markdown 흐름
+  - 기본 stdout 출력
+  - `REPORT_MARKDOWN_OUTPUT` 지정 시 UTF-8 파일 출력
+- `package.json`에 `render:weekly-report` 추가
+- `test/weekly-report-markdown.test.js` 추가
+  - 필수 섹션
+  - 개인 보유정보 비노출
+  - 결정론적 순수 함수
+  - 빈 배열·누락 필드
+  - Markdown 표 escape 검증
+- `.github/workflows/manual-weekly-report-markdown.yml` 추가
+  - workflow: `Manual Weekly Report Markdown Render`
+  - preview는 앞부분 24줄만 로그 출력
+  - 전체 Markdown은 7일 보관 `weekly-report-markdown` artifact로 업로드
+- `docs/REPORT_SPEC.md`에 Markdown 출력 계약 반영
+- `docs/DECISIONS.md`에 D-027 기록
+- 실제 GitHub Actions 검증 대기
+
 ## 현재 실행 방법
 
 GitHub Actions:
+- Markdown 렌더링 검증: Actions → `Manual Weekly Report Markdown Render`
 - AI 주간 보고서 생성 검증: Actions → `Manual Weekly Report Generation`
 - 통합 매크로 리뷰 검증: Actions → `Manual Macro Review Evaluation`
 - 포트폴리오 취약도 검증: Actions → `Manual Portfolio Vulnerability Evaluation`
@@ -257,6 +286,7 @@ Node.js 환경:
 - `npm ci --no-audit --no-fund`
 - `npm test`
 - `npm run validate:examples`
+- `npm run render:weekly-report -- YYYY-MM-DD`
 - `npm run generate:weekly-report -- YYYY-MM-DD`
 - `npm run evaluate:macro-review -- YYYY-MM-DD`
 - `npm run evaluate:risk -- YYYY-MM-DD`
@@ -314,8 +344,7 @@ Markdown 렌더링 구현 시 추가 확인:
 
 ## 미해결
 
-- weekly-report-output → Markdown 렌더링 구현 및 테스트
-- Markdown 출력 계약을 docs/REPORT_SPEC.md에 반영
-- Markdown 렌더링 실제 GitHub Actions 검증
-- 이후 Notion 저장 구현
+- `Manual Weekly Report Markdown Render` 실제 GitHub Actions 검증
+- Markdown preview와 artifact 생성 확인
+- 검증 성공 후 Notion 저장 구현
 - 이후 Telegram 알림 구현
