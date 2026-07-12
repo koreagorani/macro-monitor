@@ -88,6 +88,43 @@ AI 응답은 다음 검증을 모두 통과해야 한다.
 
 검증 실패 시 임의로 보정하지 않고 명확한 error code와 요약 메시지만 출력한다.
 
+## 0-1. Markdown 렌더링 계약
+
+Markdown 렌더링 단계의 단일 입력은 schema 검증과 macro-review consistency 검증을 통과한 `weekly-report-output` JSON이다.
+
+실행 명령:
+
+```bash
+npm run render:weekly-report -- YYYY-MM-DD
+```
+
+날짜를 생략하면 UTC 오늘 기준으로 실제 FRED 수집부터 OpenAI weekly-report-output 생성까지 실행한 뒤 Markdown을 렌더링한다.
+
+기본 출력은 stdout이다. `REPORT_MARKDOWN_OUTPUT` 환경변수에 경로를 지정하면 해당 경로에 UTF-8 Markdown 파일을 쓰고 보고서 본문 대신 안전한 파일 생성 요약만 stdout에 출력한다.
+
+렌더러 원칙:
+
+- `src/render/render-weekly-report-markdown.js`의 순수 동기 함수가 weekly-report-output만 읽어 Markdown 문자열을 생성한다.
+- 렌더링 단계에서는 AI 또는 외부 API를 다시 호출하지 않는다.
+- 숫자, 점수, 등급, 임계값을 계산하거나 재판정하지 않는다.
+- 구조화 입력에 있는 점수와 문자열을 그대로 표시한다.
+- 핵심 변화와 취약 테마는 각각 최대 3개, 헷지 후보는 최대 2개만 표시한다.
+- 빈 배열 또는 일부 누락된 중첩 필드는 `해당 없음` 또는 `—`로 안전하게 표시한다.
+- 실제 개인 보유 수량, 평가금액, 계좌별 비중 필드는 렌더링하지 않는다.
+
+MVP 필수 섹션:
+
+1. 제목과 기준일·생성시각
+2. 전체 위험 요약
+3. 핵심 변화
+4. 영역별 위험 요약
+5. 취약 테마 상위 3개
+6. 헷지 필요성 및 대응 제안
+7. 다음 주 확인 조건
+8. 취약도의 의미에 대한 주의 문구
+
+운영 보고서는 공개 저장소에 커밋하지 않는다. GitHub Actions에서는 전체 Markdown을 로그에 출력하지 않고 앞부분 24줄만 preview하며, 전체 파일은 7일 보관 artifact `weekly-report-markdown`으로만 제공한다.
+
 ## 1. 한눈에 보는 결론
 
 - 기준일
