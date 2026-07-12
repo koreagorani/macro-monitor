@@ -143,6 +143,27 @@
     - `d78f7beca5452c542364899f9dd4bd8b41cb3ea3`
     - `a9683a4db20a13c657b33bcdd2a077f7e440b86e`
 
+### AI 주간 보고서 생성 2차 Actions 실패 및 테스트 보강
+
+- `Manual Weekly Report Generation` 재실행 실패 확인
+  - run: `29188697625`
+  - commit: `75dc2e780d8a67bff9d6ddb75696356d15fdbe02`
+  - job: `generate-weekly-report`
+  - `npm ci` 성공
+  - `npm test`에서 58개 중 57개 통과, 1개 실패
+  - `npm run validate:examples`, `npm run generate:weekly-report` skipped
+- 실패 원인
+  - `test/weekly-report-generation.test.js`가 프롬프트의 안전 규칙을 정확한 연속 문자열 `입력에 없는 최신 뉴스`로 검사함
+  - 프롬프트에는 같은 의미의 금지 규칙이 있었지만 문장 구성 차이로 테스트가 실패함
+  - 실제 FRED 수집 및 OpenAI API 호출 전 단계의 테스트 결합도 문제임
+- 수정
+  - 안전 규칙 검증을 삭제하거나 약화하지 않고 의미별 필수 문구 조각을 검사하도록 변경
+  - 숫자 재계산, 위험 등급·임계값 변경, 입력에 없는 최신 뉴스 생성, 특정 종목 추천, 개인 보유정보 추정 금지를 계속 검증
+  - 수정 커밋: `dba09296b4b8c0c98a1c0037835b0d75e0abe1f5`
+- 현재 상태
+  - 최신 main에서 `Manual Weekly Report Generation` 재검증 대기
+  - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
+
 ## 현재 실행 방법
 
 GitHub Actions:
