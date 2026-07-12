@@ -52,7 +52,8 @@ class OpenAIClient {
     model = "gpt-4.1",
     baseUrl = "https://api.openai.com/v1",
     fetchImpl = globalThis.fetch,
-    maxOutputTokens = 6000
+    maxOutputTokens = 6000,
+    responseFormat = { type: "json_object" }
   }) {
     if (!apiKey) {
       throw new OpenAIClientError(
@@ -68,6 +69,7 @@ class OpenAIClient {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.fetchImpl = fetchImpl;
     this.maxOutputTokens = maxOutputTokens;
+    this.responseFormat = responseFormat;
   }
 
   async createResponse({ instructions, input }) {
@@ -86,9 +88,7 @@ class OpenAIClient {
           input,
           max_output_tokens: this.maxOutputTokens,
           text: {
-            format: {
-              type: "text"
-            }
+            format: this.responseFormat
           }
         })
       });
