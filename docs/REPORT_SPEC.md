@@ -46,6 +46,8 @@ collectAllIndicators
 
 OpenAI API 키는 `OPENAI_API_KEY` 환경변수 또는 GitHub Secret으로만 전달한다. API 키와 OpenAI 원문 응답 전체는 로그에 남기지 않는다.
 
+OpenAI 호출은 JSON mode(`text.format.type = "json_object"`)로 요청한다. 이 단계에서 JSON 형식을 유도하되, 최종 신뢰성은 로컬 `weekly-report-output` schema 검증과 macro-review consistency 검증으로 확보한다.
+
 ### AI 역할
 
 AI는 다음만 수행한다.
