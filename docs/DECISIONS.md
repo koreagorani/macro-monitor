@@ -300,3 +300,23 @@
 - 순수 렌더러는 AI 재호출 없이 결정론적으로 테스트할 수 있다.
 - 공개 저장소에 개인 운영 보고서가 남는 것을 방지하면서 실제 결과물을 검증할 수 있어야 한다.
 
+## D-028 Notion 주간 보고서 저장 계약
+
+결정:
+- MVP Notion 저장 대상은 주간 보고서 archive database의 data source로 한다.
+- page 생성 parent에는 최신 Notion API의 `data_source_id`를 사용한다.
+- 사람이 읽는 Markdown을 page 본문으로 저장하고 weekly-report-output 전체 JSON은 중복 저장하지 않는다.
+- 검색·정렬·검증에 필요한 기준일, 생성시각, 전체 위험 단계·점수, 신뢰도, schema version, Report Key만 page properties로 저장한다.
+- `Report Key = weekly-report:{asOf}`로 upsert하며 같은 기준일의 중복 page 생성을 막는다.
+- 기존 page는 properties 갱신과 native Markdown `replace_content`로 전체 본문을 교체한다.
+- Notion API version은 `2026-03-11`을 기본값으로 고정하고 명시적 호환성 검증 없이 자동 변경하지 않는다.
+- 최신 Notion API의 native Markdown 입력을 사용하므로 자체 Markdown-to-block parser는 MVP에서 구현하지 않는다.
+- `NOTION_API_KEY`와 `NOTION_DATA_SOURCE_ID`는 GitHub Secrets에서만 읽는다.
+
+이유:
+- database/data source 방식은 주간 보고서를 날짜·위험 단계별로 검색하고 정렬하기 쉽다.
+- Markdown 본문과 최소 properties 조합이 사람 중심 archive 목적을 충족하면서 데이터 중복을 줄인다.
+- Report Key upsert는 Actions 재실행으로 같은 기준일의 보고서가 중복 생성되는 것을 막는다.
+- Notion native Markdown 변환을 사용하면 자체 parser의 포맷 손실과 유지보수 부담을 피할 수 있다.
+- 공개 저장소와 로그에 개인 보고서, workspace 식별자, 인증정보가 남지 않도록 하기 위해서다.
+
