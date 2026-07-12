@@ -186,6 +186,36 @@
   - OpenAI API 계정의 Billing/Usage/Limits 확인 후 최신 main에서 재실행 대기
   - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
 
+### AI 주간 보고서 생성 4차 Actions 실패 — schema 불일치 및 Structured Outputs 보강
+
+- `Manual Weekly Report Generation` 재실행 실패 확인
+  - run: `29189631808`
+  - job: `generate-weekly-report`
+  - `npm ci`, `npm test`, `npm run validate:examples` 성공
+  - OpenAI API 결제 후 실제 API 호출 성공
+  - `npm run generate:weekly-report`의 로컬 weekly-report-output schema 검증에서 실패
+- 실패 원인
+  - 기존 JSON mode는 유효한 JSON만 보장하고 weekly-report-output의 필드명과 중첩 구조는 강제하지 않음
+  - AI가 `sourceMacroReview`, `portfolioThemes`, `hedgeAndDefense`, `nextWeekChecklist` 등을 schema와 다른 구조로 반환함
+  - 로컬 schema 검증이 잘못된 출력을 정상적으로 차단함
+- 보강
+  - Responses API 요청을 `text.format.type = "json_schema"`, `strict: true` Structured Outputs로 변경
+  - `data/schema/weekly-report-output.schema.json`을 API 출력 schema로 전달
+  - 문서 메타데이터인 `$schema`, `$id`만 API 요청용 schema에서 제거
+  - OpenAI client의 요청별 response format override와 관련 테스트 추가
+  - 로컬 schema 검증과 macro-review consistency 검증은 그대로 유지
+  - 관련 결정: D-026
+- 수정 커밋
+  - `726f0ec0048b48988982c228a148d71ec52c2534`
+  - `5aebbb41d8b2704d1963366e0bacf1e68ed2f9c4`
+  - `b41caa8c23ecc4bd38da61f7eaedbbbe200ed986`
+  - `f1f42487ba8c36eaa351206c9c8181ef8d2b3cc5`
+  - `acbdb5bfc705352544336e5fcbe22d00f545b076`
+  - `5aadb1728eb2dc0fcc35b56dd9591a3610a2a0b2`
+- 현재 상태
+  - 최신 main에서 `Manual Weekly Report Generation` 재검증 대기
+  - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
+
 ## 현재 실행 방법
 
 GitHub Actions:
