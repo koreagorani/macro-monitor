@@ -18,7 +18,36 @@ function requiredString(value, code, message) {
   return value.trim();
 }
 
-function statusError(status, operation) {
+function sanitizeNotionMessage(message, secrets = []) {
+  if (typeof message !== "string") return null;
+  let sanitized = message.replaceAll("\n", " ").replaceAll("\r", " ");
+  for (const secret of secrets) {
+    if (typeof secret === "string" && secret.length > 0) {
+      sanitized = sanitized.replaceAll(secret, "[redacted]");
+    }
+  }
+  sanitized = sanitized
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "[id]")
+    .replace(/https?:\/\/\S+/gi, "[url]")
+    .replace(/(?:secret|ntn)_[A-Za-z0-9_-]+/g, "[token]")
+    .replace(/\s+/g, " ")
+    .trim();
+  return sanitized === "" ? null : sanitized.slice(0, 400);
+}
+
+async function readSafeApiError(response, secrets) {
+  try {
+    const body = await response.json();
+    return {
+      notionCode: typeof body?.code === "string" ? body.code : null,
+      safeMessage: sanitizeNotionMessage(body?.message, secrets)
+    };
+  } catch {
+    return { notionCode: null, safeMessage: null };
+  }
+}
+
+function statusError(status, operation, apiError = {}) {
   const codes = {
     400: "NOTION_BAD_REQUEST",
     401: "NOTION_UNAUTHORIZED",
@@ -27,8 +56,13 @@ function statusError(status, operation) {
     409: "NOTION_CONFLICT",
     429: "NOTION_RATE_LIMITED"
   };
-  const code = codes[status] ?? (status >= 500 ? "NOTION_SERVICE_ERROR" : "NOTION_API_REQUEST_FAILED");
-  return new NotionClientError(code, `Notion API ${operation} request failed with status ${status}.`, { status });
+  const code = status === 400 && apiError.notionCode === "validation_error"
+    ? "NOTION_VALIDATION_ERROR"
+    : (codes[status] ?? (status >= 500 ? "NOTION_SERVICE_ERROR" : "NOTION_API_REQUEST_FAILED"));
+  const detail = status === 400 && apiError.notionCode === "validation_error" && apiError.safeMessage
+    ? ` ${apiError.safeMessage}`
+    : "";
+  return new NotionClientError(code, `Notion API ${operation} request failed with status ${status}.${detail}`, { status });
 }
 
 function retryDelayMs(response, attempt) {
@@ -84,7 +118,8 @@ class NotionClient {
           await this.sleep(retryDelayMs(response, attempt));
           continue;
         }
-        throw statusError(response.status, operation);
+        const apiError = await readSafeApiError(response, [this.apiKey, this.dataSourceId]);
+        throw statusError(response.status, operation, apiError);
       }
 
       try {
@@ -118,6 +153,12 @@ class NotionClient {
       throw new NotionClientError("NOTION_QUERY_RESPONSE_INVALID", "Notion query response did not include results.");
     }
     return response.results.map((page) => ({ id: page.id, properties: page.properties ?? {} }));
+  }
+
+  retrieveDataSource() {
+    return this.request(`/data_sources/${encodeURIComponent(this.dataSourceId)}`, {
+      operation: "read_data_source_schema"
+    });
   }
 
   async createReportPage({ properties, markdown }) {
@@ -177,5 +218,6 @@ export {
   DEFAULT_NOTION_API_VERSION,
   NotionClient,
   NotionClientError,
-  createNotionClientFromEnv
+  createNotionClientFromEnv,
+  sanitizeNotionMessage
 };
