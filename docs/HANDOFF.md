@@ -362,6 +362,28 @@
   - 기존 D-028과 ARCHITECTURE/REPORT_SPEC 계약을 그대로 구현
 - 실제 GitHub Actions 성공 전까지 Notion 저장 단계를 완료 처리하지 않음
 
+### Notion 저장 1차 Actions 실패 및 API payload 보강
+
+- `Manual Weekly Report Notion Save` 첫 실행 실패
+  - run: `29328029596`
+  - commit: `6f48b8e9bac5e3428975104bead15aa8dd8525ef`
+  - `npm ci` 성공
+  - `npm test` 성공: 82개 전체 통과
+  - `npm run validate:examples` 성공
+  - `Save weekly report to Notion`에서 HTTP 400 실패
+- 안전한 오류 요약
+  - code: `NOTION_BAD_REQUEST`
+  - status: `400`
+  - Secret 및 Notion 원문 응답은 로그에 노출되지 않음
+- 원인 판단 및 수정
+  - Notion API `2026-03-11` page property value와 data source parent에 명시적 `type` discriminator가 필요함
+  - 모든 properties에 `type`을 추가하고 parent에 `type: data_source_id` 추가
+  - 후속 실패 분석용으로 원문 응답 없이 `query_report_key|create_page|update_properties|replace_markdown|read_back` operation만 안전한 오류 message에 포함
+  - 신규 mock 회귀 테스트 17개 통과
+- 구조적 계약 변경 없음
+  - D-028과 REPORT_SPEC의 저장 계약은 유지
+- 최신 main에서 workflow 재실행 대기
+
 ## 현재 실행 방법
 
 GitHub Actions:
