@@ -13,8 +13,9 @@
 - AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
 - weekly-report-output → Markdown 렌더링 구현 및 실제 GitHub Actions 검증 완료
 - Notion 저장 완료 조건 및 저장 계약 설계 완료
-- Notion 저장 구현 완료, 실제 GitHub Actions 검증 대기
-- 다음 작업: `Manual Weekly Report Notion Save` 최신 main 실행 및 검증
+- Notion 저장 구현 완료
+- Notion 저장 실제 GitHub Actions 검증은 실패 상태
+- 다음 작업: `Manual Weekly Report Notion Save` run `29328856682`의 저장 단계 실패 원인 분석 및 수정
 
 ## 완료된 내용
 
@@ -75,172 +76,28 @@
   - job: `evaluate-macro-review`
   - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:macro-review` 모두 성공
 
-### AI 주간 보고서 생성 설계
+### AI 주간 보고서 생성
 
 - `data/schema/weekly-report-output.schema.json` 추가
 - `data/examples/weekly-report-output.example.json` 추가
-- `scripts/validate-examples.js` 확장
 - `prompts/weekly-analysis.md` 보강
 - `docs/REPORT_SPEC.md` 보강
-- `test/weekly-report-output.test.js` 추가
-- `docs/DECISIONS.md` 갱신
-  - D-024: AI 주간 보고서 출력 계약 확정
-- 설계 검증 완료
-  - run: `29088698198`
-  - job: `evaluate-macro-review`
-  - `npm ci`, `npm test`, `npm run validate:examples`, `npm run evaluate:macro-review` 모두 성공
-
-### AI 주간 보고서 생성 구현
-
-- `src/clients/openai-client.js` 추가
-  - OpenAI Responses API 호출 클라이언트
-  - `OPENAI_API_KEY` 필수
-  - `OPENAI_MODEL` optional, 미설정 또는 빈 값이면 `gpt-4.1` 사용
-  - `OPENAI_BASE_URL`, `OPENAI_MAX_OUTPUT_TOKENS` optional
-  - API key와 원문 응답 전체를 로그에 남기지 않음
-  - 실패 시 안전한 error code/message만 반환
-- `src/report/generate-weekly-report.js` 추가
-  - `macroReviewOutput`과 `prompts/weekly-analysis.md`를 사용해 AI 보고서 생성
-  - AI 응답 JSON 파싱
-  - `weekly-report-output` schema 검증
-  - macro-review 원본과 consistency 검증
-  - AI가 `overallLevel`, `overallScore`, `confidence`, 상위 테마 ID, 영역별 score/status, 테마별 score/level을 바꾸면 실패
+- OpenAI Responses API client 구현
+- `src/report/generate-weekly-report.js` 구현
 - `scripts/run-weekly-report.js` 추가
-  - 실제 FRED 기반 숫자 파이프라인 실행
-  - macro-review 출력 생성 및 검증
-  - OpenAI API 호출
-  - weekly-report-output 생성 및 최종 schema 검증
-- `package.json`에 `generate:weekly-report` 명령 추가
 - `.github/workflows/manual-weekly-report.yml` 추가
-  - `Manual Weekly Report Generation`
-  - `FRED_API_KEY`, `OPENAI_API_KEY` 사용
-- `test/openai-client.test.js` 추가
-- `test/weekly-report-generation.test.js` 추가
-- `docs/REPORT_SPEC.md` 갱신
-- `docs/DECISIONS.md` 갱신
-  - D-025: AI 주간 보고서 생성 실행 경로 확정
-
-### AI 주간 보고서 생성 검증 실패 및 보강
-
-- `Manual Weekly Report Generation` 첫 실행 실패 확인
-  - run: `29089456395`
-  - job: `generate-weekly-report`
-  - `npm ci` 성공
-  - `npm test` 실패
-  - 이후 `npm run validate:examples`, `npm run generate:weekly-report` skipped
-- 실패 성격
-  - 실제 OpenAI 호출 전 단계에서 실패
-  - 신규 `test/weekly-report-generation.test.js` 쪽 fixture 결합도가 높아 예시 파일 정합성 변화에 취약했음
-- 1차 수정
-  - `test/weekly-report-generation.test.js`가 `macro-review.example.json`에 직접 의존하지 않도록 변경
-  - `weekly-report-output.example.json`에서 self-contained `macroReviewOutput` fixture를 생성해 generator의 schema/consistency 검증 책임만 테스트
-  - JSON deep clone helper로 `structuredClone` 의존 제거
-  - 수정 커밋: `f5b8dbb3b2270bbbced5ee81417e10a82d5f9937`
-- 2차 보강
-  - OpenAI client가 `text.format.type = "json_object"`를 사용하도록 변경
-  - OpenAI client 테스트에서 JSON output 요청 여부를 검증하도록 추가
-  - `docs/REPORT_SPEC.md`, `docs/DECISIONS.md`에 JSON mode 사용 방침 기록
-  - 수정 커밋:
-    - `3a7a401b807a72db242625e21fa4a30d253ba0f9`
-    - `2cb5645958f4c650e2d04af6393d65a1e530f8e7`
-    - `d78f7beca5452c542364899f9dd4bd8b41cb3ea3`
-    - `a9683a4db20a13c657b33bcdd2a077f7e440b86e`
-
-### AI 주간 보고서 생성 2차 Actions 실패 및 테스트 보강
-
-- `Manual Weekly Report Generation` 재실행 실패 확인
-  - run: `29188697625`
-  - commit: `75dc2e780d8a67bff9d6ddb75696356d15fdbe02`
-  - job: `generate-weekly-report`
-  - `npm ci` 성공
-  - `npm test`에서 58개 중 57개 통과, 1개 실패
-  - `npm run validate:examples`, `npm run generate:weekly-report` skipped
-- 실패 원인
-  - `test/weekly-report-generation.test.js`가 프롬프트의 안전 규칙을 정확한 연속 문자열 `입력에 없는 최신 뉴스`로 검사함
-  - 프롬프트에는 같은 의미의 금지 규칙이 있었지만 문장 구성 차이로 테스트가 실패함
-  - 실제 FRED 수집 및 OpenAI API 호출 전 단계의 테스트 결합도 문제임
-- 수정
-  - 안전 규칙 검증을 삭제하거나 약화하지 않고 의미별 필수 문구 조각을 검사하도록 변경
-  - 숫자 재계산, 위험 등급·임계값 변경, 입력에 없는 최신 뉴스 생성, 특정 종목 추천, 개인 보유정보 추정 금지를 계속 검증
-  - 수정 커밋: `dba09296b4b8c0c98a1c0037835b0d75e0abe1f5`
-- 현재 상태
-  - 최신 main에서 `Manual Weekly Report Generation` 재검증 대기
-  - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
-
-### AI 주간 보고서 생성 3차 Actions 실패 — OpenAI API 429
-
-- `Manual Weekly Report Generation` 재실행 실패 확인
-  - run: `29189293756`
-  - job: `generate-weekly-report`
-  - `npm ci` 성공
-  - `npm test` 성공: 58개 전체 통과
-  - `npm run validate:examples` 성공
-  - `npm run generate:weekly-report`에서 실패
-- 안전한 오류 요약
-  - code: `OPENAI_API_REQUEST_FAILED`
-  - message: `OpenAI API request failed with status 429.`
-  - API key와 OpenAI 원문 응답은 로그에 노출되지 않음
-- 판단
-  - 이전 테스트 결합도 문제는 해결됨
-  - 실제 FRED 기반 파이프라인 뒤 OpenAI API 호출 단계까지 도달함
-  - HTTP 429는 OpenAI API 사용량 한도, rate limit 또는 API 결제·크레딧 상태 확인이 필요함
-  - ChatGPT 구독과 OpenAI API 결제·크레딧은 별도일 수 있음
-- 현재 상태
-  - OpenAI API 계정의 Billing/Usage/Limits 확인 후 최신 main에서 재실행 대기
-  - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
-
-### AI 주간 보고서 생성 4차 Actions 실패 — schema 불일치 및 Structured Outputs 보강
-
-- `Manual Weekly Report Generation` 재실행 실패 확인
-  - run: `29189631808`
-  - job: `generate-weekly-report`
-  - `npm ci`, `npm test`, `npm run validate:examples` 성공
-  - OpenAI API 결제 후 실제 API 호출 성공
-  - `npm run generate:weekly-report`의 로컬 weekly-report-output schema 검증에서 실패
-- 실패 원인
-  - 기존 JSON mode는 유효한 JSON만 보장하고 weekly-report-output의 필드명과 중첩 구조는 강제하지 않음
-  - AI가 `sourceMacroReview`, `portfolioThemes`, `hedgeAndDefense`, `nextWeekChecklist` 등을 schema와 다른 구조로 반환함
-  - 로컬 schema 검증이 잘못된 출력을 정상적으로 차단함
-- 보강
-  - Responses API 요청을 `text.format.type = "json_schema"`, `strict: true` Structured Outputs로 변경
-  - `data/schema/weekly-report-output.schema.json`을 API 출력 schema로 전달
-  - 문서 메타데이터인 `$schema`, `$id`만 API 요청용 schema에서 제거
-  - OpenAI client의 요청별 response format override와 관련 테스트 추가
-  - 로컬 schema 검증과 macro-review consistency 검증은 그대로 유지
-  - 관련 결정: D-026
-- 수정 커밋
-  - `726f0ec0048b48988982c228a148d71ec52c2534`
-  - `5aebbb41d8b2704d1963366e0bacf1e68ed2f9c4`
-  - `b41caa8c23ecc4bd38da61f7eaedbbbe200ed986`
-  - `f1f42487ba8c36eaa351206c9c8181ef8d2b3cc5`
-  - `acbdb5bfc705352544336e5fcbe22d00f545b076`
-  - `5aadb1728eb2dc0fcc35b56dd9591a3610a2a0b2`
-- 현재 상태
-  - 최신 main에서 `Manual Weekly Report Generation` 재검증 대기
-  - Actions 성공 전까지 AI 주간 보고서 생성 단계를 완료 처리하지 않음
-
-### AI 주간 보고서 생성 실제 Actions 검증 완료
-
-- `Manual Weekly Report Generation` 최신 main 실행 성공
+- `Manual Weekly Report Generation` 최신 main 실행 성공 확인
   - run: `29189858304`
   - job: `generate-weekly-report`
   - conclusion: `success`
-- 필수 단계 전체 성공
-  - Install dependencies
-  - Run tests
-  - Validate synthetic examples
-  - Generate weekly report
 - 실제 검증 범위
   - 실제 FRED 기반 macro-review 생성
   - OpenAI Responses API Structured Outputs 호출
   - weekly-report-output JSON 생성
   - weekly-report-output schema 검증
   - macro-review consistency 검증
-- 완료 판정
-  - AI 주간 보고서 생성 단계 완료
-  - 다음 구현은 weekly-report-output → Markdown 렌더링
 
-### weekly-report-output → Markdown 렌더링 구현
+### weekly-report-output → Markdown 렌더링
 
 - `src/render/render-weekly-report-markdown.js` 추가
   - weekly-report-output만 입력받는 순수 동기 렌더러
@@ -249,38 +106,16 @@
   - 빈 배열과 일부 누락 필드 안전 처리
 - `scripts/run-weekly-report.js`의 live weekly-report 파이프라인을 재사용 가능하도록 분리
 - `scripts/render-weekly-report-markdown.js` 추가
-  - 실제 FRED → macro-review → OpenAI weekly-report-output → Markdown 흐름
-  - 기본 stdout 출력
-  - `REPORT_MARKDOWN_OUTPUT` 지정 시 UTF-8 파일 출력
 - `package.json`에 `render:weekly-report` 추가
 - `test/weekly-report-markdown.test.js` 추가
-  - 필수 섹션
-  - 개인 보유정보 비노출
-  - 결정론적 순수 함수
-  - 빈 배열·누락 필드
-  - Markdown 표 escape 검증
 - `.github/workflows/manual-weekly-report-markdown.yml` 추가
-  - workflow: `Manual Weekly Report Markdown Render`
-  - preview는 앞부분 24줄만 로그 출력
-  - 전체 Markdown은 7일 보관 `weekly-report-markdown` artifact로 업로드
 - `docs/REPORT_SPEC.md`에 Markdown 출력 계약 반영
 - `docs/DECISIONS.md`에 D-027 기록
-- 실제 GitHub Actions 검증 대기
-
-### Markdown 렌더링 실제 Actions 검증 완료
-
-- `Manual Weekly Report Markdown Render` 최신 main 실행 성공
+- `Manual Weekly Report Markdown Render` 최신 main 실행 성공 확인
   - run: `29190592678`
   - commit: `5ac3c127cf3939b289679761ad9cf9f03c989bb2`
   - job: `render-weekly-report-markdown`
   - conclusion: `success`
-- 필수 단계 전체 성공
-  - Install dependencies
-  - Run tests
-  - Validate synthetic examples
-  - Render weekly report Markdown
-  - Preview Markdown
-  - Upload Markdown artifact
 - 실제 출력 확인
   - 기준일: `2026-07-12`
   - 전체 위험: `정상`
@@ -293,9 +128,6 @@
   - size: 1,722 bytes
   - expires: `2026-07-19T11:18:40Z`
   - 저장소 커밋 없이 Actions artifact로만 보관
-- 완료 판정
-  - weekly-report-output → Markdown 렌더링 단계 완료
-  - 다음 구현은 Notion 저장
 
 ### Notion 저장 계약 및 완료 조건 설계
 
@@ -330,7 +162,6 @@
   - `docs/ARCHITECTURE.md`
   - `docs/REPORT_SPEC.md`
   - `docs/DECISIONS.md` D-028
-- Notion 저장 구현은 아래 항목으로 완료했으며 실제 Actions 검증은 대기 중
 
 ### Notion 저장 구현
 
@@ -354,13 +185,11 @@
   - `test/notion-client.test.js`
   - `test/notion-report-payload.test.js`
   - `test/notion-save.test.js`
-  - 로컬 신규 테스트 17개 통과
 - `.github/workflows/manual-weekly-report-notion.yml` 추가
   - workflow: `Manual Weekly Report Notion Save`
   - artifact와 전체 보고서 로그 출력 없음
 - 구조적 계약 변경 없음
   - 기존 D-028과 ARCHITECTURE/REPORT_SPEC 계약을 그대로 구현
-- 실제 GitHub Actions 성공 전까지 Notion 저장 단계를 완료 처리하지 않음
 
 ### Notion 저장 1차 Actions 실패 및 API payload 보강
 
@@ -382,7 +211,6 @@
   - 신규 mock 회귀 테스트 17개 통과
 - 구조적 계약 변경 없음
   - D-028과 REPORT_SPEC의 저장 계약은 유지
-- 최신 main에서 workflow 재실행 대기
 
 ### Notion 저장 2차 Actions 실패 및 안전한 진단 보강
 
@@ -402,7 +230,31 @@
   - Notion 400 validation error는 ID·token·URL을 제거하고 400자로 제한한 validation code/message만 출력
   - Markdown 본문과 원문 API 응답 전체는 출력하지 않음
   - mock 회귀 테스트 19개 통과
-- 최신 main에서 새 workflow run 대기
+
+### Notion 저장 3차 Actions 실패
+
+- `Manual Weekly Report Notion Save` 재실행 실패
+  - run: `29328856682`
+  - url: `https://github.com/koreagorani/macro-monitor/actions/runs/29328856682`
+  - job: `save-weekly-report-notion`
+  - conclusion: `failure`
+- 확인된 단계
+  - Set up job: success
+  - Check out repository: success
+  - Set up Node.js: success
+  - Install dependencies: success
+  - Run tests: success
+  - Validate synthetic examples: success
+  - Save weekly report to Notion: failure
+- 판단
+  - 테스트와 합성 예시 검증은 통과함
+  - 실패는 Notion 저장 단계에서 재현됨
+  - 이전 2차 실패 후 추가한 안전한 진단이 최신 run의 실패 원인 분석 출발점
+  - 실제 저장 성공 전까지 Notion 저장 단계를 완료 처리하지 않음
+- 다음 작업
+  - run `29328856682`의 `Save weekly report to Notion` 단계 로그를 기준으로 안전한 validation message 확인
+  - data source property 계약, native Markdown create payload, parent/data source payload를 재검토
+  - 원문 Notion 응답, page URL, data source ID, Secret, 전체 Markdown 본문은 로그나 저장소에 남기지 않음
 
 ## 현재 실행 방법
 
@@ -467,6 +319,12 @@ Node.js 환경:
 - 실제 FRED 기반 macro-review 생성 후 OpenAI Structured Outputs 호출 성공
 - weekly-report-output schema 및 macro-review consistency 검증 성공
 - `Manual Weekly Report Generation` run `29189858304` 성공
+- `Manual Weekly Report Markdown Render` run `29190592678` 성공
+
+검증 실패 기록:
+- `Manual Weekly Report Notion Save` run `29328029596` 실패
+- `Manual Weekly Report Notion Save` run `29328469168` 실패
+- `Manual Weekly Report Notion Save` run `29328856682` 실패
 
 ## 다음 세션이 읽을 문서
 
@@ -481,9 +339,17 @@ Notion 저장 Actions 검증 및 실패 분석 시 필수:
 - `data/schema/weekly-report-output.schema.json`
 - `src/render/render-weekly-report-markdown.js`
 - `scripts/run-weekly-report.js`
+- `src/clients/notion-client.js`
+- `src/notion/build-notion-report-payload.js`
+- `src/notion/save-weekly-report-to-notion.js`
+- `.github/workflows/manual-weekly-report-notion.yml`
 
 ## 미해결
 
-- 최신 main에서 `Manual Weekly Report Notion Save` 실제 실행 및 검증
+- run `29328856682`의 Notion 저장 실패 원인 분석
+- `Save weekly report to Notion` 단계의 안전한 validation message 확인
+- Notion create/update payload 수정
+- mock 회귀 테스트 보강
+- 최신 main에서 `Manual Weekly Report Notion Save` 재실행 및 성공 검증
 - 성공 후 run ID와 `created|updated`, read-back 검증 결과를 HANDOFF에 기록
 - Actions 성공 후 Notion 저장 단계를 완료 처리하고 Telegram 알림 구현으로 이동
