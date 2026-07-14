@@ -55,7 +55,7 @@ test("NotionClient uses native Markdown create and full-content replacement", as
   await client.replacePageMarkdown({ pageId: "page-id", markdown: "# updated" });
 
   assert.deepEqual(JSON.parse(requests[0].options.body), {
-    parent: { data_source_id: "source" },
+    parent: { type: "data_source_id", data_source_id: "source" },
     properties: { Name: { title: [] } },
     markdown: "# report"
   });
@@ -100,6 +100,7 @@ test("NotionClient classifies errors without exposing token or raw response", as
       assert.ok(error instanceof NotionClientError);
       assert.equal(error.code, "NOTION_FORBIDDEN");
       assert.equal(error.status, 403);
+      assert.match(error.message, /query_report_key/);
       assert.doesNotMatch(error.message, /do-not-expose|also-private|raw private body/);
       return true;
     }
