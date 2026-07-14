@@ -107,6 +107,27 @@ test("NotionClient classifies errors without exposing token or raw response", as
   );
 });
 
+test("NotionClient exposes only sanitized validation details", async () => {
+  const client = new NotionClient({
+    apiKey: "secret_token_value",
+    dataSourceId: "12345678-1234-1234-1234-123456789012",
+    maxRetries: 0,
+    fetchImpl: async () => jsonResponse({
+      code: "validation_error",
+      message: "body.properties.Report Key failed for 12345678-1234-1234-1234-123456789012 using secret_token_value"
+    }, 400)
+  });
+  await assert.rejects(
+    client.createReportPage({ properties: {}, markdown: "# private report" }),
+    (error) => {
+      assert.equal(error.code, "NOTION_VALIDATION_ERROR");
+      assert.match(error.message, /body\.properties\.Report Key/);
+      assert.doesNotMatch(error.message, /12345678|secret_token_value|private report/);
+      return true;
+    }
+  );
+});
+
 for (const [status, code] of [
   [401, "NOTION_UNAUTHORIZED"],
   [403, "NOTION_FORBIDDEN"],
