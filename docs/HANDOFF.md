@@ -384,6 +384,26 @@
   - D-028과 REPORT_SPEC의 저장 계약은 유지
 - 최신 main에서 workflow 재실행 대기
 
+### Notion 저장 2차 Actions 실패 및 안전한 진단 보강
+
+- `Manual Weekly Report Notion Save` 재실행 실패
+  - run: `29328469168`
+  - commit: `352111a0a7d84edfc0cf1c8dcb4522b6e23da168`
+  - `npm test` 성공: 82개 전체 통과
+  - `npm run validate:examples` 성공
+  - `create_page`에서 HTTP 400 실패
+- 확인된 범위
+  - Notion 인증과 data source 접근 성공
+  - Report Key query 성공
+  - 신규 page create payload 검증 단계에서만 실패
+- 진단 보강
+  - 저장 전 대상 data source의 8개 property 이름과 타입을 계약과 대조
+  - schema 불일치 시 `NOTION_DATA_SOURCE_SCHEMA_MISMATCH`와 안전한 property/type 차이만 출력
+  - Notion 400 validation error는 ID·token·URL을 제거하고 400자로 제한한 validation code/message만 출력
+  - Markdown 본문과 원문 API 응답 전체는 출력하지 않음
+  - mock 회귀 테스트 19개 통과
+- 최신 main에서 새 workflow run 대기
+
 ## 현재 실행 방법
 
 GitHub Actions:
