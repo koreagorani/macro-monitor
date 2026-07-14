@@ -17,7 +17,8 @@
     "generate:weekly-report": "node scripts/run-weekly-report.js",
     "test": "node --test",
     "validate:examples": "node scripts/validate-examples.js",
-    "render:weekly-report": "node scripts/render-weekly-report-markdown.js"
+    "render:weekly-report": "node scripts/render-weekly-report-markdown.js",
+    "save:weekly-report:notion": "node scripts/save-weekly-report-to-notion.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
