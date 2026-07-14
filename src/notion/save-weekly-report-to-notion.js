@@ -8,6 +8,32 @@ class NotionReportSaveError extends Error {
   }
 }
 
+const REQUIRED_DATA_SOURCE_PROPERTIES = {
+  Name: "title",
+  "Report Date": "date",
+  "Generated At": "date",
+  "Overall Risk": "select",
+  "Overall Score": "number",
+  Confidence: "select",
+  "Schema Version": "rich_text",
+  "Report Key": "rich_text"
+};
+
+function assertDataSourceSchema(dataSource) {
+  const properties = dataSource?.properties ?? {};
+  const mismatches = Object.entries(REQUIRED_DATA_SOURCE_PROPERTIES).flatMap(([name, expectedType]) => {
+    const actualType = properties[name]?.type;
+    if (actualType === expectedType) return [];
+    return [`${name}:${actualType ?? "missing"}->${expectedType}`];
+  });
+  if (mismatches.length > 0) {
+    throw new NotionReportSaveError(
+      "NOTION_DATA_SOURCE_SCHEMA_MISMATCH",
+      `Notion data source schema does not match the report contract: ${mismatches.join(", ")}.`
+    );
+  }
+}
+
 function plainText(items) {
   return Array.isArray(items)
     ? items.map((item) => item?.plain_text ?? item?.text?.content ?? "").join("")
@@ -65,6 +91,8 @@ function verifyReadBack({ page, pageMarkdown, expected }) {
 
 async function saveWeeklyReportToNotion({ notionClient, weeklyReportOutput, markdown }) {
   const payload = buildNotionReportPayload({ weeklyReportOutput, markdown });
+  const dataSource = await notionClient.retrieveDataSource();
+  assertDataSourceSchema(dataSource);
   const matches = await notionClient.queryPagesByReportKey(payload.reportKey);
 
   if (matches.length > 1) {
@@ -101,6 +129,8 @@ async function saveWeeklyReportToNotion({ notionClient, weeklyReportOutput, mark
 
 export {
   NotionReportSaveError,
+  REQUIRED_DATA_SOURCE_PROPERTIES,
+  assertDataSourceSchema,
   readStoredMetadata,
   saveWeeklyReportToNotion,
   verifyReadBack
