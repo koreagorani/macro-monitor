@@ -13,7 +13,8 @@
 - AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
 - weekly-report-output → Markdown 렌더링 구현 및 실제 GitHub Actions 검증 완료
 - Notion 저장 완료 조건 및 저장 계약 설계 완료
-- 다음 작업: Notion 저장 구현
+- Notion 저장 구현 완료, 실제 GitHub Actions 검증 대기
+- 다음 작업: `Manual Weekly Report Notion Save` 최신 main 실행 및 검증
 
 ## 완료된 내용
 
@@ -329,11 +330,42 @@
   - `docs/ARCHITECTURE.md`
   - `docs/REPORT_SPEC.md`
   - `docs/DECISIONS.md` D-028
-- 아직 Notion API 호출 코드와 workflow는 구현하지 않음
+- Notion 저장 구현은 아래 항목으로 완료했으며 실제 Actions 검증은 대기 중
+
+### Notion 저장 구현
+
+- `src/clients/notion-client.js`
+  - Notion API version `2026-03-11` 기본값
+  - Report Key data source query, native Markdown create, properties update, Markdown `replace_content`, read-back 지원
+  - 429와 일시적 5xx 제한 재시도
+  - Secret, data source ID, page ID·URL, 원문 응답 비로그 정책 적용
+- `src/notion/build-notion-report-payload.js`
+  - weekly-report-output의 허용된 메타데이터만 properties로 whitelist 매핑
+  - `Report Key = weekly-report:{asOf}`
+  - 전체 JSON과 개인 보유정보는 payload에 포함하지 않음
+- `src/notion/save-weekly-report-to-notion.js`
+  - 0건 create, 1건 update, 2건 이상 `NOTION_DUPLICATE_REPORT_KEY` 실패
+  - 저장 후 properties와 Markdown의 제목·기준일·필수 주의 문구 read-back 검증
+- `scripts/save-weekly-report-to-notion.js`
+  - 실제 FRED → macro-review → OpenAI weekly-report-output → Markdown → Notion 저장
+  - 성공 출력은 `created|updated`, 기준일, 검증 여부만 포함
+- `package.json`에 `save:weekly-report:notion` 추가
+- mock 테스트 추가
+  - `test/notion-client.test.js`
+  - `test/notion-report-payload.test.js`
+  - `test/notion-save.test.js`
+  - 로컬 신규 테스트 17개 통과
+- `.github/workflows/manual-weekly-report-notion.yml` 추가
+  - workflow: `Manual Weekly Report Notion Save`
+  - artifact와 전체 보고서 로그 출력 없음
+- 구조적 계약 변경 없음
+  - 기존 D-028과 ARCHITECTURE/REPORT_SPEC 계약을 그대로 구현
+- 실제 GitHub Actions 성공 전까지 Notion 저장 단계를 완료 처리하지 않음
 
 ## 현재 실행 방법
 
 GitHub Actions:
+- Notion 저장 검증: Actions → `Manual Weekly Report Notion Save`
 - Markdown 렌더링 검증: Actions → `Manual Weekly Report Markdown Render`
 - AI 주간 보고서 생성 검증: Actions → `Manual Weekly Report Generation`
 - 통합 매크로 리뷰 검증: Actions → `Manual Macro Review Evaluation`
@@ -345,13 +377,17 @@ GitHub Actions:
 - 저장소 Secret 필요:
   - `FRED_API_KEY`
   - `OPENAI_API_KEY`
+  - `NOTION_API_KEY`
+  - `NOTION_DATA_SOURCE_ID`
 - 선택 repository variable:
   - `OPENAI_MODEL`
+  - `NOTION_API_VERSION` (기본 `2026-03-11`)
 
 Node.js 환경:
 - `npm ci --no-audit --no-fund`
 - `npm test`
 - `npm run validate:examples`
+- `npm run save:weekly-report:notion -- YYYY-MM-DD`
 - `npm run render:weekly-report -- YYYY-MM-DD`
 - `npm run generate:weekly-report -- YYYY-MM-DD`
 - `npm run evaluate:macro-review -- YYYY-MM-DD`
@@ -392,7 +428,7 @@ Node.js 환경:
 
 ## 다음 세션이 읽을 문서
 
-Notion 저장 구현 시 필수:
+Notion 저장 Actions 검증 및 실패 분석 시 필수:
 - `AGENTS.md`
 - `docs/ARCHITECTURE.md`
 - `docs/REPORT_SPEC.md`
@@ -406,7 +442,6 @@ Notion 저장 구현 시 필수:
 
 ## 미해결
 
-- Notion client, payload adapter, upsert orchestration 구현
-- Notion mock 테스트와 live 저장 script 구현
-- `Manual Weekly Report Notion Save` workflow 구현 및 실제 검증
-- 이후 Telegram 알림 구현
+- 최신 main에서 `Manual Weekly Report Notion Save` 실제 실행 및 검증
+- 성공 후 run ID와 `created|updated`, read-back 검증 결과를 HANDOFF에 기록
+- Actions 성공 후 Notion 저장 단계를 완료 처리하고 Telegram 알림 구현으로 이동
