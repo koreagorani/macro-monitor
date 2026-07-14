@@ -18,7 +18,7 @@ function requiredString(value, code, message) {
   return value.trim();
 }
 
-function statusError(status) {
+function statusError(status, operation) {
   const codes = {
     400: "NOTION_BAD_REQUEST",
     401: "NOTION_UNAUTHORIZED",
@@ -28,7 +28,7 @@ function statusError(status) {
     429: "NOTION_RATE_LIMITED"
   };
   const code = codes[status] ?? (status >= 500 ? "NOTION_SERVICE_ERROR" : "NOTION_API_REQUEST_FAILED");
-  return new NotionClientError(code, `Notion API request failed with status ${status}.`, { status });
+  return new NotionClientError(code, `Notion API ${operation} request failed with status ${status}.`, { status });
 }
 
 function retryDelayMs(response, attempt) {
@@ -58,7 +58,7 @@ class NotionClient {
     this.sleep = sleep;
   }
 
-  async request(path, { method = "GET", body = null } = {}) {
+  async request(path, { method = "GET", body = null, operation = "unknown" } = {}) {
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
       let response;
       try {
@@ -74,7 +74,7 @@ class NotionClient {
       } catch (error) {
         throw new NotionClientError(
           "NOTION_NETWORK_ERROR",
-          "Notion API request failed before receiving a response.",
+          `Notion API ${operation} request failed before receiving a response.`,
           { cause: error }
         );
       }
@@ -84,7 +84,7 @@ class NotionClient {
           await this.sleep(retryDelayMs(response, attempt));
           continue;
         }
-        throw statusError(response.status);
+        throw statusError(response.status, operation);
       }
 
       try {
@@ -92,7 +92,7 @@ class NotionClient {
       } catch (error) {
         throw new NotionClientError(
           "NOTION_INVALID_JSON_RESPONSE",
-          "Notion API response could not be parsed as JSON.",
+          `Notion API ${operation} response could not be parsed as JSON.`,
           { status: response.status, cause: error }
         );
       }
@@ -104,6 +104,7 @@ class NotionClient {
   async queryPagesByReportKey(reportKey) {
     const response = await this.request(`/data_sources/${encodeURIComponent(this.dataSourceId)}/query`, {
       method: "POST",
+      operation: "query_report_key",
       body: {
         filter: {
           property: "Report Key",
@@ -122,8 +123,9 @@ class NotionClient {
   async createReportPage({ properties, markdown }) {
     const response = await this.request("/pages", {
       method: "POST",
+      operation: "create_page",
       body: {
-        parent: { data_source_id: this.dataSourceId },
+        parent: { type: "data_source_id", data_source_id: this.dataSourceId },
         properties,
         markdown
       }
@@ -137,6 +139,7 @@ class NotionClient {
   async updatePageProperties({ pageId, properties }) {
     await this.request(`/pages/${encodeURIComponent(pageId)}`, {
       method: "PATCH",
+      operation: "update_properties",
       body: { properties }
     });
   }
@@ -144,6 +147,7 @@ class NotionClient {
   async replacePageMarkdown({ pageId, markdown }) {
     await this.request(`/pages/${encodeURIComponent(pageId)}/markdown`, {
       method: "PATCH",
+      operation: "replace_markdown",
       body: {
         type: "replace_content",
         replace_content: { new_str: markdown }
@@ -152,11 +156,11 @@ class NotionClient {
   }
 
   retrievePage(pageId) {
-    return this.request(`/pages/${encodeURIComponent(pageId)}`);
+    return this.request(`/pages/${encodeURIComponent(pageId)}`, { operation: "read_back_properties" });
   }
 
   retrievePageMarkdown(pageId) {
-    return this.request(`/pages/${encodeURIComponent(pageId)}/markdown`);
+    return this.request(`/pages/${encodeURIComponent(pageId)}/markdown`, { operation: "read_back_markdown" });
   }
 }
 
