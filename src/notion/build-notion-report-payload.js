@@ -43,14 +43,14 @@ function buildNotionReportPayload({ weeklyReportOutput, markdown }) {
     reportKey,
     markdown,
     properties: {
-      Name: { title: textValue(title) },
-      "Report Date": { date: { start: asOf } },
-      "Generated At": { date: { start: generatedAt } },
-      "Overall Risk": { select: { name: overallLevel } },
-      "Overall Score": { number: source.overallScore },
-      Confidence: { select: { name: confidence } },
-      "Schema Version": { rich_text: textValue(schemaVersion) },
-      "Report Key": { rich_text: textValue(reportKey) }
+      Name: { type: "title", title: textValue(title) },
+      "Report Date": { type: "date", date: { start: asOf } },
+      "Generated At": { type: "date", date: { start: generatedAt } },
+      "Overall Risk": { type: "select", select: { name: overallLevel } },
+      "Overall Score": { type: "number", number: source.overallScore },
+      Confidence: { type: "select", select: { name: confidence } },
+      "Schema Version": { type: "rich_text", rich_text: textValue(schemaVersion) },
+      "Report Key": { type: "rich_text", rich_text: textValue(reportKey) }
     },
     expected: { title, asOf, generatedAt, overallLevel, overallScore: source.overallScore, confidence, schemaVersion, reportKey, disclosure }
   };
