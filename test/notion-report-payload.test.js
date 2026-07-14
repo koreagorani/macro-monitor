@@ -29,12 +29,16 @@ test("buildNotionReportPayload maps only the documented metadata", () => {
   const payload = buildNotionReportPayload({ weeklyReportOutput: input, markdown: "# report" });
 
   assert.equal(payload.reportKey, "weekly-report:2026-07-12");
+  assert.equal(payload.properties.Name.type, "title");
   assert.equal(payload.properties.Name.title[0].text.content, input.report.title);
+  assert.equal(payload.properties["Report Date"].type, "date");
   assert.equal(payload.properties["Report Date"].date.start, input.asOf);
   assert.equal(payload.properties["Generated At"].date.start, input.generatedAt);
   assert.equal(payload.properties["Overall Risk"].select.name, "normal");
+  assert.equal(payload.properties["Overall Score"].type, "number");
   assert.equal(payload.properties["Overall Score"].number, 0.2);
   assert.equal(payload.properties.Confidence.select.name, "normal");
+  assert.equal(payload.properties["Schema Version"].type, "rich_text");
   assert.equal(payload.properties["Schema Version"].rich_text[0].text.content, "1.0.0");
   assert.equal(payload.properties["Report Key"].rich_text[0].text.content, payload.reportKey);
   assert.equal(payload.markdown, "# report");
