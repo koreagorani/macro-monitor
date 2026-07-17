@@ -64,32 +64,44 @@ function sameDateTime(left, right) {
   return Number.isFinite(leftTime) && Number.isFinite(rightTime) && leftTime === rightTime;
 }
 
-function verifyReadBack({ page, pageMarkdown, expected }) {
+function readBackMismatches({ page, pageMarkdown, expected }) {
   const stored = readStoredMetadata(page?.properties);
-  const propertiesValid = stored.title === expected.title
-    && stored.asOf === expected.asOf
-    && sameDateTime(stored.generatedAt, expected.generatedAt)
-    && stored.overallLevel === expected.overallLevel
-    && sameScore(stored.overallScore, expected.overallScore)
-    && stored.confidence === expected.confidence
-    && stored.schemaVersion === expected.schemaVersion
-    && stored.reportKey === expected.reportKey;
   const markdown = pageMarkdown?.markdown;
-  const markdownValid = pageMarkdown?.truncated !== true
-    && typeof markdown === "string"
-    && markdown.includes(expected.title)
-    && markdown.includes(expected.asOf)
-    && markdown.includes(expected.disclosure);
+  const checks = {
+    "property.Name": stored.title === expected.title,
+    "property.Report Date": stored.asOf === expected.asOf,
+    "property.Generated At": sameDateTime(stored.generatedAt, expected.generatedAt),
+    "property.Overall Risk": stored.overallLevel === expected.overallLevel,
+    "property.Overall Score": sameScore(stored.overallScore, expected.overallScore),
+    "property.Confidence": stored.confidence === expected.confidence,
+    "property.Schema Version": stored.schemaVersion === expected.schemaVersion,
+    "property.Report Key": stored.reportKey === expected.reportKey,
+    "markdown.notTruncated": pageMarkdown?.truncated !== true,
+    "markdown.present": typeof markdown === "string",
+    "markdown.title": typeof markdown === "string" && markdown.includes(expected.title),
+    "markdown.asOf": typeof markdown === "string" && markdown.includes(expected.asOf),
+    "markdown.disclosure": typeof markdown === "string" && markdown.includes(expected.disclosure)
+  };
+  return Object.entries(checks).filter(([, valid]) => !valid).map(([name]) => name);
+}
 
-  if (!propertiesValid || !markdownValid) {
+function verifyReadBack({ page, pageMarkdown, expected }) {
+  const mismatches = readBackMismatches({ page, pageMarkdown, expected });
+  if (mismatches.length > 0) {
     throw new NotionReportSaveError(
       "NOTION_READ_BACK_VERIFICATION_FAILED",
-      "Saved Notion report did not pass metadata and Markdown verification."
+      `Saved Notion report did not pass read-back verification: ${mismatches.join(", ")}.`
     );
   }
 }
 
-async function saveWeeklyReportToNotion({ notionClient, weeklyReportOutput, markdown }) {
+async function saveWeeklyReportToNotion({
+  notionClient,
+  weeklyReportOutput,
+  markdown,
+  readBackAttempts = 3,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+}) {
   const payload = buildNotionReportPayload({ weeklyReportOutput, markdown });
   const dataSource = await notionClient.retrieveDataSource();
   assertDataSourceSchema(dataSource);
@@ -118,11 +130,24 @@ async function saveWeeklyReportToNotion({ notionClient, weeklyReportOutput, mark
     status = "updated";
   }
 
-  const [page, pageMarkdown] = await Promise.all([
-    notionClient.retrievePage(pageId),
-    notionClient.retrievePageMarkdown(pageId)
-  ]);
-  verifyReadBack({ page, pageMarkdown, expected: payload.expected });
+  let lastError;
+  for (let attempt = 0; attempt < readBackAttempts; attempt += 1) {
+    const [page, pageMarkdown] = await Promise.all([
+      notionClient.retrievePage(pageId),
+      notionClient.retrievePageMarkdown(pageId)
+    ]);
+    try {
+      verifyReadBack({ page, pageMarkdown, expected: payload.expected });
+      lastError = null;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt + 1 < readBackAttempts) {
+        await sleep(500 * (attempt + 1));
+      }
+    }
+  }
+  if (lastError) throw lastError;
 
   return { status, asOf: payload.expected.asOf, verified: true };
 }
@@ -131,6 +156,7 @@ export {
   NotionReportSaveError,
   REQUIRED_DATA_SOURCE_PROPERTIES,
   assertDataSourceSchema,
+  readBackMismatches,
   readStoredMetadata,
   saveWeeklyReportToNotion,
   verifyReadBack
