@@ -107,9 +107,40 @@ test("saveWeeklyReportToNotion fails when read-back content differs", async () =
     retrievePageMarkdown: async () => readBack.pageMarkdown
   };
   await assert.rejects(
-    saveWeeklyReportToNotion({ notionClient, weeklyReportOutput: weeklyReport(), markdown }),
+    saveWeeklyReportToNotion({
+      notionClient,
+      weeklyReportOutput: weeklyReport(),
+      markdown,
+      readBackAttempts: 1
+    }),
     (error) => error.code === "NOTION_READ_BACK_VERIFICATION_FAILED"
+      && /markdown\.title/.test(error.message)
   );
+});
+
+test("saveWeeklyReportToNotion retries temporarily stale read-back", async () => {
+  const readBack = verifiedReadBack();
+  let markdownReads = 0;
+  const delays = [];
+  const notionClient = {
+    retrieveDataSource: async () => dataSourceSchema(),
+    queryPagesByReportKey: async () => [],
+    createReportPage: async () => ({ id: "page-id" }),
+    retrievePage: async () => readBack.page,
+    retrievePageMarkdown: async () => {
+      markdownReads += 1;
+      return markdownReads === 1 ? { markdown: "", truncated: false } : readBack.pageMarkdown;
+    }
+  };
+  const result = await saveWeeklyReportToNotion({
+    notionClient,
+    weeklyReportOutput: weeklyReport(),
+    markdown,
+    sleep: async (ms) => delays.push(ms)
+  });
+  assert.equal(result.verified, true);
+  assert.equal(markdownReads, 2);
+  assert.deepEqual(delays, [500]);
 });
 
 test("saveWeeklyReportToNotion fails before create when data source schema differs", async () => {
