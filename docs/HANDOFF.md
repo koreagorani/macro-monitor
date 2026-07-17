@@ -296,6 +296,23 @@
   - Notion 관련 mock 테스트 20개 통과
 - 최신 main에서 새 workflow run 대기
 
+### Notion 저장 6차 Actions 실패 — Generated At 정밀도 보정
+
+- `Manual Weekly Report Notion Save` 재실행 실패
+  - run: `29569288729`
+  - job: `87849029440`
+  - 테스트와 합성 예시 검증 성공
+  - 기존 Report Key page update 및 Markdown 저장 성공
+  - read-back 불일치: `property.Generated At` 단일 항목
+- 확인된 정상 항목
+  - Name, Report Date, Overall Risk, Overall Score, Confidence, Schema Version, Report Key
+  - Markdown 존재·비절단·제목·기준일·필수 주의 문구
+- 보정
+  - Notion date property의 분 단위 정규화를 고려해 Generated At을 60초 이내 오차로 검증
+  - 원본 generatedAt 값은 payload에 그대로 저장하며 점수·등급·시각을 재계산하지 않음
+  - 관련 mock 테스트 추가, Notion 테스트 21개 통과
+- 최신 main에서 새 workflow run 대기
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -367,6 +384,7 @@ Node.js 환경:
 - `Manual Weekly Report Notion Save` run `29328856682` 실패
 - `Manual Weekly Report Notion Save` run `29568459209` 실패: `Name:missing->title`
 - `Manual Weekly Report Notion Save` run `29568995281` 실패: 저장 후 read-back verification
+- `Manual Weekly Report Notion Save` run `29569288729` 실패: `property.Generated At` 정밀도 불일치
 
 ## 다음 세션이 읽을 문서
 
@@ -388,6 +406,6 @@ Notion 저장 Actions 검증 및 실패 분석 시 필수:
 
 ## 미해결
 
-- 최신 main에서 read-back retry 보강 후 `Manual Weekly Report Notion Save`를 새로 실행하고 성공 검증
+- 최신 main에서 Generated At 정밀도 보정 후 `Manual Weekly Report Notion Save`를 새로 실행하고 성공 검증
 - 성공 후 run ID와 `created|updated`, read-back 검증 결과를 HANDOFF에 기록
 - Actions 성공 후 Notion 저장 단계를 완료 처리하고 Telegram 알림 구현으로 이동
