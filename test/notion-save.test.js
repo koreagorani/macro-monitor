@@ -143,6 +143,27 @@ test("saveWeeklyReportToNotion retries temporarily stale read-back", async () =>
   assert.deepEqual(delays, [500]);
 });
 
+test("saveWeeklyReportToNotion accepts Notion minute-level Generated At normalization", async () => {
+  const readBack = verifiedReadBack();
+  readBack.page.properties["Generated At"].date.start = "2026-07-12T09:00:00.000+00:00";
+  const report = weeklyReport();
+  report.generatedAt = "2026-07-12T09:00:42.567Z";
+  const notionClient = {
+    retrieveDataSource: async () => dataSourceSchema(),
+    queryPagesByReportKey: async () => [{ id: "page-id" }],
+    updatePageProperties: async () => {},
+    replacePageMarkdown: async () => {},
+    retrievePage: async () => readBack.page,
+    retrievePageMarkdown: async () => readBack.pageMarkdown
+  };
+  const result = await saveWeeklyReportToNotion({
+    notionClient,
+    weeklyReportOutput: report,
+    markdown
+  });
+  assert.equal(result.verified, true);
+});
+
 test("saveWeeklyReportToNotion fails before create when data source schema differs", async () => {
   const schema = dataSourceSchema();
   schema.properties["Schema Version"].type = "number";
