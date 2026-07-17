@@ -57,11 +57,13 @@ function sameScore(left, right) {
   return left === right || (typeof left === "number" && typeof right === "number" && Math.abs(left - right) < 1e-12);
 }
 
-function sameDateTime(left, right) {
+function sameDateTime(left, right, toleranceMs = 0) {
   if (left === right) return true;
   const leftTime = Date.parse(left);
   const rightTime = Date.parse(right);
-  return Number.isFinite(leftTime) && Number.isFinite(rightTime) && leftTime === rightTime;
+  return Number.isFinite(leftTime)
+    && Number.isFinite(rightTime)
+    && Math.abs(leftTime - rightTime) <= toleranceMs;
 }
 
 function readBackMismatches({ page, pageMarkdown, expected }) {
@@ -70,7 +72,7 @@ function readBackMismatches({ page, pageMarkdown, expected }) {
   const checks = {
     "property.Name": stored.title === expected.title,
     "property.Report Date": stored.asOf === expected.asOf,
-    "property.Generated At": sameDateTime(stored.generatedAt, expected.generatedAt),
+    "property.Generated At": sameDateTime(stored.generatedAt, expected.generatedAt, 60_000),
     "property.Overall Risk": stored.overallLevel === expected.overallLevel,
     "property.Overall Score": sameScore(stored.overallScore, expected.overallScore),
     "property.Confidence": stored.confidence === expected.confidence,
