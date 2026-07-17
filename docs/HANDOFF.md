@@ -13,9 +13,8 @@
 - AI 주간 보고서 생성 구현 및 실제 GitHub Actions 검증 완료
 - weekly-report-output → Markdown 렌더링 구현 및 실제 GitHub Actions 검증 완료
 - Notion 저장 완료 조건 및 저장 계약 설계 완료
-- Notion 저장 구현 완료
-- Notion 저장 실제 GitHub Actions 검증은 실패 상태
-- 다음 작업: `Manual Weekly Report Notion Save` run `29328856682`의 저장 단계 실패 원인 분석 및 수정
+- Notion 저장 구현 및 실제 GitHub Actions 검증 완료
+- 다음 작업: Telegram 알림 저장·전송 계약 설계
 
 ## 완료된 내용
 
@@ -313,6 +312,34 @@
   - 관련 mock 테스트 추가, Notion 테스트 21개 통과
 - 최신 main에서 새 workflow run 대기
 
+### Notion 저장 실제 Actions 검증 완료
+
+- `Manual Weekly Report Notion Save` 최신 main 실행 성공
+  - run: `29569541977`
+  - commit: `5c9c543fda5f87524527529b504fcc39376196f9`
+  - job: `save-weekly-report-notion`
+  - conclusion: `success`
+- 필수 단계 전체 성공
+  - Install dependencies
+  - Run tests: 86개 전체 통과
+  - Validate synthetic examples
+  - Save weekly report to Notion
+- 실제 저장 결과
+  - status: `updated`
+  - asOf: `2026-07-17`
+  - verified: `true`
+- 검증 범위
+  - 실제 FRED 및 OpenAI live weekly-report-output 생성
+  - Markdown 렌더링
+  - Report Key 기반 기존 page 갱신
+  - 8개 properties read-back
+  - Markdown 존재·비절단·제목·기준일·필수 주의 문구 read-back
+  - 실제 보고서·JSON artifact 및 저장소 비보관
+  - Secret, data source ID, page ID·URL, Notion 원문 응답 비노출
+- 완료 판정
+  - Notion 저장 단계 완료
+  - 다음 구현은 Telegram 알림
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -386,26 +413,25 @@ Node.js 환경:
 - `Manual Weekly Report Notion Save` run `29568995281` 실패: 저장 후 read-back verification
 - `Manual Weekly Report Notion Save` run `29569288729` 실패: `property.Generated At` 정밀도 불일치
 
+검증 성공 기록:
+- `Manual Weekly Report Notion Save` run `29569541977` 성공: `updated`, `verified: true`
+
 ## 다음 세션이 읽을 문서
 
-Notion 저장 Actions 검증 및 실패 분석 시 필수:
+Telegram 연동 설계·구현 시 필수:
 - `AGENTS.md`
 - `docs/ARCHITECTURE.md`
-- `docs/REPORT_SPEC.md`
+- `docs/REQUIREMENTS.md`
 - `docs/HANDOFF.md`
 
-추가 확인:
-- `docs/DECISIONS.md` D-028
-- `data/schema/weekly-report-output.schema.json`
-- `src/render/render-weekly-report-markdown.js`
-- `scripts/run-weekly-report.js`
-- `src/clients/notion-client.js`
-- `src/notion/build-notion-report-payload.js`
-- `src/notion/save-weekly-report-to-notion.js`
-- `.github/workflows/manual-weekly-report-notion.yml`
+선택:
+- 보고서 요약 원천 확인 시 `docs/REPORT_SPEC.md`
+- 기존 외부 client 보안·오류 패턴 확인 시 `src/clients/notion-client.js`
+- live pipeline 재사용 확인 시 `scripts/save-weekly-report-to-notion.js`
 
 ## 미해결
 
-- 최신 main에서 Generated At 정밀도 보정 후 `Manual Weekly Report Notion Save`를 새로 실행하고 성공 검증
-- 성공 후 run ID와 `created|updated`, read-back 검증 결과를 HANDOFF에 기록
-- Actions 성공 후 Notion 저장 단계를 완료 처리하고 Telegram 알림 구현으로 이동
+- Telegram 알림 입력·요약 길이·전송 실패 정책 설계
+- Telegram Bot API client와 mock 테스트 구현
+- 수동 Telegram 알림 workflow 및 실제 Actions 검증
+- 자동 스케줄 실행은 Telegram 단계 이후 별도 검토
