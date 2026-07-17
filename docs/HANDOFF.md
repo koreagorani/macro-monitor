@@ -256,6 +256,26 @@
   - data source property 계약, native Markdown create payload, parent/data source payload를 재검토
   - 원문 Notion 응답, page URL, data source ID, Secret, 전체 Markdown 본문은 로그나 저장소에 남기지 않음
 
+### Notion 저장 4차 Actions 실패 — title property 이름 불일치 확정
+
+- `Manual Weekly Report Notion Save` 재실행 실패
+  - run: `29568459209`
+  - commit: `b128bb5319967c31444c5581bd33eeaa41c455fc`
+  - `npm test` 성공: 84개 전체 통과
+  - `npm run validate:examples` 성공
+  - Notion schema preflight에서 중단
+- 확정 원인
+  - error: `NOTION_DATA_SOURCE_SCHEMA_MISMATCH`
+  - detail: `Name:missing->title`
+  - 대상 data source의 나머지 7개 property 이름·타입은 계약과 일치
+  - 기존 title property의 이름이 정확히 `Name`이 아님
+- 사용자 조치
+  - Notion의 맨 왼쪽 기존 title 열을 새로 만들지 말고 정확히 `Name`으로 이름 변경
+  - 대소문자와 앞뒤 공백까지 일치시킨 뒤 최신 main에서 새 workflow run 실행
+- 코드 변경 불필요
+  - D-028 및 REPORT_SPEC의 명시적 property 계약 유지
+  - 실제 저장 성공 전까지 Notion 저장 단계 완료 처리 금지
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -325,6 +345,7 @@ Node.js 환경:
 - `Manual Weekly Report Notion Save` run `29328029596` 실패
 - `Manual Weekly Report Notion Save` run `29328469168` 실패
 - `Manual Weekly Report Notion Save` run `29328856682` 실패
+- `Manual Weekly Report Notion Save` run `29568459209` 실패: `Name:missing->title`
 
 ## 다음 세션이 읽을 문서
 
@@ -346,10 +367,7 @@ Notion 저장 Actions 검증 및 실패 분석 시 필수:
 
 ## 미해결
 
-- run `29328856682`의 Notion 저장 실패 원인 분석
-- `Save weekly report to Notion` 단계의 안전한 validation message 확인
-- Notion create/update payload 수정
-- mock 회귀 테스트 보강
-- 최신 main에서 `Manual Weekly Report Notion Save` 재실행 및 성공 검증
+- Notion 대상 data source의 기존 title property 이름을 정확히 `Name`으로 변경
+- 최신 main에서 `Manual Weekly Report Notion Save`를 새로 실행하고 성공 검증
 - 성공 후 run ID와 `created|updated`, read-back 검증 결과를 HANDOFF에 기록
 - Actions 성공 후 Notion 저장 단계를 완료 처리하고 Telegram 알림 구현으로 이동
