@@ -276,6 +276,26 @@
   - D-028 및 REPORT_SPEC의 명시적 property 계약 유지
   - 실제 저장 성공 전까지 Notion 저장 단계 완료 처리 금지
 
+### Notion 저장 5차 Actions 실패 — read-back 검증 보강
+
+- `Manual Weekly Report Notion Save` 재실행 실패
+  - run: `29568995281`
+  - `npm test` 성공
+  - `npm run validate:examples` 성공
+  - data source schema preflight 통과
+  - page create 또는 update 통과
+  - 저장 후 read-back 검증에서 `NOTION_READ_BACK_VERIFICATION_FAILED`
+- 판단
+  - Notion page 저장 요청 자체는 성공했으며 같은 Report Key page가 존재할 가능성이 높음
+  - 다음 실행은 upsert 규칙에 따라 기존 page update 경로로 복구 가능
+  - 즉시 read-back 시 Notion 반영 지연 또는 특정 검증 항목 불일치 가능
+- 보강
+  - 최대 3회, 500ms/1000ms 간격으로 read-back 재검증
+  - 실패 시 값이나 본문 대신 `property.*`, `markdown.*` 불일치 항목 이름만 출력
+  - stale read-back 복구 mock 테스트 추가
+  - Notion 관련 mock 테스트 20개 통과
+- 최신 main에서 새 workflow run 대기
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -346,6 +366,7 @@ Node.js 환경:
 - `Manual Weekly Report Notion Save` run `29328469168` 실패
 - `Manual Weekly Report Notion Save` run `29328856682` 실패
 - `Manual Weekly Report Notion Save` run `29568459209` 실패: `Name:missing->title`
+- `Manual Weekly Report Notion Save` run `29568995281` 실패: 저장 후 read-back verification
 
 ## 다음 세션이 읽을 문서
 
@@ -367,7 +388,6 @@ Notion 저장 Actions 검증 및 실패 분석 시 필수:
 
 ## 미해결
 
-- Notion 대상 data source의 기존 title property 이름을 정확히 `Name`으로 변경
-- 최신 main에서 `Manual Weekly Report Notion Save`를 새로 실행하고 성공 검증
+- 최신 main에서 read-back retry 보강 후 `Manual Weekly Report Notion Save`를 새로 실행하고 성공 검증
 - 성공 후 run ID와 `created|updated`, read-back 검증 결과를 HANDOFF에 기록
 - Actions 성공 후 Notion 저장 단계를 완료 처리하고 Telegram 알림 구현으로 이동
