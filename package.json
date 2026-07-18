@@ -18,7 +18,8 @@
     "test": "node --test",
     "validate:examples": "node scripts/validate-examples.js",
     "render:weekly-report": "node scripts/render-weekly-report-markdown.js",
-    "save:weekly-report:notion": "node scripts/save-weekly-report-to-notion.js"
+    "save:weekly-report:notion": "node scripts/save-weekly-report-to-notion.js",
+    "send:weekly-report:telegram": "node scripts/send-weekly-report-telegram.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",

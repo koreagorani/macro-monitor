@@ -1,0 +1,51 @@
+name: Manual Weekly Report Telegram Notification
+
+on:
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: Optional UTC report date in YYYY-MM-DD format
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  send-weekly-report-telegram:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate synthetic examples
+        run: npm run validate:examples
+
+      - name: Send weekly report Telegram notification
+        env:
+          AS_OF: ${{ inputs.as_of }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+          NOTION_API_VERSION: ${{ vars.NOTION_API_VERSION }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$AS_OF" ]; then
+            npm run send:weekly-report:telegram -- "$AS_OF"
+          else
+            npm run send:weekly-report:telegram
+          fi

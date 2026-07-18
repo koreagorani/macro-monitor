@@ -15,7 +15,8 @@
 - Notion 저장 완료 조건 및 저장 계약 설계 완료
 - Notion 저장 구현 및 실제 GitHub Actions 검증 완료
 - Telegram 주간 알림 전송 계약 및 완료 조건 설계 완료
-- 다음 작업: Telegram 알림 구현 및 mock 검증
+- Telegram 알림 구현 및 mock 기반 로컬 검증 완료
+- 다음 작업: Manual Weekly Report Telegram Notification 실제 GitHub Actions 검증
 
 ## 완료된 내용
 
@@ -398,9 +399,47 @@
   - `docs/ARCHITECTURE.md`
   - `docs/DECISIONS.md` D-029
 
+### Telegram 알림 구현 및 로컬 검증
+
+- `src/clients/telegram-client.js`
+  - Bot API `sendMessage`, `parse_mode=HTML`
+  - 429 `retry_after` 최대 30초 및 네트워크·5xx 최대 2회 재시도
+  - 안전한 오류 코드 매핑과 token/chat ID/메시지/원문 응답 비노출
+- `src/telegram/build-telegram-summary.js`
+  - normal/watch 일반 제목, alert/high_risk 경고 제목
+  - 핵심 변화·취약 테마 최대 3개, reduced confidence 문구
+  - shouldAbort 데이터 품질 실패 전용 메시지
+  - 동적 HTML escape, 보이는 텍스트 3,500자 상한, 분할 없음
+  - 논리적 delivery key만 생성하고 저장하지 않음
+- `src/telegram/send-weekly-report-notification.js`
+  - 정상 경로에서 weekly-report 생성·검증, Markdown, Notion 저장·read-back 검증 뒤 Telegram 전송
+  - Notion `verified === true`가 아니면 Telegram 전송 차단
+  - shouldAbort 시 OpenAI·Markdown·Notion을 호출하지 않고 품질 실패 알림만 전송
+  - Telegram 실패 시 예외를 유지하되 Notion rollback 동작 없음
+- `scripts/send-weekly-report-telegram.js`
+  - 기존 live `buildMacroReview` 재사용
+  - 성공 시 status, notificationType, asOf, notionStatus, verified만 출력
+- `package.json`에 `send:weekly-report:telegram` 추가
+- mock 테스트 추가
+  - `test/telegram-client.test.js`
+  - `test/telegram-summary.test.js`
+  - `test/telegram-send.test.js`
+- `.github/workflows/manual-weekly-report-telegram.yml` 추가
+  - workflow: `Manual Weekly Report Telegram Notification`
+  - 테스트·합성 예시 검증·live 전송 실행
+  - 보고서·Markdown·Telegram 메시지 artifact 및 preview 없음
+- 로컬 검증
+  - `npm test`: 114개 전체 통과
+  - `npm run validate:examples`: 6개 합성 예시 전체 통과
+  - `git diff --check`: 통과
+- 구조적 계약 변경 없음
+  - D-029, ARCHITECTURE, REQUIREMENTS를 그대로 구현
+- 실제 GitHub Actions 검증 대기
+
 ## 현재 실행 방법
 
 GitHub Actions:
+- Telegram 알림 검증: Actions → `Manual Weekly Report Telegram Notification`
 - Notion 저장 검증: Actions → `Manual Weekly Report Notion Save`
 - Markdown 렌더링 검증: Actions → `Manual Weekly Report Markdown Render`
 - AI 주간 보고서 생성 검증: Actions → `Manual Weekly Report Generation`
@@ -415,6 +454,8 @@ GitHub Actions:
   - `OPENAI_API_KEY`
   - `NOTION_API_KEY`
   - `NOTION_DATA_SOURCE_ID`
+  - `TELEGRAM_BOT_TOKEN`
+  - `TELEGRAM_CHAT_ID`
 - 선택 repository variable:
   - `OPENAI_MODEL`
   - `NOTION_API_VERSION` (기본 `2026-03-11`)
@@ -423,6 +464,7 @@ Node.js 환경:
 - `npm ci --no-audit --no-fund`
 - `npm test`
 - `npm run validate:examples`
+- `npm run send:weekly-report:telegram -- YYYY-MM-DD`
 - `npm run save:weekly-report:notion -- YYYY-MM-DD`
 - `npm run render:weekly-report -- YYYY-MM-DD`
 - `npm run generate:weekly-report -- YYYY-MM-DD`
@@ -455,6 +497,8 @@ Node.js 환경:
 - 실제 FRED 수집 기반 `riskOutput` → `portfolioVulnerability` → `macroReviewOutput` 통합 출력 schema 통과
 
 추가 확인 완료:
+- Telegram client·summary·orchestration mock 테스트 포함 `npm test` 114개 통과
+- Telegram 구현 후 `npm run validate:examples` 6개 전체 통과
 - `test/openai-client.test.js` 통과
 - `test/weekly-report-generation.test.js` 통과
 - `npm run validate:examples` 전체 통과
@@ -476,7 +520,7 @@ Node.js 환경:
 
 ## 다음 세션이 읽을 문서
 
-Telegram 알림 구현 시 필수:
+Telegram 알림 실제 Actions 검증 시 필수:
 - `AGENTS.md`
 - `docs/ARCHITECTURE.md`
 - `docs/REQUIREMENTS.md`
@@ -489,7 +533,8 @@ Telegram 알림 구현 시 필수:
 
 ## 미해결
 
-- Telegram Bot API client, 순수 summary builder, orchestration 및 mock 테스트 구현
-- 수동 Telegram 알림 workflow와 실제 연결 테스트·주간 요약 Actions 검증
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` GitHub Secrets 등록 확인
+- `Manual Weekly Report Telegram Notification` 최신 main 실제 연결 테스트·주간 요약 전송 검증
+- 성공 run ID와 결과를 HANDOFF에 기록한 뒤 Telegram 단계를 완료 처리
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토
 - 자동 스케줄 실행은 Telegram 단계 이후 별도 검토
