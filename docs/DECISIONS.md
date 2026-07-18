@@ -320,3 +320,26 @@
 - Notion native Markdown 변환을 사용하면 자체 parser의 포맷 손실과 유지보수 부담을 피할 수 있다.
 - 공개 저장소와 로그에 개인 보고서, workspace 식별자, 인증정보가 남지 않도록 하기 위해서다.
 
+## D-029 Telegram 주간 알림 전송 계약
+
+결정:
+
+- Notion을 전체 주간 보고서의 원본으로 두고 Telegram은 핵심 요약과 경고만 전달하는 확인용 채널로 사용한다.
+- 정상 알림은 검증된 weekly-report-output만 렌더링하며 숫자·위험 단계·임계값을 다시 계산하지 않는다.
+- `quality.shouldAbort === true`이면 AI 보고서와 Notion 저장 대신 macro-review quality 기반 데이터 품질 실패 알림만 보낸다.
+- 정상 주간 보고서는 위험 단계와 관계없이 한 메시지를 보내고, `alert`와 `high_risk`는 같은 메시지의 경고 머리말로 구분한다.
+- 메시지는 `HTML` parse mode, 보이는 텍스트 최대 3,500자, 동적 문자열 escape를 적용하고 MVP에서는 분할하지 않는다.
+- Notion page 직접 링크는 MVP 메시지에 포함하지 않고 전체 보고서 위치를 고정 문구로만 안내한다.
+- 정상 알림은 Notion 저장 성공 뒤에 전송하며 Telegram 실패가 Notion 저장을 되돌리지 않는다.
+- Telegram Bot API가 idempotency key를 제공하지 않으므로 MVP에서는 재실행 중복을 허용한다. 논리적 delivery key는 정의하되 영속 저장과 exactly-once 보장은 후속 결정으로 남긴다.
+- `TELEGRAM_BOT_TOKEN`과 `TELEGRAM_CHAT_ID`는 GitHub Secrets에서만 읽으며 token, chat ID, 메시지 본문, 원문 API 응답은 로그에 남기지 않는다.
+
+이유:
+
+- 긴 전체 보고서는 검색·보관이 가능한 Notion에 두고 Telegram의 읽기 시간을 짧게 유지하기 위해서다.
+- 데이터 품질 중단 시 계산되지 않은 위험 정보가 알림에서 만들어지는 것을 막아 숫자 판정과 채널 렌더링 책임을 분리하기 위해서다.
+- 한 메시지와 보수적 길이 상한은 Telegram 제한에 여유를 두고 분할 메시지의 순서·부분 실패 문제를 피한다.
+- 직접 Notion 링크를 제외하면 workspace 식별자와 개인 page URL이 제3자 채널과 로그로 확산될 가능성을 줄일 수 있다.
+- 영속 delivery 상태가 없는 MVP에서 exactly-once를 가장하면 전송 성공 후 응답 유실 같은 경우를 안전하게 처리할 수 없으므로 중복 가능성을 명시하는 편이 정확하다.
+- Notion 저장과 Telegram 전송을 비원자적으로 분리하면 알림 장애가 이미 보관된 전체 보고서를 훼손하지 않는다.
+
