@@ -138,6 +138,61 @@ Notion API 계약:
 - https://developers.notion.com/guides/data-apis/working-with-databases
 - https://developers.notion.com/reference/versioning
 
+## Telegram 알림 아키텍처
+
+MVP에서 Notion은 전체 주간 보고서의 원본이고 Telegram은 확인용 요약·경고 채널이다. Telegram 메시지에서 수치나 위험 단계를 다시 계산하지 않는다.
+
+정상 보고서 흐름:
+
+```text
+검증된 weekly-report-output
+→ Markdown 렌더링
+→ Notion 저장 및 검증 성공
+→ Telegram 요약 생성
+→ Telegram 전송
+```
+
+데이터 품질 중단 흐름:
+
+```text
+macro-review quality.shouldAbort 확인
+→ AI 보고서 및 Notion 저장 생략
+→ 데이터 품질 실패 Telegram 알림 생성·전송
+```
+
+입력과 표현:
+
+- 정상 알림은 검증된 weekly-report-output의 기준일, 전체 위험 단계·점수, 신뢰도, 핵심 변화 최대 3개, 취약 테마 최대 3개, 권장 대응만 사용한다.
+- 데이터 품질 실패 알림은 macro-review의 quality 정보만 사용하며 존재하지 않는 위험 단계·점수를 생성하지 않는다.
+- Telegram Bot API의 `sendMessage`와 `parse_mode=HTML`을 사용한다.
+- 태그는 렌더러가 생성하는 제한된 `<b>`만 허용하고 동적 문자열의 `&`, `<`, `>`는 HTML entity로 escape한다.
+- Bot API 제한은 entity 해석 후 4,096자이지만 MVP 내부 상한은 보이는 텍스트 3,500자로 둔다.
+- 핵심 변화와 테마 수, 각 동적 문구 길이를 제한하고 선택 세부내용부터 축약해 한 메시지를 유지한다. 상한을 넘은 메시지를 자동 분할하지 않는다.
+- Notion page URL은 MVP 메시지에 넣지 않는다. 대신 `Notion의 Macro Weekly Reports에서 전체 보고서 확인`이라는 고정 안내만 사용한다.
+- 개인 보유 수량, 평가금액, 계좌별 비중은 입력과 메시지에 포함하지 않는다.
+
+전송 순서와 중복:
+
+- 정상 알림은 Notion 저장 성공 뒤에 전송한다.
+- Telegram 실패는 이미 성공한 Notion 저장을 되돌리지 않지만 workflow는 실패 처리해 미전송을 드러낸다.
+- Telegram `sendMessage`에는 애플리케이션 idempotency key가 없으므로 MVP에서는 수동 재실행에 따른 중복 전송을 허용한다.
+- 논리적 추적 키는 정상 알림 `telegram-weekly:{asOf}`, 품질 실패 알림 `telegram-quality:{asOf}`로 정의하지만 MVP에서는 영속 저장하거나 중복 차단에 사용하지 않는다.
+- Notion의 `weekly-report:{asOf}` Report Key는 저장 upsert에만 사용하며 Telegram exactly-once 보장으로 재사용하지 않는다.
+
+오류·재시도와 안전한 로그:
+
+- 429 응답은 `parameters.retry_after`를 존중하되 대기 시간을 30초로 제한하고 최대 2회 재시도한다.
+- 일시적 네트워크 오류와 5xx는 0.5초, 1초 간격으로 최대 2회 재시도한다.
+- 잘못된 token은 `TELEGRAM_UNAUTHORIZED`, 찾을 수 없는 chat은 `TELEGRAM_CHAT_NOT_FOUND`, bot 차단은 `TELEGRAM_BOT_BLOCKED`, 기타 권한 실패는 `TELEGRAM_FORBIDDEN`, 429는 `TELEGRAM_RATE_LIMITED`, 네트워크 실패는 `TELEGRAM_NETWORK_ERROR`처럼 안전한 코드로 구분한다.
+- Telegram API의 원문 `description`, 원문 응답 전체, token, chat ID, 메시지 본문은 로그에 남기지 않는다.
+- 성공 로그에는 알림 종류, 기준일, `delivered: true`만 남기고 실패 로그에는 안전한 code, HTTP status, 기준일만 남긴다.
+
+공식 API 참고:
+
+- https://core.telegram.org/bots/api#sendmessage
+- https://core.telegram.org/bots/api#formatting-options
+- https://core.telegram.org/bots/api#responseparameters
+
 ## 로그 정책
 
 - GitHub Actions 로그에 원시 시계열 전체를 출력하지 않는다.
