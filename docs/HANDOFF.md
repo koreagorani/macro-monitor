@@ -16,7 +16,8 @@
 - Notion 저장 구현 및 실제 GitHub Actions 검증 완료
 - Telegram 주간 알림 전송 계약 및 완료 조건 설계 완료
 - Telegram 알림 구현 및 mock 기반 로컬 검증 완료
-- 다음 작업: Manual Weekly Report Telegram Notification 실제 GitHub Actions 검증
+- Telegram 알림 실제 GitHub Actions 검증 완료
+- 다음 작업: 자동 스케줄 실행 전 계약 설계
 
 ## 완료된 내용
 
@@ -436,6 +437,33 @@
   - D-029, ARCHITECTURE, REQUIREMENTS를 그대로 구현
 - 실제 GitHub Actions 검증 대기
 
+### Telegram 알림 실제 Actions 검증 완료
+
+- `Manual Weekly Report Telegram Notification` 최신 main 실행 성공
+  - run: `30193659178`
+  - commit: `531eff9a4a52f45f8a42dbabaa6ed94390d169b3`
+  - job: `send-weekly-report-telegram`
+  - conclusion: `success`
+- 필수 단계 전체 성공
+  - Install dependencies
+  - Run tests: 114개 전체 통과
+  - Validate synthetic examples: 6개 전체 통과
+  - Send weekly report Telegram notification
+- 실제 실행 결과
+  - status: `sent`
+  - notificationType: `weekly`
+  - asOf: `2026-07-26`
+  - notionStatus: `updated`
+  - verified: `true`
+  - 사용자가 Telegram 메시지 정상 수신 확인
+- 보안 및 저장 정책 확인
+  - Secret은 Actions 로그에서 마스킹됨
+  - 메시지 본문, Bot Token, Chat ID, Notion page ID·URL, API 원문 응답 비출력
+  - run artifact 0개
+- 완료 판정
+  - Telegram 주간 알림 단계 완료
+  - 다음 작업은 자동 스케줄 실행 전 계약 설계
+
 ## 현재 실행 방법
 
 GitHub Actions:
@@ -499,6 +527,9 @@ Node.js 환경:
 추가 확인 완료:
 - Telegram client·summary·orchestration mock 테스트 포함 `npm test` 114개 통과
 - Telegram 구현 후 `npm run validate:examples` 6개 전체 통과
+- `Manual Weekly Report Telegram Notification` run `30193659178` 성공
+- 실제 Notion `updated` 및 read-back `verified: true` 후 Telegram `weekly` 알림 전송 성공
+- 사용자가 Telegram 메시지 정상 수신 확인, run artifact 0개
 - `test/openai-client.test.js` 통과
 - `test/weekly-report-generation.test.js` 통과
 - `npm run validate:examples` 전체 통과
@@ -517,10 +548,11 @@ Node.js 환경:
 
 검증 성공 기록:
 - `Manual Weekly Report Notion Save` run `29569541977` 성공: `updated`, `verified: true`
+- `Manual Weekly Report Telegram Notification` run `30193659178` 성공: `weekly`, `updated`, `verified: true`
 
 ## 다음 세션이 읽을 문서
 
-Telegram 알림 실제 Actions 검증 시 필수:
+다음 작업 착수 시 필수:
 - `AGENTS.md`
 - `docs/ARCHITECTURE.md`
 - `docs/REQUIREMENTS.md`
@@ -533,8 +565,5 @@ Telegram 알림 실제 Actions 검증 시 필수:
 
 ## 미해결
 
-- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` GitHub Secrets 등록 확인
-- `Manual Weekly Report Telegram Notification` 최신 main 실제 연결 테스트·주간 요약 전송 검증
-- 성공 run ID와 결과를 HANDOFF에 기록한 뒤 Telegram 단계를 완료 처리
+- 자동 스케줄 실행의 계약과 완료 조건 설계
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토
-- 자동 스케줄 실행은 Telegram 단계 이후 별도 검토
