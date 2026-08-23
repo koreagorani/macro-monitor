@@ -32,11 +32,11 @@ test("weekly report example keeps portfolio vulnerability disclosure", async () 
   const output = await loadJsonFile("data/examples/weekly-report-output.example.json");
 
   assert.match(
-    output.report.mandatoryDisclosure,
+    output.presentation.mandatoryDisclosure,
     /취약도는 현재 매크로 환경에 대한 노출 정도/
   );
   assert.match(
-    output.report.mandatoryDisclosure,
+    output.presentation.mandatoryDisclosure,
     /직접적인 매도 신호가 아닙니다/
   );
 });
@@ -53,8 +53,8 @@ test("weekly report example uses only allowed action phrases", async () => {
     "헤지 검토"
   ]);
 
-  assert.ok(allowedActions.has(output.report.oneLookConclusion.recommendedAction));
-  for (const theme of output.report.portfolioThemes) {
+  assert.ok(allowedActions.has(output.analysis.oneLookAnalysis.recommendedAction));
+  for (const theme of output.analysis.themeInsights) {
     assert.ok(allowedActions.has(theme.action));
   }
 });

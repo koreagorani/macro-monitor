@@ -11,8 +11,9 @@
 → 이례성
 → 영역 위험
 → 테마 취약도
-→ AI 해석
-→ 보고서
+→ deterministic reportFacts
+→ AI analysis-only JSON
+→ code-owned weekly-report-output v2 조립
 → Notion
 → 경고
 → Telegram
@@ -60,6 +61,18 @@
 - 실제 계산에 사용한 관측일은 유형별 `metrics`에 별도로 저장한다.
 - 계산값은 원래 정밀도를 유지하고 표시 단계에서만 반올림한다.
 
+## 보고서 v2 데이터 소유권
+
+- `indicatorOutputs`, `riskOutput`, `portfolioVulnerability`에서 `reportFacts`를 만드는 주체는 deterministic code다.
+- 실제 값·관측일·단위·상태·점수·matched threshold·`riskContribution`은 `data/schema/report-facts.schema.json` 계약에만 둔다.
+- OpenAI 입력은 `macroReviewOutput.reportFacts`이며 출력은 `data/schema/weekly-analysis-output.schema.json`을 따르는 해석 전용 JSON이다.
+- OpenAI는 canonical 숫자, 날짜, 상태, 등급, 이름을 생성하지 않고 source area/theme/candidate ID만 참조한다.
+- 코드는 `facts`와 `analysis`를 결합해 `data/schema/weekly-report-output.schema.json` v2를 생성한다.
+- Markdown, Notion, Telegram의 단일 입력은 계속 최종 weekly-report-output 하나다.
+- `quality.shouldAbort === true`이면 `reportFacts`는 `null`이며 OpenAI·Markdown·Notion 정상 경로를 실행하지 않는다.
+- ID coverage, duplicate, placeholder, source deep-equal 검증은 schema 검증 뒤 별도 consistency validator가 수행한다.
+- Phase A에서는 채널별 본문 구성을 바꾸지 않으며, 6개 지표 data-first 출력은 Phase B/C에서 구현한다.
+
 ## 소스 구조
 
 ```text
@@ -69,7 +82,12 @@ src/
 ├─ config/        # JSON 설정 로딩
 ├─ domain/        # 관측값 선택과 순수 계산 함수
 ├─ portfolio/     # 포트폴리오 테마 취약도 계산
+├─ report/        # deterministic facts, AI analysis, final v2 조립·consistency
+├─ review/        # risk/portfolio/facts 통합 macro-review
+├─ render/        # final weekly report의 채널 독립 Markdown 렌더링
+├─ notion/        # Notion payload·upsert
 ├─ risk/          # 지표·영역·전체 위험 판정
+├─ telegram/      # Telegram 요약·전송 orchestration
 └─ validation/    # JSON Schema 검증
 
 scripts/          # 수동 실행 진입점

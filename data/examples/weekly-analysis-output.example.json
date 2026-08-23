@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "oneLookAnalysis": {
+    "coreChanges": [
+      "금리와 공급 측 신호가 함께 경계 방향을 가리킵니다.",
+      "위험선호 신호는 자산군별로 엇갈립니다."
+    ],
+    "recommendedAction": "신규매수 신중"
+  },
+  "macroJudgment": {
+    "riskCharacter": "mixed",
+    "directionAgreement": "금리와 공급 영역은 같은 방향이지만 위험선호 내부 신호는 엇갈립니다.",
+    "conflictingSignals": [
+      "방어 필요성과 일부 위험자산 회복 신호가 공존합니다."
+    ],
+    "summary": "복합 위험의 지속 여부를 확인할 구간입니다."
+  },
+  "areaInsights": [
+    {
+      "areaId": "rates_policy",
+      "keyReason": "금리 변화가 정책 민감도를 높였습니다."
+    },
+    {
+      "areaId": "inflation_supply",
+      "keyReason": "공급 측 압력이 완전히 해소되지 않았습니다."
+    },
+    {
+      "areaId": "risk_appetite",
+      "keyReason": "위험자산 신호가 서로 엇갈립니다."
+    },
+    {
+      "areaId": "dollar_korea",
+      "keyReason": "한국 금융환경 신호는 상대적으로 안정적입니다."
+    }
+  ],
+  "themeInsights": [
+    {
+      "themeId": "crypto_altcoins",
+      "keyReasons": [
+        "유동성과 위험선호 변화에 민감합니다."
+      ],
+      "action": "신규매수 신중"
+    },
+    {
+      "themeId": "us_large_cap_growth",
+      "keyReasons": [
+        "금리와 위험선호 변화에 함께 노출됩니다."
+      ],
+      "action": "투자 가설 재확인"
+    },
+    {
+      "themeId": "long_duration_bonds",
+      "keyReasons": [
+        "금리 민감도가 높은 구간입니다."
+      ],
+      "action": "헤지 검토"
+    }
+  ],
+  "hedgeAndDefense": {
+    "needLevel": "medium",
+    "summary": "위험 신호가 겹친 영역에 대해 방어 수단을 비교할 필요가 있습니다.",
+    "candidates": [
+      {
+        "candidateId": "cash_krw",
+        "whyItFits": "유동성 완충 역할을 할 수 있습니다.",
+        "failureCondition": "위험선호가 빠르게 회복되면 기회비용이 커질 수 있습니다.",
+        "cashComparison": "가장 단순한 방어 기준점입니다."
+      }
+    ]
+  },
+  "nextWeekChecklist": {
+    "scheduledIndicators": [
+      "정기 발표형 지표의 다음 관측치를 확인합니다."
+    ],
+    "riskStrengtheningConditions": [
+      "여러 영역의 경계 신호가 함께 지속되는지 확인합니다."
+    ],
+    "riskEasingConditions": [
+      "금리와 위험선호 신호가 동시에 완화되는지 확인합니다."
+    ],
+    "invalidatingConditions": [
+      "현재 신호가 일회성 변동으로 되돌려지는지 확인합니다."
+    ]
+  },
+  "decisionLog": {
+    "baseScenario": "복합 위험이 이어지지만 일부 신호는 상충하는 상태입니다.",
+    "reviewItems": [
+      "상충 신호가 어느 방향으로 해소되는지 재검토합니다."
+    ]
+  }
+}

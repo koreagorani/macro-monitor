@@ -229,6 +229,8 @@
 
 ## D-023 통합 매크로 리뷰 실행 경로
 
+상태: D-030에서 `reportFacts`와 정상/중단 null 계약을 추가해 확장했다.
+
 결정:
 - live 통합 실행 명령은 `npm run evaluate:macro-review -- YYYY-MM-DD`로 한다.
 - 이 명령은 실제 FRED 기반 `riskOutput`을 생성한 뒤, 같은 실행 안에서 `portfolioVulnerability`를 계산하고 `macro-review` 통합 JSON을 출력한다.
@@ -241,6 +243,8 @@
 - 중단 조건과 신뢰도 하향 조건을 통합 출력에서 명시해야 이후 AI 보고서가 같은 계약을 안정적으로 읽을 수 있다.
 
 ## D-024 AI 주간 보고서 출력 계약
+
+상태: D-030이 AI의 final weekly-report-output 생성 부분을 supersede한다. renderer의 final 단일 입력 원칙은 유지한다.
 
 결정:
 - AI 보고서 생성의 단일 입력은 `macro-review` JSON으로 한다.
@@ -255,6 +259,8 @@
 - 보고서 문장화와 숫자 계산 책임을 분리하기 위해서다.
 
 ## D-025 AI 주간 보고서 생성 실행 경로
+
+상태: D-026의 Structured Outputs 변경과 D-030의 analysis-only 생성·code assembly 계약이 출력 관련 부분을 supersede한다. 실행 명령과 Secret·로그 정책은 유지한다.
 
 결정:
 - AI 주간 보고서 생성 명령은 `npm run generate:weekly-report -- YYYY-MM-DD`로 한다.
@@ -274,6 +280,8 @@
 
 ## D-026 AI 주간 보고서 Structured Outputs 적용
 
+상태: D-030이 API에 전달하는 schema를 `weekly-analysis-output`으로 변경한다. Structured Outputs와 로컬 최종 검증 원칙은 유지한다.
+
 결정:
 - OpenAI Responses API 호출은 기존 JSON mode(`text.format.type = "json_object"`) 대신 Structured Outputs(`text.format.type = "json_schema"`, `strict: true`)를 사용한다.
 - 단일 출력 계약인 `data/schema/weekly-report-output.schema.json`을 API 요청의 schema로 전달한다.
@@ -288,6 +296,8 @@
 
 ## D-027 weekly-report-output 기반 Markdown 렌더링
 
+상태: D-030에서 입력을 code-assembled weekly-report-output v2로 확장했다. 단일 입력과 순수 렌더러 원칙은 유지한다.
+
 결정:
 - Markdown 렌더링의 단일 입력은 검증을 통과한 weekly-report-output JSON으로 한다.
 - 렌더러는 AI나 외부 API를 호출하지 않는 순수 동기 함수로 구현한다.
@@ -301,6 +311,8 @@
 - 공개 저장소에 개인 운영 보고서가 남는 것을 방지하면서 실제 결과물을 검증할 수 있어야 한다.
 
 ## D-028 Notion 주간 보고서 저장 계약
+
+상태: D-030에서 properties의 canonical source를 weekly-report-output v2 `facts`로 확장했다. data-first 본문과 Notion table 형식 변경은 Phase B에 남긴다.
 
 결정:
 - MVP Notion 저장 대상은 주간 보고서 archive database의 data source로 한다.
@@ -321,6 +333,8 @@
 - 공개 저장소와 로그에 개인 보고서, workspace 식별자, 인증정보가 남지 않도록 하기 위해서다.
 
 ## D-029 Telegram 주간 알림 전송 계약
+
+상태: D-030에서 정상 알림의 canonical source를 weekly-report-output v2 `facts`로 확장했다. 실제 지표 최대 3개 표시는 Phase C에 남긴다.
 
 결정:
 
@@ -343,3 +357,32 @@
 - 영속 delivery 상태가 없는 MVP에서 exactly-once를 가장하면 전송 성공 후 응답 유실 같은 경우를 안전하게 처리할 수 없으므로 중복 가능성을 명시하는 편이 정확하다.
 - Notion 저장과 Telegram 전송을 비원자적으로 분리하면 알림 장애가 이미 보관된 전체 보고서를 훼손하지 않는다.
 
+## D-030 deterministic report facts와 AI analysis 분리
+
+결정:
+
+- 실제 값, 관측일, 단위, 상태, 점수, matched threshold와 위험 기여도는 deterministic code가 생성한 `reportFacts`만 소유한다.
+- `reportFacts`의 단일 계약은 `data/schema/report-facts.schema.json`이다.
+- 정상 macro-review는 config의 MVP 지표 6개와 enabled area exact-set, portfolio theme 최대 3개를 포함한 `reportFacts`를 가진다. `quality.shouldAbort === true`이면 `reportFacts`는 `null`이다.
+- OpenAI는 `macroReviewOutput.reportFacts`를 입력받고 `data/schema/weekly-analysis-output.schema.json`에 맞는 analysis-only JSON만 반환한다.
+- AI output은 canonical 숫자·날짜·단위·상태·등급·이름을 포함하지 않고 facts에 존재하는 area/theme/candidate ID만 참조한다.
+- 최종 `weekly-report-output` v2는 코드가 deterministic presentation, facts, AI analysis, warnings를 조립해 생성한다.
+- Markdown, Notion, Telegram은 계속 검증된 최종 weekly-report-output 하나만 입력받는다.
+- indicator/area/theme exact-set, duplicate, placeholder, AI ID coverage, source facts deep-equal은 JSON Schema 뒤의 명시적 consistency validator로 검증한다.
+- `riskContribution`은 기존 area score와 overall weighted score 산식을 지표별로 수학적으로 분해한 raw number이며 새로운 위험 판정을 만들지 않는다.
+- 계산, 판정, 정렬, consistency는 raw JS number를 사용한다. 사용자 표시 반올림은 channel boundary에서만 수행한다.
+- Phase A는 v2 JSON 계약과 최소 채널 호환까지만 구현한다. Markdown/Notion의 6개 지표 data-first 출력은 Phase B, Telegram의 실제 지표 선택·표시는 Phase C로 분리한다.
+
+관계:
+
+- D-024의 “AI가 weekly-report-output 전체를 반환”하는 부분을 supersede한다.
+- D-025의 AI 응답 final schema 검증 부분과 D-026의 API 전달 schema를 supersede한다.
+- D-023의 macro-review 계약, D-027의 final 단일 renderer 입력, D-028의 Notion metadata source, D-029의 Telegram canonical source를 확장한다.
+- D-027의 순수 렌더러, D-028의 upsert/read-back/Secret 정책, D-029의 one-message/3,500자/Notion verified 후 전송/shouldAbort 정책은 유지한다.
+
+이유:
+
+- AI가 수치 표를 누락·축약·변형하더라도 canonical facts가 사라지지 않는 구조가 필요하다.
+- 채널마다 upstream 객체를 다시 조인하지 않고 같은 final object를 사용해야 Notion과 Telegram의 데이터 일관성을 유지할 수 있다.
+- strict analysis schema와 exact-set validator를 함께 사용하면 존재하지 않는 ID나 placeholder 행을 조용히 렌더링하는 문제를 생성 단계에서 차단할 수 있다.
+- 내부 반올림을 제거해야 표시 정밀도와 판정 정밀도를 독립적으로 관리할 수 있다.

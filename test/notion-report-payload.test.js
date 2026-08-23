@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildNotionReportPayload } from "../src/notion/build-notion-report-payload.js";
+import { loadJsonFile } from "../src/config/load-config.js";
 
 function weeklyReport(overrides = {}) {
   return {
@@ -59,4 +60,15 @@ test("buildNotionReportPayload rejects missing required metadata", () => {
     () => buildNotionReportPayload({ weeklyReportOutput: input, markdown: "# report" }),
     (error) => error.code === "NOTION_REPORT_METADATA_INVALID"
   );
+});
+
+test("buildNotionReportPayload minimally accepts v2 deterministic metadata", async () => {
+  const input = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const payload = buildNotionReportPayload({ weeklyReportOutput: input, markdown: "# report" });
+
+  assert.equal(payload.properties.Name.title[0].text.content, input.presentation.title);
+  assert.equal(payload.properties["Overall Risk"].select.name, input.facts.overallRisk.level);
+  assert.equal(payload.properties["Overall Score"].number, input.facts.overallRisk.score);
+  assert.equal(payload.properties.Confidence.select.name, input.facts.overallRisk.confidence);
+  assert.equal(payload.properties["Schema Version"].rich_text[0].text.content, "2.0.0");
 });

@@ -1,20 +1,15 @@
 # Weekly Report Specification
 
-## 0. AI 보고서 생성 계약
+## 0. 보고서 v2 생성 계약
 
-AI 보고서 생성 단계의 입력은 `macro-review` JSON이다.
+보고서 v2는 facts와 analysis의 소유자를 분리한다.
 
-단일 입력 계약:
+- deterministic facts: `data/schema/report-facts.schema.json`
+- OpenAI output: `data/schema/weekly-analysis-output.schema.json`
+- code-assembled final output: `data/schema/weekly-report-output.schema.json`
+- macro-review integration: `data/schema/macro-review-output.schema.json`
 
-- `data/schema/macro-review-output.schema.json`
-
-AI의 출력은 자유 형식 Markdown이 아니라 구조화된 JSON이다.
-
-단일 출력 계약:
-
-- `data/schema/weekly-report-output.schema.json`
-
-이후 Markdown, Notion, Telegram용 문장은 이 구조화된 JSON을 렌더링해서 만든다.
+OpenAI는 최종 weekly-report-output을 생성하지 않는다. 코드가 `macroReviewOutput.reportFacts`와 AI analysis를 결합하며 Markdown, Notion, Telegram은 이 최종 객체 하나만 입력받는다.
 
 ### 실행 계약
 
@@ -36,17 +31,18 @@ npm run generate:weekly-report
 collectAllIndicators
 → risk model evaluation
 → portfolio vulnerability evaluation
+→ deterministic reportFacts 생성·검증
 → macro-review output validation
-→ OpenAI Responses API 호출
-→ weekly-report-output JSON 파싱
-→ weekly-report-output schema 검증
-→ macro-review 원본과 consistency 검증
+→ OpenAI Responses API analysis-only 호출
+→ weekly-analysis-output JSON 파싱·schema·ID 검증
+→ code-owned weekly-report-output v2 조립
+→ final schema와 facts deep-equal 검증
 → JSON 출력
 ```
 
 OpenAI API 키는 `OPENAI_API_KEY` 환경변수 또는 GitHub Secret으로만 전달한다. API 키와 OpenAI 원문 응답 전체는 로그에 남기지 않는다.
 
-OpenAI 호출은 Structured Outputs(`text.format.type = "json_schema"`, `strict: true`)로 요청하고 `data/schema/weekly-report-output.schema.json`을 출력 계약으로 전달한다. API 단계에서 schema 준수를 강제하며, 최종 안전장치로 로컬 `weekly-report-output` schema 검증과 macro-review consistency 검증을 모두 유지한다.
+OpenAI 호출은 Structured Outputs(`text.format.type = "json_schema"`, `strict: true`)로 요청하고 `data/schema/weekly-analysis-output.schema.json`을 출력 계약으로 전달한다. `report-facts`와 final weekly-report-output은 API 출력 schema가 아니다.
 
 ### AI 역할
 
@@ -55,38 +51,45 @@ AI는 다음만 수행한다.
 - 핵심 변화 요약
 - 위험 성격 설명
 - 상충 신호 정리
-- 취약 테마의 핵심 이유 정리
+- source ID를 참조한 영역·취약 테마의 핵심 이유 정리
 - 헷지 필요성 문장화
 - 다음 주 체크리스트 문장화
 
 AI는 다음을 수행하지 않는다.
 
-- 지표 수치 재계산
-- 위험 등급 재판정
-- 포트폴리오 취약도 점수 재계산
+- 숫자·날짜·단위·상태·점수·임계값 생성 또는 재계산
+- indicator·area·theme·candidate의 canonical 이름 생성
+- 위험 등급 또는 포트폴리오 취약도 재판정
 - 입력에 없는 최신 뉴스, 일정, 가격 생성
 - 특정 종목 매수·매도 추천
 - 실제 개인 보유 수량·평가금액 추정
 
-### 입력 우선순위
+### deterministic facts
 
-- 전체 위험 단계는 `macroReviewOutput.riskOutput.overallRisk.level`을 따른다.
-- 영역별 위험도는 `macroReviewOutput.riskOutput.areaRisks[]`를 따른다.
-- 테마별 취약도는 `macroReviewOutput.portfolioVulnerability.themeVulnerabilities[]`를 따른다.
-- 신뢰도는 `macroReviewOutput.riskOutput.quality.confidence`를 따른다.
-- warnings는 삭제하지 않고 보고서 warnings로 전달한다.
+- `overallRisk`: `riskOutput.overallRisk`의 level, label, raw score, confidence, reasons, triggeredRules
+- `indicators`: config의 MVP 6개 exact-set. market 5개 실제 값·관측일·1주·4주 변화와 Core PCE 관측일·기준월·전월비·이전치·3개월 평균·consensus를 보존
+- `areaRisks`: enabled area 4개 exact-set과 source score/status/weight/contributingIndicators
+- `portfolioThemes`: portfolio vulnerability 상위 최대 3개와 deterministic hedge candidate ID
+- `riskContribution`: 기존 area 및 overall 정규화 가중평균을 지표별로 분해한 raw number
+- `reportPriority`: config에 정의한 서로 다른 정수이며 낮은 값이 높은 우선순위
+- Core PCE `currentObservationDate`는 관측일이며 실제 BEA 발표일로 표현하지 않는다.
+- 내부 계산·판정·정렬·consistency에는 raw JS number를 사용한다. 표시 반올림은 채널 경계에서만 수행한다.
 
 ### 출력 검증
 
-AI 응답은 다음 검증을 모두 통과해야 한다.
+검증 순서:
 
-1. JSON 파싱 가능
-2. `data/schema/weekly-report-output.schema.json` 통과
-3. `sourceMacroReview.asOf`, `overallLevel`, `overallScore`, `confidence`, `topThemeIds`가 입력 `macroReviewOutput`과 일치
-4. 보고서 내 영역별 `score`, `status`가 입력 `riskOutput.areaRisks[]`와 일치
-5. 보고서 내 테마별 `score`, `level`이 입력 `portfolioVulnerability.themeVulnerabilities[]`와 일치
+1. reportFacts schema 통과
+2. indicator exact 6, enabled area exact 4, theme 최대 3, duplicate/placeholder 차단
+3. reportFacts와 indicator/risk/portfolio source의 deep consistency
+4. AI JSON 파싱과 weekly-analysis-output schema 통과
+5. AI area/theme ID가 source facts와 exact-set이며 candidate ID가 source facts의 허용 집합에 포함
+6. code-assembled weekly-report-output v2 schema 통과
+7. final `facts`가 `macroReviewOutput.reportFacts`와 deep-equal
 
 검증 실패 시 임의로 보정하지 않고 명확한 error code와 요약 메시지만 출력한다.
+
+`quality.shouldAbort === true`이면 macro-review의 `reportFacts`는 `null`이다. OpenAI와 정상 weekly report 생성은 실행하지 않고 기존 품질 실패 Telegram 경로를 유지한다.
 
 ## 0-1. Markdown 렌더링 계약
 
@@ -98,7 +101,7 @@ Markdown 렌더링 단계의 단일 입력은 schema 검증과 macro-review cons
 npm run render:weekly-report -- YYYY-MM-DD
 ```
 
-날짜를 생략하면 UTC 오늘 기준으로 실제 FRED 수집부터 OpenAI weekly-report-output 생성까지 실행한 뒤 Markdown을 렌더링한다.
+날짜를 생략하면 UTC 오늘 기준으로 실제 FRED 수집, deterministic facts, OpenAI analysis, code-owned weekly-report-output v2 조립까지 실행한 뒤 Markdown을 렌더링한다.
 
 기본 출력은 stdout이다. `REPORT_MARKDOWN_OUTPUT` 환경변수에 경로를 지정하면 해당 경로에 UTF-8 Markdown 파일을 쓰고 보고서 본문 대신 안전한 파일 생성 요약만 stdout에 출력한다.
 
@@ -144,12 +147,12 @@ weekly-report-output 전체 JSON은 MVP에서 Notion에 별도 저장하지 않�
 
 | Property | Notion type | weekly-report-output source |
 |---|---|---|
-| Name | title | `report.title` |
+| Name | title | `presentation.title` |
 | Report Date | date | `asOf` |
 | Generated At | date | `generatedAt` |
-| Overall Risk | select | `sourceMacroReview.overallLevel` |
-| Overall Score | number | `sourceMacroReview.overallScore` |
-| Confidence | select | `sourceMacroReview.confidence` |
+| Overall Risk | select | `facts.overallRisk.level` |
+| Overall Score | number | `facts.overallRisk.score` |
+| Confidence | select | `facts.overallRisk.confidence` |
 | Schema Version | rich_text | `schemaVersion` |
 | Report Key | rich_text | `weekly-report:{asOf}` |
 
@@ -247,13 +250,17 @@ GitHub Actions 완료 기준:
 
 ## 2. 주요 지표 현황
 
-| 지표 | 현재값 | 주간 변화 | 4주 변화/보조지표 | 상태 | 특이사항 |
-|---|---:|---:|---:|---|---|
+Phase A의 `facts.indicators`는 MVP 6개를 정확히 보존한다. Phase B에서는 이 facts를 다음 사용자 표로 렌더링한다.
 
-특이사항이 없으면 `—`.
-지표별 장문 해설은 작성하지 않는다.
+시장가격형 5개:
 
-보고서 표의 `현재값`, `주간 변화`, `4주 변화/보조지표`는 계산용 숫자가 아니라 사람이 읽는 표시 문자열 또는 `null`이다.
+- 지표명, 현재값, 실제 관측일, 1주 변화와 기준일, 4주 변화와 기준일, 단위, 상태, deterministic fact note
+
+Core PCE:
+
+- 최신 전월비, 이전 전월비, 최근 3개월 평균, consensus 또는 `—`, 관측일, 기준월, 상태, deterministic fact note
+
+표시 문자열을 AI output에 두지 않는다. Phase B renderer가 raw facts를 지표별 정밀도 정책으로 포맷하며, `null`은 `—`로 표시한다. 이번 Phase A에서는 기존 Markdown/Notion 사용자 본문 구조를 최소 호환으로 유지한다.
 
 ## 3. 이번 주 매크로 판단
 

@@ -151,6 +151,20 @@ test("highest score matching threshold wins", () => {
   assert.equal(status.selectedEvaluation.matchedRuleId, "us2y_weekly_strong_alert");
 });
 
+test("threshold decisions use raw values near a display rounding boundary", () => {
+  const below = evaluateIndicatorStatus({
+    thresholdsConfig,
+    indicatorOutput: output("us2y", true, { weeklyChange: 9.999999999 })
+  });
+  const above = evaluateIndicatorStatus({
+    thresholdsConfig,
+    indicatorOutput: output("us2y", true, { weeklyChange: 10.000000001 })
+  });
+
+  assert.equal(below.status, "normal");
+  assert.equal(above.status, "watch");
+});
+
 test("risk output schema validates first vertical slice output", async () => {
   const indicatorOutputs = [
     output("us2y", true, { weeklyChange: 35 })

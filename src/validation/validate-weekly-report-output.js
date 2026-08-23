@@ -8,9 +8,15 @@ export async function getWeeklyReportOutputValidator(
   schemaPath = "data/schema/weekly-report-output.schema.json"
 ) {
   if (!compiledValidator) {
-    const schema = await loadJsonFile(schemaPath);
+    const [schema, reportFactsSchema, weeklyAnalysisSchema] = await Promise.all([
+      loadJsonFile(schemaPath),
+      loadJsonFile("data/schema/report-facts.schema.json"),
+      loadJsonFile("data/schema/weekly-analysis-output.schema.json")
+    ]);
     const ajv = new Ajv2020({ allErrors: true, strict: true });
     addFormats(ajv);
+    ajv.addSchema(reportFactsSchema);
+    ajv.addSchema(weeklyAnalysisSchema);
     compiledValidator = ajv.compile(schema);
   }
   return compiledValidator;

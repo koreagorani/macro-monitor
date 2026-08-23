@@ -11,10 +11,11 @@
     "dataSourceSummary",
     "riskOutput",
     "portfolioVulnerability",
+    "reportFacts",
     "warnings"
   ],
   "properties": {
-    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "schemaVersion": { "type": "string", "const": "2.0.0" },
     "asOf": { "type": "string", "format": "date" },
     "generatedAt": { "type": "string", "format": "date-time" },
     "dataSourceSummary": { "$ref": "#/$defs/dataSourceSummary" },
@@ -31,11 +32,45 @@
         }
       ]
     },
+    "reportFacts": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "$ref": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/report-facts.schema.json"
+        }
+      ]
+    },
     "warnings": {
       "type": "array",
       "items": { "$ref": "#/$defs/warning" }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "dataSourceSummary": {
+            "type": "object",
+            "properties": { "riskShouldAbort": { "const": true } },
+            "required": ["riskShouldAbort"]
+          }
+        },
+        "required": ["dataSourceSummary"]
+      },
+      "then": {
+        "type": "object",
+        "properties": { "reportFacts": { "type": "null" } }
+      },
+      "else": {
+        "type": "object",
+        "properties": {
+          "reportFacts": {
+            "$ref": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/report-facts.schema.json"
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "dataSourceSummary": {
       "type": "object",

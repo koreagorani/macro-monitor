@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/report-facts.schema.json",
+  "title": "Deterministic Report Facts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "asOf",
+    "overallRisk",
+    "indicators",
+    "areaRisks",
+    "portfolioThemes",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "asOf": { "type": "string", "format": "date" },
+    "overallRisk": { "$ref": "#/$defs/overallRisk" },
+    "indicators": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/indicatorFact" }
+    },
+    "areaRisks": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/areaRisk" }
+    },
+    "portfolioThemes": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/portfolioTheme" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "not": { "enum": ["unknown", "n_a"] }
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*",
+      "not": { "pattern": "^\\s*(---|—|N/A|n/a|unknown|UNKNOWN)\\s*$" }
+    },
+    "nullableNumber": { "type": ["number", "null"] },
+    "nullableDate": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["easing", "normal", "watch", "alert", "strong_alert", "unavailable"]
+    },
+    "overallRisk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "label", "score", "confidence", "reasons", "triggeredRules"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["normal", "watch", "alert", "high_risk"]
+        },
+        "label": { "$ref": "#/$defs/text" },
+        "score": { "type": "number", "minimum": -1, "maximum": 3 },
+        "confidence": { "type": "string", "enum": ["normal", "reduced"] },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "triggeredRules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "indicatorFact": {
+      "oneOf": [
+        { "$ref": "#/$defs/marketPriceIndicator" },
+        { "$ref": "#/$defs/scheduledReleaseIndicator" }
+      ]
+    },
+    "marketPriceIndicator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "indicatorId",
+        "name",
+        "type",
+        "unit",
+        "available",
+        "status",
+        "score",
+        "reportPriority",
+        "riskContribution",
+        "factNote",
+        "selectedEvaluation",
+        "currentValue",
+        "currentObservationDate",
+        "weeklyChange",
+        "weeklyChangeUnit",
+        "weeklyReferenceDate",
+        "fourWeekChange",
+        "fourWeekChangeUnit",
+        "fourWeekReferenceDate"
+      ],
+      "properties": {
+        "indicatorId": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "type": { "const": "market_price" },
+        "unit": { "$ref": "#/$defs/text" },
+        "available": { "type": "boolean" },
+        "status": { "$ref": "#/$defs/status" },
+        "score": { "type": ["number", "null"], "minimum": -1, "maximum": 3 },
+        "reportPriority": { "type": "integer", "minimum": 1 },
+        "riskContribution": { "$ref": "#/$defs/nullableNumber" },
+        "factNote": { "$ref": "#/$defs/text" },
+        "selectedEvaluation": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/selectedEvaluation" }
+          ]
+        },
+        "currentValue": { "$ref": "#/$defs/nullableNumber" },
+        "currentObservationDate": { "$ref": "#/$defs/nullableDate" },
+        "weeklyChange": { "$ref": "#/$defs/nullableNumber" },
+        "weeklyChangeUnit": { "type": ["string", "null"], "enum": ["bp", "%", null] },
+        "weeklyReferenceDate": { "$ref": "#/$defs/nullableDate" },
+        "fourWeekChange": { "$ref": "#/$defs/nullableNumber" },
+        "fourWeekChangeUnit": { "type": ["string", "null"], "enum": ["bp", "%", null] },
+        "fourWeekReferenceDate": { "$ref": "#/$defs/nullableDate" }
+      }
+    },
+    "scheduledReleaseIndicator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "indicatorId",
+        "name",
+        "type",
+        "unit",
+        "available",
+        "status",
+        "score",
+        "reportPriority",
+        "riskContribution",
+        "factNote",
+        "selectedEvaluation",
+        "currentObservationDate",
+        "referenceMonth",
+        "currentMoM",
+        "previousMoM",
+        "threeMonthAverageMoM",
+        "consensusMoM"
+      ],
+      "properties": {
+        "indicatorId": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "type": { "const": "scheduled_release" },
+        "unit": { "$ref": "#/$defs/text" },
+        "available": { "type": "boolean" },
+        "status": { "$ref": "#/$defs/status" },
+        "score": { "type": ["number", "null"], "minimum": -1, "maximum": 3 },
+        "reportPriority": { "type": "integer", "minimum": 1 },
+        "riskContribution": { "$ref": "#/$defs/nullableNumber" },
+        "factNote": { "$ref": "#/$defs/text" },
+        "selectedEvaluation": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/selectedEvaluation" }
+          ]
+        },
+        "currentObservationDate": { "$ref": "#/$defs/nullableDate" },
+        "referenceMonth": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+        },
+        "currentMoM": { "$ref": "#/$defs/nullableNumber" },
+        "previousMoM": { "$ref": "#/$defs/nullableNumber" },
+        "threeMonthAverageMoM": { "$ref": "#/$defs/nullableNumber" },
+        "consensusMoM": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "selectedEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricPath", "unit", "value", "status", "score", "matchedRuleId", "signal", "threshold"],
+      "properties": {
+        "metricPath": { "$ref": "#/$defs/text" },
+        "unit": { "$ref": "#/$defs/text" },
+        "value": { "$ref": "#/$defs/nullableNumber" },
+        "status": { "$ref": "#/$defs/status" },
+        "score": { "type": ["number", "null"], "minimum": -1, "maximum": 3 },
+        "matchedRuleId": { "type": ["string", "null"] },
+        "signal": { "type": ["string", "null"] },
+        "threshold": { "$ref": "#/$defs/threshold" }
+      }
+    },
+    "threshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operator", "value"],
+      "properties": {
+        "operator": { "type": "string", "enum": [">", ">=", "<", "<=", "==", "default"] },
+        "value": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "areaRisk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["areaId", "name", "weight", "score", "status", "contributingIndicators"],
+      "properties": {
+        "areaId": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "weight": { "type": "number", "minimum": 0 },
+        "score": { "type": ["number", "null"], "minimum": -1, "maximum": 3 },
+        "status": { "$ref": "#/$defs/status" },
+        "contributingIndicators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/areaContribution" }
+        }
+      }
+    },
+    "areaContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["indicatorId", "status", "score", "areaWeight", "weightedScore"],
+      "properties": {
+        "indicatorId": { "$ref": "#/$defs/id" },
+        "status": { "$ref": "#/$defs/status" },
+        "score": { "type": "number", "minimum": -1, "maximum": 3 },
+        "areaWeight": { "type": "number", "exclusiveMinimum": 0 },
+        "weightedScore": { "type": "number" }
+      }
+    },
+    "portfolioTheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "themeId",
+        "name",
+        "description",
+        "score",
+        "level",
+        "macroContributions",
+        "reasons",
+        "confidence",
+        "hedgeCandidateIds"
+      ],
+      "properties": {
+        "themeId": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "description": { "$ref": "#/$defs/text" },
+        "score": { "type": "number" },
+        "level": {
+          "type": "string",
+          "enum": ["easing", "normal", "watch", "alert", "high_risk"]
+        },
+        "macroContributions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/macroContribution" }
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "confidence": { "type": "string", "enum": ["normal", "reduced"] },
+        "hedgeCandidateIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "macroContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["areaId", "areaScore", "areaStatus", "exposure", "contribution"],
+      "properties": {
+        "areaId": { "$ref": "#/$defs/id" },
+        "areaScore": { "type": "number", "minimum": -1, "maximum": 3 },
+        "areaStatus": { "$ref": "#/$defs/status" },
+        "exposure": { "type": "number" },
+        "contribution": { "type": "number" }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "message": { "$ref": "#/$defs/text" }
+      }
+    }
+  }
+}

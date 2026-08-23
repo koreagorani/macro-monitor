@@ -1,6 +1,12 @@
 import { readFile } from "node:fs/promises";
 
+import { validateWeeklyAnalysisOutput } from "../validation/validate-weekly-analysis-output.js";
 import { validateWeeklyReportOutput } from "../validation/validate-weekly-report-output.js";
+import { buildWeeklyReportOutput } from "./build-weekly-report-output.js";
+import {
+  validateWeeklyAnalysisConsistency,
+  validateWeeklyReportConsistency
+} from "./validate-report-consistency.js";
 
 class WeeklyReportGenerationError extends Error {
   constructor(code, message, { errors = [], cause = null } = {}) {
@@ -22,19 +28,21 @@ function compactValidationErrors(errors = []) {
 
 function buildWeeklyReportUserMessage(macroReviewOutput) {
   return [
-    "아래 macroReviewOutput을 바탕으로 weekly-report-output JSON을 생성해줘.",
+    "아래 deterministic reportFacts만 해석해 weekly-analysis-output JSON을 생성해줘.",
     "",
     "절대 규칙:",
-    "- 숫자를 재계산하지 마라.",
+    "- 숫자, 날짜, 단위, 상태, 점수, 임계값을 출력하지 마라.",
     "- 위험 등급을 재판정하지 마라.",
-    "- 임계값을 바꾸지 마라.",
+    "- area/theme/candidate의 canonical 이름을 생성하지 마라.",
+    "- areaInsights와 themeInsights는 입력에 있는 ID를 정확히 한 번씩 참조하라.",
+    "- hedge candidate는 입력에 있는 candidateId만 참조하라.",
     "- 입력에 없는 최신 뉴스, 가격, 일정을 만들지 마라.",
     "- 특정 종목 추천을 하지 마라.",
     "- 실제 개인 보유 수량이나 평가금액을 추정하지 마라.",
     "- JSON 외 텍스트를 출력하지 마라.",
     "",
-    "macroReviewOutput:",
-    JSON.stringify(macroReviewOutput, null, 2)
+    "reportFacts:",
+    JSON.stringify(macroReviewOutput.reportFacts, null, 2)
   ].join("\n");
 }
 
@@ -45,7 +53,7 @@ function buildWeeklyReportResponseFormat(schema) {
 
   return {
     type: "json_schema",
-    name: "weekly_report_output",
+    name: "weekly_analysis_output",
     strict: true,
     schema: apiSchema
   };
@@ -56,127 +64,27 @@ function parseWeeklyReportJson(rawText) {
     return JSON.parse(rawText.trim());
   } catch (error) {
     throw new WeeklyReportGenerationError(
-      "WEEKLY_REPORT_JSON_PARSE_FAILED",
-      "AI weekly report response was not valid JSON.",
+      "WEEKLY_ANALYSIS_JSON_PARSE_FAILED",
+      "AI weekly analysis response was not valid JSON.",
       { cause: error }
     );
   }
-}
-
-function sameNumberOrNull(left, right) {
-  if (left === null && right === null) return true;
-  if (typeof left === "number" && typeof right === "number") {
-    return Math.abs(left - right) < 1e-12;
-  }
-  return left === right;
-}
-
-function assertConsistency(condition, message, errors) {
-  if (!condition) {
-    errors.push({
-      instancePath: "",
-      keyword: "macroReviewConsistency",
-      message
-    });
-  }
-}
-
-function validateWeeklyReportConsistency({ weeklyReportOutput, macroReviewOutput }) {
-  const errors = [];
-  const expectedOverallRisk = macroReviewOutput.riskOutput?.overallRisk ?? null;
-  const sourceMacroReview = weeklyReportOutput.sourceMacroReview;
-
-  assertConsistency(
-    weeklyReportOutput.asOf === macroReviewOutput.asOf,
-    "weekly report asOf must match macroReviewOutput.asOf.",
-    errors
-  );
-  assertConsistency(
-    sourceMacroReview.asOf === macroReviewOutput.asOf,
-    "sourceMacroReview.asOf must match macroReviewOutput.asOf.",
-    errors
-  );
-  assertConsistency(
-    sourceMacroReview.overallLevel === (expectedOverallRisk?.level ?? null),
-    "sourceMacroReview.overallLevel must match macroReviewOutput.riskOutput.overallRisk.level.",
-    errors
-  );
-  assertConsistency(
-    sameNumberOrNull(sourceMacroReview.overallScore, expectedOverallRisk?.score ?? null),
-    "sourceMacroReview.overallScore must match macroReviewOutput.riskOutput.overallRisk.score.",
-    errors
-  );
-  assertConsistency(
-    sourceMacroReview.confidence === macroReviewOutput.riskOutput?.quality?.confidence,
-    "sourceMacroReview.confidence must match macroReviewOutput.riskOutput.quality.confidence.",
-    errors
-  );
-
-  const expectedTopThemeIds = (macroReviewOutput.portfolioVulnerability?.themeVulnerabilities ?? [])
-    .slice(0, 3)
-    .map((theme) => theme.themeId);
-  assertConsistency(
-    JSON.stringify(sourceMacroReview.topThemeIds) === JSON.stringify(expectedTopThemeIds),
-    "sourceMacroReview.topThemeIds must match portfolioVulnerability top theme ids.",
-    errors
-  );
-
-  const sourceAreaMap = new Map((macroReviewOutput.riskOutput?.areaRisks ?? []).map((area) => [area.areaId, area]));
-  for (const area of weeklyReportOutput.report?.areaRisks ?? []) {
-    const sourceArea = sourceAreaMap.get(area.areaId);
-    assertConsistency(
-      Boolean(sourceArea),
-      `report.areaRisks contains unknown areaId ${area.areaId}.`,
-      errors
-    );
-    if (sourceArea) {
-      assertConsistency(
-        sameNumberOrNull(area.score, sourceArea.score),
-        `report.areaRisks score for ${area.areaId} must match macroReviewOutput.`,
-        errors
-      );
-      assertConsistency(
-        area.status === sourceArea.status,
-        `report.areaRisks status for ${area.areaId} must match macroReviewOutput.`,
-        errors
-      );
-    }
-  }
-
-  const sourceThemeMap = new Map((macroReviewOutput.portfolioVulnerability?.themeVulnerabilities ?? []).map((theme) => [theme.themeId, theme]));
-  for (const theme of weeklyReportOutput.report?.portfolioThemes ?? []) {
-    const sourceTheme = sourceThemeMap.get(theme.themeId);
-    assertConsistency(
-      Boolean(sourceTheme),
-      `report.portfolioThemes contains unknown themeId ${theme.themeId}.`,
-      errors
-    );
-    if (sourceTheme) {
-      assertConsistency(
-        sameNumberOrNull(theme.score, sourceTheme.score),
-        `report.portfolioThemes score for ${theme.themeId} must match macroReviewOutput.`,
-        errors
-      );
-      assertConsistency(
-        theme.level === sourceTheme.level,
-        `report.portfolioThemes level for ${theme.themeId} must match macroReviewOutput.`,
-        errors
-      );
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors
-  };
 }
 
 async function generateWeeklyReport({
   macroReviewOutput,
   openaiClient,
   promptPath = "prompts/weekly-analysis.md",
-  schemaPath = "data/schema/weekly-report-output.schema.json"
+  schemaPath = "data/schema/weekly-analysis-output.schema.json",
+  generatedAt = new Date().toISOString()
 }) {
+  if (!macroReviewOutput.reportFacts) {
+    throw new WeeklyReportGenerationError(
+      "WEEKLY_REPORT_FACTS_UNAVAILABLE",
+      "Weekly analysis cannot run without deterministic report facts."
+    );
+  }
+
   const [promptText, schemaText] = await Promise.all([
     readFile(promptPath, "utf8"),
     readFile(schemaPath, "utf8")
@@ -190,25 +98,51 @@ async function generateWeeklyReport({
     responseFormat
   });
 
-  const weeklyReportOutput = parseWeeklyReportJson(aiResponse.text);
-  const schemaValidation = await validateWeeklyReportOutput(weeklyReportOutput);
-  if (!schemaValidation.valid) {
+  const analysis = parseWeeklyReportJson(aiResponse.text);
+  const analysisSchemaValidation = await validateWeeklyAnalysisOutput(analysis);
+  if (!analysisSchemaValidation.valid) {
     throw new WeeklyReportGenerationError(
-      "WEEKLY_REPORT_SCHEMA_VALIDATION_FAILED",
-      "AI weekly report response did not match weekly-report-output schema.",
-      { errors: compactValidationErrors(schemaValidation.errors) }
+      "WEEKLY_ANALYSIS_SCHEMA_VALIDATION_FAILED",
+      "AI weekly analysis response did not match weekly-analysis-output schema.",
+      { errors: compactValidationErrors(analysisSchemaValidation.errors) }
     );
   }
 
-  const consistencyValidation = validateWeeklyReportConsistency({
+  const analysisConsistency = validateWeeklyAnalysisConsistency({
+    analysis,
+    reportFacts: macroReviewOutput.reportFacts
+  });
+  if (!analysisConsistency.valid) {
+    throw new WeeklyReportGenerationError(
+      "WEEKLY_ANALYSIS_CONSISTENCY_FAILED",
+      "AI weekly analysis referenced inconsistent source fact IDs.",
+      { errors: analysisConsistency.errors }
+    );
+  }
+
+  const weeklyReportOutput = buildWeeklyReportOutput({
+    macroReviewOutput,
+    analysis,
+    generatedAt
+  });
+  const finalSchemaValidation = await validateWeeklyReportOutput(weeklyReportOutput);
+  if (!finalSchemaValidation.valid) {
+    throw new WeeklyReportGenerationError(
+      "WEEKLY_REPORT_SCHEMA_VALIDATION_FAILED",
+      "Code-assembled weekly report did not match weekly-report-output schema.",
+      { errors: compactValidationErrors(finalSchemaValidation.errors) }
+    );
+  }
+
+  const finalConsistency = validateWeeklyReportConsistency({
     weeklyReportOutput,
     macroReviewOutput
   });
-  if (!consistencyValidation.valid) {
+  if (!finalConsistency.valid) {
     throw new WeeklyReportGenerationError(
       "WEEKLY_REPORT_CONSISTENCY_FAILED",
-      "AI weekly report response changed source macro-review facts.",
-      { errors: consistencyValidation.errors }
+      "Code-assembled weekly report changed source macro-review facts.",
+      { errors: finalConsistency.errors }
     );
   }
 

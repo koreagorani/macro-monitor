@@ -3,6 +3,8 @@ import { validateIndicatorOutput } from "../src/validation/validate-output.js";
 import { validateRiskOutput } from "../src/validation/validate-risk-output.js";
 import { validatePortfolioVulnerabilityOutput } from "../src/validation/validate-portfolio-vulnerability-output.js";
 import { validateMacroReviewOutput } from "../src/validation/validate-macro-review-output.js";
+import { validateReportFacts } from "../src/validation/validate-report-facts.js";
+import { validateWeeklyAnalysisOutput } from "../src/validation/validate-weekly-analysis-output.js";
 import { validateWeeklyReportOutput } from "../src/validation/validate-weekly-report-output.js";
 
 const indicatorExamplePaths = [
@@ -24,6 +26,14 @@ const macroReviewExamplePaths = [
 
 const weeklyReportExamplePaths = [
   "data/examples/weekly-report-output.example.json"
+];
+
+const reportFactsExamplePaths = [
+  "data/examples/report-facts.example.json"
+];
+
+const weeklyAnalysisExamplePaths = [
+  "data/examples/weekly-analysis-output.example.json"
 ];
 
 let failed = false;
@@ -79,6 +89,30 @@ for (const path of macroReviewExamplePaths) {
 for (const path of weeklyReportExamplePaths) {
   const value = await loadJsonFile(path);
   const result = await validateWeeklyReportOutput(value);
+  if (!result.valid) {
+    failed = true;
+    console.error(`${path}: invalid`);
+    console.error(JSON.stringify(result.errors, null, 2));
+  } else {
+    console.log(`${path}: valid`);
+  }
+}
+
+for (const path of reportFactsExamplePaths) {
+  const value = await loadJsonFile(path);
+  const result = await validateReportFacts(value);
+  if (!result.valid) {
+    failed = true;
+    console.error(`${path}: invalid`);
+    console.error(JSON.stringify(result.errors, null, 2));
+  } else {
+    console.log(`${path}: valid`);
+  }
+}
+
+for (const path of weeklyAnalysisExamplePaths) {
+  const value = await loadJsonFile(path);
+  const result = await validateWeeklyAnalysisOutput(value);
   if (!result.valid) {
     failed = true;
     console.error(`${path}: invalid`);

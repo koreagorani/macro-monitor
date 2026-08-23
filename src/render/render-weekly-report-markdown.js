@@ -24,9 +24,41 @@ function renderBulletList(items, { limit = null, emptyText = "해당 없음" } =
 }
 
 function renderWeeklyReportMarkdown(weeklyReportOutput = {}) {
-  const report = weeklyReportOutput.report ?? {};
+  const facts = weeklyReportOutput.facts ?? {};
+  const analysis = weeklyReportOutput.analysis ?? {};
+  const areaInsightMap = new Map(asArray(analysis.areaInsights).map((item) => [item.areaId, item]));
+  const themeInsightMap = new Map(asArray(analysis.themeInsights).map((item) => [item.themeId, item]));
+  const legacyReport = weeklyReportOutput.report ?? {};
+  const report = weeklyReportOutput.schemaVersion === "2.0.0"
+    ? {
+        title: weeklyReportOutput.presentation?.title,
+        mandatoryDisclosure: weeklyReportOutput.presentation?.mandatoryDisclosure,
+        oneLookConclusion: {
+          overallRisk: facts.overallRisk?.label ?? facts.overallRisk?.level,
+          coreChanges: analysis.oneLookAnalysis?.coreChanges,
+          recommendedAction: analysis.oneLookAnalysis?.recommendedAction
+        },
+        areaRisks: asArray(facts.areaRisks).map((area) => ({
+          ...area,
+          keyReason: areaInsightMap.get(area.areaId)?.keyReason
+        })),
+        portfolioThemes: asArray(facts.portfolioThemes).map((theme) => ({
+          ...theme,
+          ...themeInsightMap.get(theme.themeId)
+        })),
+        hedgeAndDefense: analysis.hedgeAndDefense,
+        nextWeekChecklist: analysis.nextWeekChecklist
+      }
+    : legacyReport;
   const conclusion = report.oneLookConclusion ?? {};
-  const source = weeklyReportOutput.sourceMacroReview ?? {};
+  const source = weeklyReportOutput.schemaVersion === "2.0.0"
+    ? {
+        asOf: facts.asOf,
+        overallLevel: facts.overallRisk?.level,
+        overallScore: facts.overallRisk?.score,
+        confidence: facts.overallRisk?.confidence
+      }
+    : (weeklyReportOutput.sourceMacroReview ?? {});
   const areaRisks = asArray(report.areaRisks);
   const portfolioThemes = asArray(report.portfolioThemes).slice(0, 3);
   const hedge = report.hedgeAndDefense ?? {};

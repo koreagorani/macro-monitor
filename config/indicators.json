@@ -9,6 +9,7 @@
   "indicators": {
     "us2y": {
       "name": "미국 2년물 국채금리",
+      "reportPriority": 1,
       "type": "market_price",
       "source": {
         "provider": "FRED",
@@ -31,6 +32,7 @@
     },
     "core_pce": {
       "name": "근원 PCE",
+      "reportPriority": 2,
       "type": "scheduled_release",
       "source": {
         "provider": "FRED",
@@ -51,6 +53,7 @@
     },
     "wti": {
       "name": "WTI",
+      "reportPriority": 3,
       "type": "market_price",
       "source": {
         "provider": "FRED",
@@ -72,6 +75,7 @@
     },
     "usdkrw": {
       "name": "원·달러 환율",
+      "reportPriority": 4,
       "type": "market_price",
       "source": {
         "provider": "FRED",
@@ -93,6 +97,7 @@
     },
     "btc": {
       "name": "비트코인",
+      "reportPriority": 6,
       "type": "market_price",
       "source": {
         "provider": "FRED",
@@ -115,6 +120,7 @@
     },
     "sp500": {
       "name": "S&P 500",
+      "reportPriority": 5,
       "type": "market_price",
       "source": {
         "provider": "FRED",

@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/koreagorani/macro-monitor/blob/main/data/schema/weekly-analysis-output.schema.json",
+  "title": "Weekly Analysis Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "oneLookAnalysis",
+    "macroJudgment",
+    "areaInsights",
+    "themeInsights",
+    "hedgeAndDefense",
+    "nextWeekChecklist",
+    "decisionLog"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "oneLookAnalysis": { "$ref": "#/$defs/oneLookAnalysis" },
+    "macroJudgment": { "$ref": "#/$defs/macroJudgment" },
+    "areaInsights": {
+      "type": "array",
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/areaInsight" }
+    },
+    "themeInsights": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/themeInsight" }
+    },
+    "hedgeAndDefense": { "$ref": "#/$defs/hedgeAndDefense" },
+    "nextWeekChecklist": { "$ref": "#/$defs/nextWeekChecklist" },
+    "decisionLog": { "$ref": "#/$defs/decisionLog" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "textArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "actionPhrase": {
+      "type": "string",
+      "enum": [
+        "유지",
+        "신규매수 신중",
+        "신규매수 보류",
+        "비중 확대 중단",
+        "투자 가설 재확인",
+        "축소 검토",
+        "헤지 검토"
+      ]
+    },
+    "oneLookAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coreChanges", "recommendedAction"],
+      "properties": {
+        "coreChanges": {
+          "type": "array",
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "recommendedAction": { "$ref": "#/$defs/actionPhrase" }
+      }
+    },
+    "macroJudgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["riskCharacter", "directionAgreement", "conflictingSignals", "summary"],
+      "properties": {
+        "riskCharacter": {
+          "type": "string",
+          "enum": ["inflation", "growth_slowdown", "liquidity_risk_off", "asset_specific", "mixed"]
+        },
+        "directionAgreement": { "$ref": "#/$defs/text" },
+        "conflictingSignals": { "$ref": "#/$defs/textArray" },
+        "summary": { "$ref": "#/$defs/text" }
+      }
+    },
+    "areaInsight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["areaId", "keyReason"],
+      "properties": {
+        "areaId": { "$ref": "#/$defs/id" },
+        "keyReason": { "$ref": "#/$defs/text" }
+      }
+    },
+    "themeInsight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["themeId", "keyReasons", "action"],
+      "properties": {
+        "themeId": { "$ref": "#/$defs/id" },
+        "keyReasons": {
+          "type": "array",
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "action": { "$ref": "#/$defs/actionPhrase" }
+      }
+    },
+    "hedgeAndDefense": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["needLevel", "summary", "candidates"],
+      "properties": {
+        "needLevel": { "type": "string", "enum": ["none", "low", "medium", "high"] },
+        "summary": { "$ref": "#/$defs/text" },
+        "candidates": {
+          "type": "array",
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/hedgeCandidateInsight" }
+        }
+      }
+    },
+    "hedgeCandidateInsight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "whyItFits", "failureCondition", "cashComparison"],
+      "properties": {
+        "candidateId": { "$ref": "#/$defs/id" },
+        "whyItFits": { "$ref": "#/$defs/text" },
+        "failureCondition": { "$ref": "#/$defs/text" },
+        "cashComparison": { "$ref": "#/$defs/text" }
+      }
+    },
+    "nextWeekChecklist": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheduledIndicators",
+        "riskStrengtheningConditions",
+        "riskEasingConditions",
+        "invalidatingConditions"
+      ],
+      "properties": {
+        "scheduledIndicators": { "$ref": "#/$defs/textArray" },
+        "riskStrengtheningConditions": { "$ref": "#/$defs/textArray" },
+        "riskEasingConditions": { "$ref": "#/$defs/textArray" },
+        "invalidatingConditions": { "$ref": "#/$defs/textArray" }
+      }
+    },
+    "decisionLog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseScenario", "reviewItems"],
+      "properties": {
+        "baseScenario": { "$ref": "#/$defs/text" },
+        "reviewItems": { "$ref": "#/$defs/textArray" }
+      }
+    }
+  }
+}

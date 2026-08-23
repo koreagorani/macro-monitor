@@ -7,12 +7,15 @@ import { aggregateAreaRisks } from "../src/risk/aggregate-areas.js";
 import { evaluateOverallRisk } from "../src/risk/evaluate-overall-risk.js";
 import { evaluatePortfolioVulnerability } from "../src/portfolio/evaluate-portfolio-vulnerability.js";
 import { buildMacroReviewOutput } from "../src/review/build-macro-review-output.js";
+import { buildReportFacts } from "../src/report/build-report-facts.js";
+import { validateReportFactsConsistency } from "../src/report/validate-report-consistency.js";
 import { createOpenAIClientFromEnv, OpenAIClientError } from "../src/clients/openai-client.js";
 import { generateWeeklyReport, WeeklyReportGenerationError } from "../src/report/generate-weekly-report.js";
 import { validateIndicatorOutputs } from "../src/validation/validate-outputs.js";
 import { validateRiskOutput } from "../src/validation/validate-risk-output.js";
 import { validatePortfolioVulnerabilityOutput } from "../src/validation/validate-portfolio-vulnerability-output.js";
 import { validateMacroReviewOutput } from "../src/validation/validate-macro-review-output.js";
+import { validateReportFacts } from "../src/validation/validate-report-facts.js";
 import { validateWeeklyReportOutput } from "../src/validation/validate-weekly-report-output.js";
 
 function compactErrors(errors = []) {
@@ -125,9 +128,46 @@ async function buildMacroReview({ asOf }) {
     }
   }
 
+  const reportFacts = buildReportFacts({
+    indicatorOutputs,
+    riskOutput,
+    portfolioVulnerability,
+    indicatorConfig,
+    thresholdsConfig
+  });
+
+  if (reportFacts !== null) {
+    const reportFactsValidation = await validateReportFacts(reportFacts);
+    if (!reportFactsValidation.valid) {
+      throw new WeeklyReportGenerationError(
+        "REPORT_FACTS_SCHEMA_VALIDATION_FAILED",
+        "Deterministic report facts failed schema validation.",
+        { errors: compactErrors(reportFactsValidation.errors) }
+      );
+    }
+
+    const reportFactsConsistency = validateReportFactsConsistency({
+      reportFacts,
+      indicatorOutputs,
+      riskOutput,
+      portfolioVulnerability,
+      indicatorConfig,
+      riskAreasConfig,
+      thresholdsConfig
+    });
+    if (!reportFactsConsistency.valid) {
+      throw new WeeklyReportGenerationError(
+        "REPORT_FACTS_CONSISTENCY_FAILED",
+        "Deterministic report facts did not match source outputs and config.",
+        { errors: reportFactsConsistency.errors }
+      );
+    }
+  }
+
   const macroReviewOutput = buildMacroReviewOutput({
     riskOutput,
-    portfolioVulnerability
+    portfolioVulnerability,
+    reportFacts
   });
 
   const macroReviewValidation = await validateMacroReviewOutput(macroReviewOutput);

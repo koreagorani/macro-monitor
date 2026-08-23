@@ -17,9 +17,30 @@
 - Telegram 주간 알림 전송 계약 및 완료 조건 설계 완료
 - Telegram 알림 구현 및 mock 기반 로컬 검증 완료
 - Telegram 알림 실제 GitHub Actions 검증 완료
-- 다음 작업: 자동 스케줄 실행 전 계약 설계
+- 보고서 v2 Phase A — deterministic facts / AI analysis 분리 구현 및 로컬 검증 완료
+- 다음 작업: Phase B — Markdown/Notion data-first 출력
 
 ## 완료된 내용
+
+### 보고서 v2 Phase A — deterministic facts / AI analysis 분리
+
+- `data/schema/report-facts.schema.json`과 `data/schema/weekly-analysis-output.schema.json` 추가
+- `weekly-report-output`을 code-assembled v2 `presentation + facts + analysis` 계약으로 변경
+- macro-review v2에 정상 `reportFacts`, 품질 중단 시 `reportFacts: null` 계약 추가
+- market 5개 실제 값·관측일·1주·4주 변화와 Core PCE 관측일·기준월·전월비·이전치·3개월 평균·consensus 보존
+- 기존 area/overall 가중평균을 정확히 분해하는 deterministic `riskContribution` 구현
+- `config/indicators.json`에 고유한 `reportPriority` 1~6 추가
+- OpenAI Structured Outputs를 final weekly report schema에서 analysis-only schema로 변경
+- 코드가 deterministic presentation/facts/warnings와 AI analysis를 조립하고 final facts deep-equal 검증
+- indicator/area/theme exact-set, duplicate, placeholder, AI unknown ID, candidate ID consistency 검증 추가
+- overall 및 portfolio 계산의 내부 `toFixed(12)` 제거; 판정과 정렬은 raw JS number 사용
+- 기존 Markdown/Notion/Telegram은 v2를 읽는 최소 호환만 추가했으며 data-first 출력은 구현하지 않음
+- `quality.shouldAbort`에서 reportFacts null, OpenAI·Markdown·Notion 생략, 품질 실패 Telegram 전송 계약 유지
+- 로컬 검증:
+  - `npm test`: 130개 전체 통과
+  - `npm run validate:examples`: 8개 전체 통과
+  - 실제 FRED/OpenAI/Notion/Telegram Actions 검증은 Phase A 완료 조건에서 제외
+- 구조적 결정: D-030 추가, D-024/D-025/D-026 일부 supersede, D-023/D-027/D-028/D-029 확장
 
 ### Phase 1 수동 보고서 검증
 
@@ -556,14 +577,19 @@ Node.js 환경:
 - `AGENTS.md`
 - `docs/ARCHITECTURE.md`
 - `docs/REQUIREMENTS.md`
+- `docs/REPORT_SPEC.md`
 - `docs/HANDOFF.md`
+- `docs/DECISIONS.md` D-030
 
 선택:
-- 보고서 요약 원천 확인 시 `docs/REPORT_SPEC.md`
-- 기존 외부 client 보안·오류 패턴 확인 시 `src/clients/notion-client.js`
-- live pipeline 재사용 확인 시 `scripts/save-weekly-report-to-notion.js`
+- facts 구조 확인 시 `data/schema/report-facts.schema.json`
+- final 입력 확인 시 `data/schema/weekly-report-output.schema.json`
+- Notion native Markdown 동작 확인 시 `src/clients/notion-client.js`
+- 기존 renderer 확인 시 `src/render/render-weekly-report-markdown.js`
 
 ## 미해결
 
-- 자동 스케줄 실행의 계약과 완료 조건 설계
+- Phase B — Markdown/Notion에서 MVP 6개 실제 데이터 표, 표시 정밀도 formatter, Notion `<table>` 및 read-back coverage 구현
+- Phase C — Telegram 중요 실제 지표 최대 3개 deterministic 선택·표시와 실제 Actions 통합 검증
+- 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토

@@ -121,6 +121,10 @@
 ## 보고서
 
 - 5분 이내에 핵심 판단 가능
+- 정상 보고서는 MVP 6개 지표의 실제 값과 관측일, 시장가격형의 1주·4주 변화, 근원 PCE의 전월비·이전치·3개월 평균·기준월을 deterministic facts로 보존
+- 실제 값·날짜·단위·상태·점수·임계값은 코드만 생성
+- OpenAI는 facts의 ID를 참조하는 해석만 생성하고 canonical fact를 생성하거나 변경하지 않음
+- 최종 weekly-report-output은 코드가 deterministic facts와 AI analysis를 조립
 - 전체 위험 단계
 - 영역별 위험
 - 지표 코멘트는 특이사항이 있을 때만
@@ -147,6 +151,8 @@ AI 없이:
 - 임계값
 - 영역 점수
 - 테마 취약도
+- report facts와 `riskContribution`
+- final weekly-report-output 조립
 - 표 생성
 - Notion 저장
 
@@ -156,4 +162,4 @@ AI:
 - 일시적/지속적 변화 구분
 - 포트폴리오 영향
 - 헷지 설명
-- 자연어 보고서
+- facts ID 기반 자연어 해석

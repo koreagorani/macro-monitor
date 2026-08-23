@@ -148,7 +148,7 @@ test("overall risk calculation is skipped when quality gate aborts", () => {
   assert.equal(overallRisk, null);
 });
 
-test("weighted score uses enabled area weights as a normalized weighted average", () => {
+test("weighted score uses the raw normalized weighted average without decimal rounding", () => {
   const score = calculateWeightedScore([
     areaRisk("rates_policy", "alert", 2, 0.35),
     areaRisk("inflation_supply", "watch", 1, 0.25),
@@ -156,7 +156,7 @@ test("weighted score uses enabled area weights as a normalized weighted average"
     areaRisk("dollar_korea", "normal", 0, 0.10)
   ]);
 
-  assert.equal(score, 0.95);
+  assert.equal(score, 0.9500000000000001);
 });
 
 test("risk output schema validates with populated overallRisk and allows null when aborted", async () => {

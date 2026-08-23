@@ -1,0 +1,443 @@
+{
+  "schemaVersion": "1.0.0",
+  "asOf": "2026-07-05",
+  "overallRisk": {
+    "level": "high_risk",
+    "score": 0.5473214285714287,
+    "label": "높은 위험",
+    "reasons": [
+      "금리·인플레이션·위험선호 영역이 동시에 악화되었습니다."
+    ],
+    "triggeredRules": [
+      "HIGH_RISK_RATES_INFLATION_RISK_APPETITE_WORSENING"
+    ],
+    "confidence": "normal"
+  },
+  "indicators": [
+    {
+      "indicatorId": "us2y",
+      "name": "미국 2년물 국채금리",
+      "type": "market_price",
+      "unit": "%",
+      "available": true,
+      "status": "watch",
+      "score": 1,
+      "reportPriority": 1,
+      "riskContribution": 0.21875000000000003,
+      "factNote": "주간 변화 기준 주의",
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "bp",
+        "value": 12.4,
+        "status": "watch",
+        "score": 1,
+        "matchedRuleId": "us2y_weekly_watch",
+        "signal": null,
+        "threshold": {
+          "operator": ">",
+          "value": 10
+        }
+      },
+      "currentValue": 4.3217,
+      "currentObservationDate": "2026-07-03",
+      "weeklyChange": 12.4,
+      "weeklyChangeUnit": "bp",
+      "weeklyReferenceDate": "2026-06-27",
+      "fourWeekChange": -8.6,
+      "fourWeekChangeUnit": "bp",
+      "fourWeekReferenceDate": "2026-06-06"
+    },
+    {
+      "indicatorId": "core_pce",
+      "name": "근원 PCE",
+      "type": "scheduled_release",
+      "unit": "% MoM",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "reportPriority": 2,
+      "riskContribution": 0,
+      "factNote": "전월비 기준 정상",
+      "selectedEvaluation": {
+        "metricPath": "metrics.currentMoM",
+        "unit": "% MoM",
+        "value": 0.22,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "core_pce_current_normal",
+        "signal": null,
+        "threshold": {
+          "operator": ">=",
+          "value": 0.16
+        }
+      },
+      "currentObservationDate": "2026-05-01",
+      "referenceMonth": "2026-05",
+      "currentMoM": 0.22,
+      "previousMoM": 0.19,
+      "threeMonthAverageMoM": 0.24,
+      "consensusMoM": null
+    },
+    {
+      "indicatorId": "wti",
+      "name": "WTI",
+      "type": "market_price",
+      "unit": "USD/barrel",
+      "available": true,
+      "status": "watch",
+      "score": 1,
+      "reportPriority": 3,
+      "riskContribution": 0.1785714285714286,
+      "factNote": "주간 변화 기준 주의",
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": 3.6,
+        "status": "watch",
+        "score": 1,
+        "matchedRuleId": "wti_weekly_up_watch",
+        "signal": "supply_inflation_pressure",
+        "threshold": {
+          "operator": ">=",
+          "value": 3
+        }
+      },
+      "currentValue": 75.34,
+      "currentObservationDate": "2026-07-02",
+      "weeklyChange": 3.6,
+      "weeklyChangeUnit": "%",
+      "weeklyReferenceDate": "2026-06-27",
+      "fourWeekChange": 6.2,
+      "fourWeekChangeUnit": "%",
+      "fourWeekReferenceDate": "2026-06-06"
+    },
+    {
+      "indicatorId": "usdkrw",
+      "name": "원·달러 환율",
+      "type": "market_price",
+      "unit": "KRW/USD",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "reportPriority": 4,
+      "riskContribution": 0,
+      "factNote": "주간 변화 기준 정상",
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": 0.4,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "usdkrw_weekly_normal",
+        "signal": null,
+        "threshold": {
+          "operator": "default",
+          "value": null
+        }
+      },
+      "currentValue": 1375.42,
+      "currentObservationDate": "2026-07-03",
+      "weeklyChange": 0.4,
+      "weeklyChangeUnit": "%",
+      "weeklyReferenceDate": "2026-06-27",
+      "fourWeekChange": 1.1,
+      "fourWeekChangeUnit": "%",
+      "fourWeekReferenceDate": "2026-06-06"
+    },
+    {
+      "indicatorId": "btc",
+      "name": "비트코인",
+      "type": "market_price",
+      "unit": "USD",
+      "available": true,
+      "status": "watch",
+      "score": 1,
+      "reportPriority": 6,
+      "riskContribution": 0.15000000000000002,
+      "factNote": "주간 변화 기준 주의",
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": -6.4,
+        "status": "watch",
+        "score": 1,
+        "matchedRuleId": "btc_weekly_down_watch",
+        "signal": null,
+        "threshold": {
+          "operator": "<=",
+          "value": -5
+        }
+      },
+      "currentValue": 105432.19,
+      "currentObservationDate": "2026-07-04",
+      "weeklyChange": -6.4,
+      "weeklyChangeUnit": "%",
+      "weeklyReferenceDate": "2026-06-27",
+      "fourWeekChange": -4.2,
+      "fourWeekChangeUnit": "%",
+      "fourWeekReferenceDate": "2026-06-06"
+    },
+    {
+      "indicatorId": "sp500",
+      "name": "S&P 500",
+      "type": "market_price",
+      "unit": "index",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "reportPriority": 5,
+      "riskContribution": 0,
+      "factNote": "주간 변화 기준 정상",
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": -0.8,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "sp500_weekly_normal",
+        "signal": null,
+        "threshold": {
+          "operator": "default",
+          "value": null
+        }
+      },
+      "currentValue": 6201.37,
+      "currentObservationDate": "2026-07-03",
+      "weeklyChange": -0.8,
+      "weeklyChangeUnit": "%",
+      "weeklyReferenceDate": "2026-06-27",
+      "fourWeekChange": 2.2,
+      "fourWeekChangeUnit": "%",
+      "fourWeekReferenceDate": "2026-06-06"
+    }
+  ],
+  "areaRisks": [
+    {
+      "areaId": "rates_policy",
+      "name": "금리·통화정책",
+      "weight": 0.35,
+      "score": 0.625,
+      "status": "watch",
+      "contributingIndicators": [
+        {
+          "indicatorId": "us2y",
+          "status": "watch",
+          "score": 1,
+          "areaWeight": 1,
+          "weightedScore": 1
+        },
+        {
+          "indicatorId": "core_pce",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 0.6,
+          "weightedScore": 0
+        }
+      ]
+    },
+    {
+      "areaId": "inflation_supply",
+      "name": "인플레이션·공급",
+      "weight": 0.25,
+      "score": 0.7142857142857143,
+      "status": "watch",
+      "contributingIndicators": [
+        {
+          "indicatorId": "core_pce",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 0.4,
+          "weightedScore": 0
+        },
+        {
+          "indicatorId": "wti",
+          "status": "watch",
+          "score": 1,
+          "areaWeight": 1,
+          "weightedScore": 1
+        }
+      ]
+    },
+    {
+      "areaId": "risk_appetite",
+      "name": "위험선호",
+      "weight": 0.3,
+      "score": 0.5,
+      "status": "watch",
+      "contributingIndicators": [
+        {
+          "indicatorId": "sp500",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 1,
+          "weightedScore": 0
+        },
+        {
+          "indicatorId": "btc",
+          "status": "watch",
+          "score": 1,
+          "areaWeight": 1,
+          "weightedScore": 1
+        }
+      ]
+    },
+    {
+      "areaId": "dollar_korea",
+      "name": "달러·한국 금융환경",
+      "weight": 0.1,
+      "score": 0,
+      "status": "normal",
+      "contributingIndicators": [
+        {
+          "indicatorId": "usdkrw",
+          "status": "normal",
+          "score": 0,
+          "areaWeight": 1,
+          "weightedScore": 0
+        }
+      ]
+    }
+  ],
+  "portfolioThemes": [
+    {
+      "themeId": "crypto_altcoins",
+      "name": "알트코인",
+      "description": "비트코인을 제외한 고변동성 암호자산 테마",
+      "score": 1.9803571428571427,
+      "level": "alert",
+      "macroContributions": [
+        {
+          "areaId": "rates_policy",
+          "areaScore": 0.625,
+          "areaStatus": "watch",
+          "exposure": 1.5,
+          "contribution": 0.9375
+        },
+        {
+          "areaId": "inflation_supply",
+          "areaScore": 0.7142857142857143,
+          "areaStatus": "watch",
+          "exposure": 0.2,
+          "contribution": 0.14285714285714288
+        },
+        {
+          "areaId": "risk_appetite",
+          "areaScore": 0.5,
+          "areaStatus": "watch",
+          "exposure": 1.8,
+          "contribution": 0.9
+        },
+        {
+          "areaId": "dollar_korea",
+          "areaScore": 0,
+          "areaStatus": "normal",
+          "exposure": 0.4,
+          "contribution": 0
+        }
+      ],
+      "reasons": [
+        "rates_policy 영역 위험 점수와 알트코인 테마 민감도가 취약도에 기여했습니다.",
+        "risk_appetite 영역 위험 점수와 알트코인 테마 민감도가 취약도에 기여했습니다."
+      ],
+      "confidence": "normal",
+      "hedgeCandidateIds": [
+        "cash_krw",
+        "short_duration_bonds"
+      ]
+    },
+    {
+      "themeId": "us_large_cap_growth",
+      "name": "미국 대형 성장주",
+      "description": "미국 대형 기술주와 성장주 중심 테마",
+      "score": 1.3392857142857144,
+      "level": "watch",
+      "macroContributions": [
+        {
+          "areaId": "rates_policy",
+          "areaScore": 0.625,
+          "areaStatus": "watch",
+          "exposure": 1,
+          "contribution": 0.625
+        },
+        {
+          "areaId": "inflation_supply",
+          "areaScore": 0.7142857142857143,
+          "areaStatus": "watch",
+          "exposure": 0.3,
+          "contribution": 0.21428571428571427
+        },
+        {
+          "areaId": "risk_appetite",
+          "areaScore": 0.5,
+          "areaStatus": "watch",
+          "exposure": 1,
+          "contribution": 0.5
+        },
+        {
+          "areaId": "dollar_korea",
+          "areaScore": 0,
+          "areaStatus": "normal",
+          "exposure": 0.1,
+          "contribution": 0
+        }
+      ],
+      "reasons": [
+        "rates_policy 영역 위험 점수와 미국 대형 성장주 테마 민감도가 취약도에 기여했습니다.",
+        "risk_appetite 영역 위험 점수와 미국 대형 성장주 테마 민감도가 취약도에 기여했습니다."
+      ],
+      "confidence": "normal",
+      "hedgeCandidateIds": [
+        "cash_krw",
+        "short_duration_bonds",
+        "value_defensive_equity"
+      ]
+    },
+    {
+      "themeId": "long_duration_bonds",
+      "name": "장기채",
+      "description": "장기 듀레이션 채권 및 장기채 ETF 테마",
+      "score": 1.275,
+      "level": "watch",
+      "macroContributions": [
+        {
+          "areaId": "rates_policy",
+          "areaScore": 0.625,
+          "areaStatus": "watch",
+          "exposure": 1.4,
+          "contribution": 0.875
+        },
+        {
+          "areaId": "inflation_supply",
+          "areaScore": 0.7142857142857143,
+          "areaStatus": "watch",
+          "exposure": 0.7,
+          "contribution": 0.5
+        },
+        {
+          "areaId": "risk_appetite",
+          "areaScore": 0.5,
+          "areaStatus": "watch",
+          "exposure": -0.2,
+          "contribution": -0.1
+        },
+        {
+          "areaId": "dollar_korea",
+          "areaScore": 0,
+          "areaStatus": "normal",
+          "exposure": 0.3,
+          "contribution": 0
+        }
+      ],
+      "reasons": [
+        "rates_policy 영역 위험 점수와 장기채 테마 민감도가 취약도에 기여했습니다.",
+        "inflation_supply 영역 위험 점수와 장기채 테마 민감도가 취약도에 기여했습니다."
+      ],
+      "confidence": "normal",
+      "hedgeCandidateIds": [
+        "cash_krw",
+        "short_duration_bonds"
+      ]
+    }
+  ],
+  "warnings": []
+}

@@ -18,7 +18,7 @@ async function fixture() {
   const riskOutput = {
     schemaVersion: "1.0.0",
     asOf: weeklyReportOutput.asOf,
-    quality: { shouldAbort: false, confidence: weeklyReportOutput.sourceMacroReview.confidence }
+    quality: { shouldAbort: false, confidence: weeklyReportOutput.facts.overallRisk.confidence }
   };
   return { riskOutput, weeklyReportOutput };
 }
@@ -30,7 +30,7 @@ test("escapeHtml escapes every dynamic HTML delimiter", () => {
 for (const level of ["normal", "watch"]) {
   test(`${level} uses the normal weekly summary title`, async () => {
     const { riskOutput, weeklyReportOutput } = await fixture();
-    weeklyReportOutput.sourceMacroReview.overallLevel = level;
+    weeklyReportOutput.facts.overallRisk.level = level;
     const summary = buildTelegramSummary({ riskOutput, weeklyReportOutput });
     assert.match(summary.text, /^<b>주간 매크로 요약<\/b>/);
     assert.doesNotMatch(summary.text, /주간 매크로 경고/);
@@ -40,7 +40,7 @@ for (const level of ["normal", "watch"]) {
 for (const level of ["alert", "high_risk"]) {
   test(`${level} uses one warning title`, async () => {
     const { riskOutput, weeklyReportOutput } = await fixture();
-    weeklyReportOutput.sourceMacroReview.overallLevel = level;
+    weeklyReportOutput.facts.overallRisk.level = level;
     const summary = buildTelegramSummary({ riskOutput, weeklyReportOutput });
     assert.match(summary.text, /^<b>⚠️ 주간 매크로 경고<\/b>/);
     assert.equal((summary.text.match(/주간 매크로 경고/g) ?? []).length, 1);
@@ -49,9 +49,9 @@ for (const level of ["alert", "high_risk"]) {
 
 test("weekly summary contains contract fields and escapes dynamic content", async () => {
   const { riskOutput, weeklyReportOutput } = await fixture();
-  weeklyReportOutput.report.oneLookConclusion.coreChanges = ["A & B < C > D"];
-  weeklyReportOutput.report.portfolioThemes[0].name = "테마 <A&B>";
-  weeklyReportOutput.report.oneLookConclusion.recommendedAction = "투자 가설 재확인";
+  weeklyReportOutput.analysis.oneLookAnalysis.coreChanges = ["A & B < C > D"];
+  weeklyReportOutput.facts.portfolioThemes[0].name = "테마 <A&B>";
+  weeklyReportOutput.analysis.oneLookAnalysis.recommendedAction = "투자 가설 재확인";
   const summary = buildTelegramSummary({ riskOutput, weeklyReportOutput });
 
   assert.match(summary.text, /기준일:/);
@@ -68,8 +68,8 @@ test("weekly summary contains contract fields and escapes dynamic content", asyn
 
 test("weekly summary limits core changes and vulnerable themes to three", async () => {
   const { riskOutput, weeklyReportOutput } = await fixture();
-  weeklyReportOutput.report.oneLookConclusion.coreChanges = ["change-1", "change-2", "change-3", "change-4"];
-  weeklyReportOutput.report.portfolioThemes = [1, 2, 3, 4].map((index) => ({
+  weeklyReportOutput.analysis.oneLookAnalysis.coreChanges = ["change-1", "change-2", "change-3", "change-4"];
+  weeklyReportOutput.facts.portfolioThemes = [1, 2, 3, 4].map((index) => ({
     name: `theme-${index}`,
     level: "watch",
     score: index
@@ -85,7 +85,7 @@ test("weekly summary limits core changes and vulnerable themes to three", async 
 
 test("reduced confidence includes the fixed warning", async () => {
   const { riskOutput, weeklyReportOutput } = await fixture();
-  weeklyReportOutput.sourceMacroReview.confidence = "reduced";
+  weeklyReportOutput.facts.overallRisk.confidence = "reduced";
   const { text } = buildTelegramSummary({ riskOutput, weeklyReportOutput });
   assert.match(text, /데이터 누락 또는 상충 신호로 판단 신뢰도가 낮아졌습니다/);
 });
@@ -119,13 +119,13 @@ test("shouldAbort builds only a safe quality failure notification", () => {
 
 test("long optional details are truncated under the 3500-character limit", async () => {
   const { riskOutput, weeklyReportOutput } = await fixture();
-  weeklyReportOutput.report.oneLookConclusion.coreChanges = Array.from({ length: 6 }, () => "긴 변화 ".repeat(1_000));
-  weeklyReportOutput.report.portfolioThemes = Array.from({ length: 6 }, (_, index) => ({
+  weeklyReportOutput.analysis.oneLookAnalysis.coreChanges = Array.from({ length: 6 }, () => "긴 변화 ".repeat(1_000));
+  weeklyReportOutput.facts.portfolioThemes = Array.from({ length: 6 }, (_, index) => ({
     name: `theme-${index}-${"긴 이름".repeat(1_000)}`,
     level: "watch",
     score: index
   }));
-  weeklyReportOutput.report.oneLookConclusion.recommendedAction = "대응 ".repeat(1_000);
+  weeklyReportOutput.analysis.oneLookAnalysis.recommendedAction = "대응 ".repeat(1_000);
   const { text } = buildTelegramSummary({ riskOutput, weeklyReportOutput });
 
   assert.ok(visibleTextLength(text) <= MAX_TELEGRAM_VISIBLE_LENGTH);

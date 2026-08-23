@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { loadJsonFile } from "../src/config/load-config.js";
 import { buildMacroReviewOutput } from "../src/review/build-macro-review-output.js";
 import { validateMacroReviewOutput } from "../src/validation/validate-macro-review-output.js";
+import { buildReportV2Fixture } from "../test-support/report-v2-fixture.js";
 
-const riskOutput = await loadJsonFile("data/examples/risk-output.example.json");
-const portfolioVulnerability = await loadJsonFile("data/examples/portfolio-vulnerability.example.json");
+const fixture = await buildReportV2Fixture();
+const { riskOutput, portfolioVulnerability, reportFacts } = fixture;
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -32,14 +32,16 @@ test("macro review output contains risk output and portfolio vulnerability in no
   const output = buildMacroReviewOutput({
     riskOutput,
     portfolioVulnerability,
+    reportFacts,
     generatedAt: "2026-07-05T00:00:00.000Z"
   });
 
-  assert.equal(output.schemaVersion, "1.0.0");
+  assert.equal(output.schemaVersion, "2.0.0");
   assert.equal(output.riskOutput.asOf, "2026-07-05");
   assert.equal(output.portfolioVulnerability.asOf, "2026-07-05");
   assert.equal(output.dataSourceSummary.portfolioVulnerabilityCalculated, true);
   assert.equal(output.dataSourceSummary.riskShouldAbort, false);
+  assert.deepEqual(output.reportFacts, reportFacts);
 
   const validation = await validateMacroReviewOutput(output);
   assert.equal(validation.valid, true);
@@ -60,6 +62,7 @@ test("macro review skips portfolio vulnerability when risk quality aborts", asyn
   });
 
   assert.equal(output.portfolioVulnerability, null);
+  assert.equal(output.reportFacts, null);
   assert.equal(output.dataSourceSummary.portfolioVulnerabilityCalculated, false);
   assert.equal(output.warnings[0].code, "MACRO_REVIEW_PORTFOLIO_SKIPPED");
 
@@ -70,10 +73,16 @@ test("macro review skips portfolio vulnerability when risk quality aborts", asyn
 test("macro review propagates reduced confidence as warning", () => {
   const reducedRiskOutput = deepClone(riskOutput);
   reducedRiskOutput.quality.confidence = "reduced";
+  const reducedReportFacts = deepClone(reportFacts);
+  reducedReportFacts.overallRisk.confidence = "reduced";
+  reducedReportFacts.portfolioThemes.forEach((theme) => {
+    theme.confidence = "reduced";
+  });
 
   const output = buildMacroReviewOutput({
     riskOutput: reducedRiskOutput,
     portfolioVulnerability,
+    reportFacts: reducedReportFacts,
     generatedAt: "2026-07-05T00:00:00.000Z"
   });
 
@@ -85,6 +94,7 @@ test("macro review output does not expose personal holding quantities or account
   const output = buildMacroReviewOutput({
     riskOutput,
     portfolioVulnerability,
+    reportFacts,
     generatedAt: "2026-07-05T00:00:00.000Z"
   });
   const forbiddenKeys = new Set([

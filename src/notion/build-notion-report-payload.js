@@ -21,20 +21,30 @@ function textValue(content) {
 }
 
 function buildNotionReportPayload({ weeklyReportOutput, markdown }) {
-  const source = weeklyReportOutput?.sourceMacroReview ?? {};
-  const title = requireText(weeklyReportOutput?.report?.title, "report.title");
+  const isV2 = weeklyReportOutput?.schemaVersion === "2.0.0";
+  const source = isV2
+    ? weeklyReportOutput?.facts?.overallRisk ?? {}
+    : (weeklyReportOutput?.sourceMacroReview ?? {});
+  const title = requireText(
+    isV2 ? weeklyReportOutput?.presentation?.title : weeklyReportOutput?.report?.title,
+    isV2 ? "presentation.title" : "report.title"
+  );
   const asOf = requireText(weeklyReportOutput?.asOf, "asOf");
   const generatedAt = requireText(weeklyReportOutput?.generatedAt, "generatedAt");
   const schemaVersion = requireText(weeklyReportOutput?.schemaVersion, "schemaVersion");
-  const overallLevel = requireText(source.overallLevel, "sourceMacroReview.overallLevel");
-  const confidence = requireText(source.confidence, "sourceMacroReview.confidence");
-  const disclosure = requireText(weeklyReportOutput?.report?.mandatoryDisclosure, "report.mandatoryDisclosure");
+  const overallLevel = requireText(isV2 ? source.level : source.overallLevel, isV2 ? "facts.overallRisk.level" : "sourceMacroReview.overallLevel");
+  const confidence = requireText(source.confidence, isV2 ? "facts.overallRisk.confidence" : "sourceMacroReview.confidence");
+  const disclosure = requireText(
+    isV2 ? weeklyReportOutput?.presentation?.mandatoryDisclosure : weeklyReportOutput?.report?.mandatoryDisclosure,
+    isV2 ? "presentation.mandatoryDisclosure" : "report.mandatoryDisclosure"
+  );
   requireText(markdown, "markdown");
 
-  if (source.overallScore !== null && typeof source.overallScore !== "number") {
+  const overallScore = isV2 ? source.score : source.overallScore;
+  if (overallScore !== null && typeof overallScore !== "number") {
     throw new NotionReportPayloadError(
       "NOTION_REPORT_METADATA_INVALID",
-      "Weekly report metadata field sourceMacroReview.overallScore must be a number or null."
+      `Weekly report metadata field ${isV2 ? "facts.overallRisk.score" : "sourceMacroReview.overallScore"} must be a number or null.`
     );
   }
 
@@ -47,12 +57,12 @@ function buildNotionReportPayload({ weeklyReportOutput, markdown }) {
       "Report Date": { type: "date", date: { start: asOf } },
       "Generated At": { type: "date", date: { start: generatedAt } },
       "Overall Risk": { type: "select", select: { name: overallLevel } },
-      "Overall Score": { type: "number", number: source.overallScore },
+      "Overall Score": { type: "number", number: overallScore },
       Confidence: { type: "select", select: { name: confidence } },
       "Schema Version": { type: "rich_text", rich_text: textValue(schemaVersion) },
       "Report Key": { type: "rich_text", rich_text: textValue(reportKey) }
     },
-    expected: { title, asOf, generatedAt, overallLevel, overallScore: source.overallScore, confidence, schemaVersion, reportKey, disclosure }
+    expected: { title, asOf, generatedAt, overallLevel, overallScore, confidence, schemaVersion, reportKey, disclosure }
   };
 }
 

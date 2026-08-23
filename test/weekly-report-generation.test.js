@@ -11,85 +11,22 @@ import {
   validateWeeklyReportConsistency
 } from "../src/report/generate-weekly-report.js";
 import { validateWeeklyReportOutput } from "../src/validation/validate-weekly-report-output.js";
+import { buildReportV2Fixture, GENERATED_AT } from "../test-support/report-v2-fixture.js";
 
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function macroReviewFromWeeklyReport(weeklyReportOutput) {
-  return {
-    schemaVersion: "1.0.0",
-    asOf: weeklyReportOutput.asOf,
-    generatedAt: "2026-07-05T00:00:00.000Z",
-    dataSourceSummary: {
-      source: "synthetic_test_fixture",
-      riskAsOf: weeklyReportOutput.asOf,
-      indicatorCount: 6,
-      availableIndicatorCount: 6,
-      unavailableIndicatorCount: 0,
-      riskQualityConfidence: weeklyReportOutput.sourceMacroReview.confidence,
-      riskShouldAbort: false,
-      portfolioVulnerabilityCalculated: true
-    },
-    riskOutput: {
-      schemaVersion: "1.0.0",
-      asOf: weeklyReportOutput.asOf,
-      quality: {
-        shouldAbort: false,
-        confidence: weeklyReportOutput.sourceMacroReview.confidence
-      },
-      areaRisks: weeklyReportOutput.report.areaRisks.map((area) => ({
-        areaId: area.areaId,
-        name: area.name,
-        score: area.score,
-        status: area.status
-      })),
-      overallRisk: {
-        level: weeklyReportOutput.sourceMacroReview.overallLevel,
-        score: weeklyReportOutput.sourceMacroReview.overallScore
-      },
-      warnings: []
-    },
-    portfolioVulnerability: {
-      schemaVersion: "1.0.0",
-      asOf: weeklyReportOutput.asOf,
-      sourceRisk: {
-        overallLevel: weeklyReportOutput.sourceMacroReview.overallLevel,
-        overallScore: weeklyReportOutput.sourceMacroReview.overallScore,
-        confidence: weeklyReportOutput.sourceMacroReview.confidence,
-        triggeredRules: []
-      },
-      selection: {
-        policy: "top_3_by_score",
-        displayedThemeCount: weeklyReportOutput.sourceMacroReview.topThemeIds.length,
-        evaluatedThemeCount: weeklyReportOutput.sourceMacroReview.topThemeIds.length
-      },
-      themeVulnerabilities: weeklyReportOutput.report.portfolioThemes.map((theme) => ({
-        themeId: theme.themeId,
-        name: theme.name,
-        score: theme.score,
-        level: theme.level
-      })),
-      warnings: []
-    },
-    warnings: []
-  };
-}
-
-async function loadFixtures() {
-  const weeklyReportOutput = await loadJsonFile("data/examples/weekly-report-output.example.json");
-  const macroReviewOutput = macroReviewFromWeeklyReport(weeklyReportOutput);
-  return { macroReviewOutput, weeklyReportOutput };
+function clone(value) {
+  return structuredClone(value);
 }
 
 function fakeOpenAIClient(text) {
   return {
+    calls: 0,
     async createResponse({ instructions, input, responseFormat }) {
-      assert.ok(instructions.includes("숫자를 재계산하지 않는다"));
-      assert.ok(input.includes("숫자를 재계산하지 마라"));
+      this.calls += 1;
+      assert.ok(instructions.includes("사실을 복사·변경·재계산하지 않는다"));
+      assert.ok(input.includes("숫자, 날짜, 단위, 상태, 점수, 임계값을 출력하지 마라"));
       assert.ok(input.includes("위험 등급을 재판정하지 마라"));
       assert.equal(responseFormat.type, "json_schema");
-      assert.equal(responseFormat.name, "weekly_report_output");
+      assert.equal(responseFormat.name, "weekly_analysis_output");
       assert.equal(responseFormat.strict, true);
       assert.equal(responseFormat.schema.type, "object");
       return { text };
@@ -97,12 +34,12 @@ function fakeOpenAIClient(text) {
   };
 }
 
-test("weekly report response format uses the local schema without metadata-only keywords", async () => {
-  const schema = await loadJsonFile("data/schema/weekly-report-output.schema.json");
+test("weekly analysis response format uses the local schema without metadata-only keywords", async () => {
+  const schema = await loadJsonFile("data/schema/weekly-analysis-output.schema.json");
   const responseFormat = buildWeeklyReportResponseFormat(schema);
 
   assert.equal(responseFormat.type, "json_schema");
-  assert.equal(responseFormat.name, "weekly_report_output");
+  assert.equal(responseFormat.name, "weekly_analysis_output");
   assert.equal(responseFormat.strict, true);
   assert.equal(responseFormat.schema.$schema, undefined);
   assert.equal(responseFormat.schema.$id, undefined);
@@ -110,61 +47,88 @@ test("weekly report response format uses the local schema without metadata-only 
   assert.deepEqual(responseFormat.schema.$defs, schema.$defs);
 });
 
-test("weekly report generator parses normal JSON and validates schema", async () => {
-  const { macroReviewOutput, weeklyReportOutput } = await loadFixtures();
+test("weekly report generator validates analysis and code-assembles v2 output", async () => {
+  const { macroReviewOutput, analysis, reportFacts } = await buildReportV2Fixture();
 
   const generated = await generateWeeklyReport({
     macroReviewOutput,
-    openaiClient: fakeOpenAIClient(JSON.stringify(weeklyReportOutput))
+    openaiClient: fakeOpenAIClient(JSON.stringify(analysis)),
+    generatedAt: GENERATED_AT
   });
 
-  assert.equal(generated.schemaVersion, "1.0.0");
+  assert.equal(generated.schemaVersion, "2.0.0");
+  assert.equal(generated.presentation.title, "주간 매크로 리뷰 — 2026-07-05");
+  assert.deepEqual(generated.facts, reportFacts);
+  assert.deepEqual(generated.analysis, analysis);
   const validation = await validateWeeklyReportOutput(generated);
   assert.equal(validation.valid, true);
 });
 
+test("weekly report warnings are code-owned and propagated from facts and macro review", async () => {
+  const { macroReviewOutput, analysis } = await buildReportV2Fixture();
+  macroReviewOutput.reportFacts.warnings.push({
+    code: "SOURCE_WARNING",
+    message: "Synthetic source warning."
+  });
+  macroReviewOutput.warnings.push({
+    code: "MACRO_WARNING",
+    message: "Synthetic macro warning."
+  });
+
+  const generated = await generateWeeklyReport({
+    macroReviewOutput,
+    openaiClient: fakeOpenAIClient(JSON.stringify(analysis)),
+    generatedAt: GENERATED_AT
+  });
+
+  assert.deepEqual(generated.warnings.map(({ code }) => code), ["SOURCE_WARNING", "MACRO_WARNING"]);
+});
+
 test("weekly report generator fails on non-JSON AI response", async () => {
-  const { macroReviewOutput } = await loadFixtures();
+  const { macroReviewOutput } = await buildReportV2Fixture();
 
   await assert.rejects(
     () => generateWeeklyReport({
       macroReviewOutput,
       openaiClient: fakeOpenAIClient("not json")
     }),
-    (error) => error.code === "WEEKLY_REPORT_JSON_PARSE_FAILED"
+    (error) => error.code === "WEEKLY_ANALYSIS_JSON_PARSE_FAILED"
   );
 });
 
-test("weekly report generator fails on schema-invalid JSON", async () => {
-  const { macroReviewOutput } = await loadFixtures();
-
-  await assert.rejects(
-    () => generateWeeklyReport({
-      macroReviewOutput,
-      openaiClient: fakeOpenAIClient(JSON.stringify({ schemaVersion: "1.0.0" }))
-    }),
-    (error) => error.code === "WEEKLY_REPORT_SCHEMA_VALIDATION_FAILED"
-  );
-});
-
-test("weekly report generator fails if AI changes source risk level", async () => {
-  const { macroReviewOutput, weeklyReportOutput } = await loadFixtures();
-  const changed = deepClone(weeklyReportOutput);
-  changed.sourceMacroReview.overallLevel = "normal";
+test("weekly report generator rejects schema-invalid or canonical fact fields from AI", async () => {
+  const { macroReviewOutput, analysis } = await buildReportV2Fixture();
+  const changed = clone(analysis);
+  changed.score = 123;
 
   await assert.rejects(
     () => generateWeeklyReport({
       macroReviewOutput,
       openaiClient: fakeOpenAIClient(JSON.stringify(changed))
     }),
-    (error) => error.code === "WEEKLY_REPORT_CONSISTENCY_FAILED"
+    (error) => error.code === "WEEKLY_ANALYSIS_SCHEMA_VALIDATION_FAILED"
   );
 });
 
-test("weekly report consistency detects theme score or level changes", async () => {
-  const { macroReviewOutput, weeklyReportOutput } = await loadFixtures();
-  const changed = deepClone(weeklyReportOutput);
-  changed.report.portfolioThemes[0].score = changed.report.portfolioThemes[0].score + 1;
+test("weekly report generator rejects unknown AI area and theme IDs", async () => {
+  const { macroReviewOutput, analysis } = await buildReportV2Fixture();
+  const changed = clone(analysis);
+  changed.areaInsights[0].areaId = "unknown_area";
+  changed.themeInsights[0].themeId = "unknown_theme";
+
+  await assert.rejects(
+    () => generateWeeklyReport({
+      macroReviewOutput,
+      openaiClient: fakeOpenAIClient(JSON.stringify(changed))
+    }),
+    (error) => error.code === "WEEKLY_ANALYSIS_CONSISTENCY_FAILED"
+  );
+});
+
+test("weekly report consistency detects facts that are not deep-equal", async () => {
+  const { macroReviewOutput, weeklyReportOutput } = await buildReportV2Fixture();
+  const changed = clone(weeklyReportOutput);
+  changed.facts.portfolioThemes[0].score += 1;
 
   const validation = validateWeeklyReportConsistency({
     macroReviewOutput,
@@ -172,52 +136,47 @@ test("weekly report consistency detects theme score or level changes", async () 
   });
 
   assert.equal(validation.valid, false);
-  assert.ok(validation.errors.some((error) => error.message.includes("portfolioThemes score")));
+  assert.ok(validation.errors.some((error) => error.message.includes("deep-equal")));
+});
+
+test("weekly report generation requires facts before calling OpenAI", async () => {
+  const { macroReviewOutput, analysis } = await buildReportV2Fixture();
+  macroReviewOutput.reportFacts = null;
+  const openaiClient = fakeOpenAIClient(JSON.stringify(analysis));
+
+  await assert.rejects(
+    () => generateWeeklyReport({ macroReviewOutput, openaiClient }),
+    (error) => error.code === "WEEKLY_REPORT_FACTS_UNAVAILABLE"
+  );
+  assert.equal(openaiClient.calls, 0);
 });
 
 test("weekly report parser keeps JSON strict", () => {
   assert.deepEqual(parseWeeklyReportJson("{\"ok\":true}"), { ok: true });
   assert.throws(
     () => parseWeeklyReportJson("```json\n{\"ok\":true}\n```"),
-    (error) => error.code === "WEEKLY_REPORT_JSON_PARSE_FAILED"
+    (error) => error.code === "WEEKLY_ANALYSIS_JSON_PARSE_FAILED"
   );
 });
 
-test("weekly report prompt and user message enforce no recalculation", async () => {
+test("weekly report prompt and user message enforce analysis-only ownership", async () => {
   const promptText = await readFile("prompts/weekly-analysis.md", "utf8");
-  const { macroReviewOutput } = await loadFixtures();
+  const { macroReviewOutput } = await buildReportV2Fixture();
   const userMessage = buildWeeklyReportUserMessage(macroReviewOutput);
 
-  const promptSafetyRules = [
-    {
-      label: "숫자 재계산 금지",
-      requiredFragments: ["숫자를 재계산하지 않는다"]
-    },
-    {
-      label: "임계값 및 위험 등급 변경 금지",
-      requiredFragments: ["임계값과 위험 등급을 바꾸지 않는다"]
-    },
-    {
-      label: "입력에 없는 최신 뉴스 생성 금지",
-      requiredFragments: ["입력에 없는", "최신 뉴스"]
-    },
-    {
-      label: "특정 종목 추천 금지",
-      requiredFragments: ["특정 종목 추천"]
-    },
-    {
-      label: "개인 보유정보 추정 금지",
-      requiredFragments: ["실제 개인 보유 수량"]
-    }
-  ];
-
-  for (const { label, requiredFragments } of promptSafetyRules) {
-    for (const fragment of requiredFragments) {
-      assert.ok(promptText.includes(fragment), `${label}: "${fragment}" missing from prompt`);
-    }
+  for (const fragment of [
+    "사실을 복사·변경·재계산하지 않는다",
+    "숫자, 날짜, 단위",
+    "canonical 이름을 생성하지 않는다",
+    "입력에 없는 ID, 뉴스, 가격, 일정",
+    "특정 종목의 매수·매도 지시",
+    "개인 보유 수량"
+  ]) {
+    assert.ok(promptText.includes(fragment), `Prompt is missing: ${fragment}`);
   }
 
-  assert.ok(userMessage.includes("숫자를 재계산하지 마라"));
-  assert.ok(userMessage.includes("위험 등급을 재판정하지 마라"));
+  assert.ok(userMessage.includes("숫자, 날짜, 단위, 상태, 점수, 임계값을 출력하지 마라"));
+  assert.ok(userMessage.includes("areaInsights와 themeInsights"));
   assert.ok(userMessage.includes("실제 개인 보유 수량이나 평가금액을 추정하지 마라"));
+  assert.equal(userMessage.includes("riskOutput"), false);
 });

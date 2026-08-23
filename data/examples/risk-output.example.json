@@ -157,33 +157,6 @@
       "warnings": []
     },
     {
-      "indicatorId": "sp500",
-      "available": true,
-      "status": "normal",
-      "score": 0,
-      "selectedEvaluation": {
-        "metricPath": "metrics.weeklyChange",
-        "unit": "%",
-        "value": -0.8,
-        "status": "normal",
-        "score": 0,
-        "matchedRuleId": "sp500_weekly_normal",
-        "signal": null
-      },
-      "evaluations": [
-        {
-          "metricPath": "metrics.weeklyChange",
-          "unit": "%",
-          "value": -0.8,
-          "status": "normal",
-          "score": 0,
-          "matchedRuleId": "sp500_weekly_normal",
-          "signal": null
-        }
-      ],
-      "warnings": []
-    },
-    {
       "indicatorId": "btc",
       "available": true,
       "status": "watch",
@@ -205,6 +178,33 @@
           "status": "watch",
           "score": 1,
           "matchedRuleId": "btc_weekly_down_watch",
+          "signal": null
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "indicatorId": "sp500",
+      "available": true,
+      "status": "normal",
+      "score": 0,
+      "selectedEvaluation": {
+        "metricPath": "metrics.weeklyChange",
+        "unit": "%",
+        "value": -0.8,
+        "status": "normal",
+        "score": 0,
+        "matchedRuleId": "sp500_weekly_normal",
+        "signal": null
+      },
+      "evaluations": [
+        {
+          "metricPath": "metrics.weeklyChange",
+          "unit": "%",
+          "value": -0.8,
+          "status": "normal",
+          "score": 0,
+          "matchedRuleId": "sp500_weekly_normal",
           "signal": null
         }
       ],
@@ -240,7 +240,7 @@
       "areaId": "inflation_supply",
       "name": "인플레이션·공급",
       "weight": 0.25,
-      "score": 0.714285714286,
+      "score": 0.7142857142857143,
       "status": "watch",
       "contributingIndicators": [
         {
@@ -304,7 +304,7 @@
   ],
   "overallRisk": {
     "level": "high_risk",
-    "score": 0.547321428572,
+    "score": 0.5473214285714287,
     "label": "높은 위험",
     "reasons": [
       "금리·인플레이션·위험선호 영역이 동시에 악화되었습니다."

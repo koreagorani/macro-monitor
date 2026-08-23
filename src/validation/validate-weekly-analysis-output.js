@@ -4,24 +4,20 @@ import { loadJsonFile } from "../config/load-config.js";
 
 let compiledValidator;
 
-export async function getMacroReviewOutputValidator(
-  schemaPath = "data/schema/macro-review-output.schema.json"
+export async function getWeeklyAnalysisOutputValidator(
+  schemaPath = "data/schema/weekly-analysis-output.schema.json"
 ) {
   if (!compiledValidator) {
-    const [schema, reportFactsSchema] = await Promise.all([
-      loadJsonFile(schemaPath),
-      loadJsonFile("data/schema/report-facts.schema.json")
-    ]);
+    const schema = await loadJsonFile(schemaPath);
     const ajv = new Ajv2020({ allErrors: true, strict: true });
     addFormats(ajv);
-    ajv.addSchema(reportFactsSchema);
     compiledValidator = ajv.compile(schema);
   }
   return compiledValidator;
 }
 
-export async function validateMacroReviewOutput(output) {
-  const validate = await getMacroReviewOutputValidator();
+export async function validateWeeklyAnalysisOutput(output) {
+  const validate = await getWeeklyAnalysisOutputValidator();
   const valid = validate(output);
   return {
     valid,

@@ -21,9 +21,14 @@ function buildDataSourceSummary({ riskOutput, portfolioVulnerability }) {
 export function buildMacroReviewOutput({
   riskOutput,
   portfolioVulnerability,
+  reportFacts,
   generatedAt = new Date().toISOString()
 }) {
   const warnings = [];
+
+  if (!riskOutput.quality?.shouldAbort && !reportFacts) {
+    throw new Error("Normal macro review output requires deterministic report facts.");
+  }
 
   if (riskOutput.quality?.shouldAbort) {
     warnings.push(warning(
@@ -40,12 +45,13 @@ export function buildMacroReviewOutput({
   }
 
   return {
-    schemaVersion: "1.0.0",
+    schemaVersion: "2.0.0",
     asOf: riskOutput.asOf,
     generatedAt,
     dataSourceSummary: buildDataSourceSummary({ riskOutput, portfolioVulnerability }),
     riskOutput,
     portfolioVulnerability,
+    reportFacts: riskOutput.quality?.shouldAbort ? null : reportFacts,
     warnings
   };
 }

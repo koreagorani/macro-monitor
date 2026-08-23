@@ -64,14 +64,18 @@ function renderThemes(themes) {
 }
 
 function normalizeCoreChanges(weeklyReportOutput, maxItemLength) {
-  const changes = weeklyReportOutput?.report?.oneLookConclusion?.coreChanges;
+  const changes = weeklyReportOutput?.schemaVersion === "2.0.0"
+    ? weeklyReportOutput?.analysis?.oneLookAnalysis?.coreChanges
+    : weeklyReportOutput?.report?.oneLookConclusion?.coreChanges;
   return Array.isArray(changes)
     ? changes.slice(0, 3).map((change) => truncateText(change, maxItemLength)).filter(Boolean)
     : [];
 }
 
 function normalizeThemes(weeklyReportOutput, maxNameLength) {
-  const themes = weeklyReportOutput?.report?.portfolioThemes;
+  const themes = weeklyReportOutput?.schemaVersion === "2.0.0"
+    ? weeklyReportOutput?.facts?.portfolioThemes
+    : weeklyReportOutput?.report?.portfolioThemes;
   return Array.isArray(themes)
     ? themes.slice(0, 3).map((theme) => ({
         name: truncateText(theme?.name, maxNameLength) || "이름 없음",
@@ -82,17 +86,24 @@ function normalizeThemes(weeklyReportOutput, maxNameLength) {
 }
 
 function weeklyMessage({ weeklyReportOutput, compact = false }) {
-  const source = weeklyReportOutput?.sourceMacroReview ?? {};
-  const conclusion = weeklyReportOutput?.report?.oneLookConclusion ?? {};
-  const warningTitle = source.overallLevel === "alert" || source.overallLevel === "high_risk";
+  const isV2 = weeklyReportOutput?.schemaVersion === "2.0.0";
+  const source = isV2
+    ? weeklyReportOutput?.facts?.overallRisk ?? {}
+    : (weeklyReportOutput?.sourceMacroReview ?? {});
+  const conclusion = isV2
+    ? weeklyReportOutput?.analysis?.oneLookAnalysis ?? {}
+    : (weeklyReportOutput?.report?.oneLookConclusion ?? {});
+  const overallLevel = isV2 ? source.level : source.overallLevel;
+  const overallScore = isV2 ? source.score : source.overallScore;
+  const warningTitle = overallLevel === "alert" || overallLevel === "high_risk";
   const coreChanges = normalizeCoreChanges(weeklyReportOutput, compact ? 120 : 240);
   const themes = normalizeThemes(weeklyReportOutput, compact ? 60 : 100);
   const recommendedAction = truncateText(conclusion.recommendedAction, compact ? 100 : 160) || "없음";
   const sections = [
     warningTitle ? "<b>⚠️ 주간 매크로 경고</b>" : "<b>주간 매크로 요약</b>",
     `기준일: ${escapeHtml(truncateText(weeklyReportOutput?.asOf, 40))}`,
-    `전체 위험 단계: ${escapeHtml(truncateText(source.overallLevel, 40))}`,
-    `전체 위험 점수: ${escapeHtml(source.overallScore)}`,
+    `전체 위험 단계: ${escapeHtml(truncateText(overallLevel, 40))}`,
+    `전체 위험 점수: ${escapeHtml(overallScore)}`,
     `신뢰도: ${escapeHtml(truncateText(source.confidence, 40))}`,
     renderList("핵심 변화", coreChanges),
     renderThemes(themes),
