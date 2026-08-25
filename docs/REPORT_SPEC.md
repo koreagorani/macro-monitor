@@ -109,22 +109,42 @@ npm run render:weekly-report -- YYYY-MM-DD
 
 - `src/render/render-weekly-report-markdown.js`의 순수 동기 함수가 weekly-report-output만 읽어 Markdown 문자열을 생성한다.
 - 렌더링 단계에서는 AI 또는 외부 API를 다시 호출하지 않는다.
-- 숫자, 점수, 등급, 임계값을 계산하거나 재판정하지 않는다.
-- 구조화 입력에 있는 점수와 문자열을 그대로 표시한다.
+- 숫자, 점수, 등급, 임계값을 계산하거나 재판정하지 않는다. 표시 formatter는 raw number를 문자열로 바꾸기만 한다.
+- overall/area/theme의 canonical 숫자·상태·이름과 indicator actual data는 `facts`에서만 읽는다.
+- area/theme 설명과 행동은 facts ID에 연결된 `analysis`에서만 읽는다.
+- indicator는 원본 배열을 변경하지 않고 `reportPriority` 오름차순으로 복사 정렬한다.
 - 핵심 변화와 취약 테마는 각각 최대 3개, 헷지 후보는 최대 2개만 표시한다.
-- 빈 배열 또는 일부 누락된 중첩 필드는 `해당 없음` 또는 `—`로 안전하게 표시한다.
+- nullable fact는 `—`로 표시한다. source exact-set 누락은 upstream validation 실패이며 renderer가 placeholder 행을 만들지 않는다.
 - 실제 개인 보유 수량, 평가금액, 계좌별 비중 필드는 렌더링하지 않는다.
 
 MVP 필수 섹션:
 
-1. 제목과 기준일·생성시각
-2. 전체 위험 요약
-3. 핵심 변화
-4. 영역별 위험 요약
-5. 취약 테마 상위 3개
-6. 헷지 필요성 및 대응 제안
-7. 다음 주 확인 조건
-8. 취약도의 의미에 대한 주의 문구
+1. 한눈에 보는 전체 상태
+2. 핵심 지표 데이터 현황
+3. 영역별 위험과 AI 해석
+4. 포트폴리오 취약 테마
+5. 대응 및 다음 주 확인 조건
+6. 경고 및 주의 문구
+
+### 표시 formatter
+
+- null/undefined/non-finite: `—`
+- 미국 2년물 수준: 소수점 2자리와 `%`
+- 미국 2년물 변화: 소수점 1자리와 `bp`, 양수 `+`
+- WTI: 소수점 1자리
+- USD/KRW: 천 단위 separator와 소수점 1자리
+- Bitcoin: 천 단위 separator와 정수
+- S&P 500: 천 단위 separator와 소수점 1자리
+- Core PCE: 소수점 2자리와 `% MoM`
+- 일반 변화율: 소수점 1자리와 양수 `+`; 1자리 반올림이 non-zero raw 변화를 0.0으로 만들면 2자리
+- overall/area/theme score: 소수점 2자리
+- 날짜: source `YYYY-MM-DD` 문자열 유지
+
+formatter는 Markdown/Notion 사용자 표시 경계에서만 사용한다. raw facts, 위험 판정, 정렬, consistency, Notion number property에는 formatter 결과를 사용하지 않는다.
+
+### enhanced Markdown 표
+
+시장가격형 5개와 Core PCE, 영역별 위험은 Notion native enhanced Markdown의 `<table fit-page-width="true" header-row="true">`, `<tr>`, `<td>` 형식으로 렌더링한다. 표 내부는 tab indentation을 사용한다. GFM pipe table과 `|---|` separator는 생성하지 않는다. 이 하나의 Markdown을 artifact/GitHub preview와 Notion native Markdown create/replace에 함께 사용한다.
 
 운영 보고서는 공개 저장소에 커밋하지 않는다. GitHub Actions에서는 전체 Markdown을 로그에 출력하지 않고 앞부분 24줄만 preview하며, 전체 파일은 7일 보관 artifact `weekly-report-markdown`으로만 제공한다.
 
@@ -157,6 +177,7 @@ weekly-report-output 전체 JSON은 MVP에서 Notion에 별도 저장하지 않�
 | Report Key | rich_text | `weekly-report:{asOf}` |
 
 properties는 입력값을 그대로 매핑하며 점수·등급을 재계산하거나 재판정하지 않는다.
+`Overall Score` number property는 `facts.overallRisk.score` raw 값을 저장한다. 소수점 2자리 정책은 본문 표시 문자열에만 적용한다.
 
 ### 생성 및 갱신
 
@@ -165,6 +186,9 @@ properties는 입력값을 그대로 매핑하며 점수·등급을 재계산하
 - 일치 page가 하나면 properties를 갱신하고 Markdown 본문 전체를 `replace_content`로 교체하며 결과를 `updated`로 기록한다.
 - 일치 page가 둘 이상이면 임의 page를 선택하지 않고 `NOTION_DUPLICATE_REPORT_KEY`로 실패한다.
 - Notion native Markdown 입력을 사용하고 자체 Markdown-to-block 변환기는 구현하지 않는다.
+- 생성과 갱신 모두 renderer가 만든 enhanced Markdown `<table>`을 그대로 사용한다.
+- 저장 후 제목·기준일·주의 문구 외에 핵심 지표 섹션, facts의 MVP 6개 지표명, Core PCE 관측일·기준월 표현, GFM separator와 placeholder table row 부재를 read-back 검증한다.
+- 검증 실패 메시지는 `markdown.indicator.btc` 같은 coverage key만 포함하고 전체 Markdown이나 page 원문을 로그에 남기지 않는다.
 
 ### 환경변수
 
@@ -213,7 +237,7 @@ GitHub Actions 완료 기준:
 4. `npm run validate:examples` 성공
 5. 실제 weekly-report-output 및 Markdown 생성 성공
 6. Notion create 또는 update 성공
-7. 저장 후 properties와 Markdown 최소 read-back 검증 성공
+7. 저장 후 properties, 핵심 지표 6개 coverage, Core PCE 날짜 표현, placeholder 부재 read-back 검증 성공
 8. job conclusion `success`
 9. 실제 보고서·JSON·Secret이 저장소 또는 Actions artifact에 남지 않음
 10. `docs/HANDOFF.md`에 run ID, create/update 결과, 검증 범위, 다음 단계 기록
@@ -239,131 +263,77 @@ GitHub Actions 완료 기준:
 - `.github/workflows/manual-weekly-report-notion.yml`
   - `Manual Weekly Report Notion Save` live 검증
 
-## 1. 한눈에 보는 결론
+## 1. 한눈에 보는 전체 상태
 
-- 기준일
-- 전체 위험 단계
-- 지난주 대비
-- 핵심 변화 최대 3개
-- 우선 점검할 테마 최대 3개
-- 권장 행동
+- 기준일과 생성시각
+- `facts.overallRisk`의 canonical level과 사람이 읽는 label 병기
+- `facts.overallRisk.score`의 소수점 2자리 표시
+- `facts.overallRisk.confidence`
+- `analysis.oneLookAnalysis.recommendedAction`
 
-## 2. 주요 지표 현황
+## 2. 핵심 지표 데이터 현황
 
-Phase A의 `facts.indicators`는 MVP 6개를 정확히 보존한다. Phase B에서는 이 facts를 다음 사용자 표로 렌더링한다.
+`facts.indicators`의 MVP 6개를 `reportPriority` 오름차순으로 표시한다.
 
-시장가격형 5개:
+시장가격형 5개 표:
 
-- 지표명, 현재값, 실제 관측일, 1주 변화와 기준일, 4주 변화와 기준일, 단위, 상태, deterministic fact note
+- 지표명
+- 단위를 포함한 현재값
+- 실제 관측일
+- 1주 변화와 비교 기준일
+- 4주 변화와 비교 기준일
+- 상태
+- deterministic fact note
 
-Core PCE:
+Core PCE 별도 표:
 
-- 최신 전월비, 이전 전월비, 최근 3개월 평균, consensus 또는 `—`, 관측일, 기준월, 상태, deterministic fact note
+- 최신 전월비
+- 이전 전월비
+- 최근 3개월 평균 전월비
+- consensus 또는 `—`
+- 관측일
+- 기준월
+- 상태
+- deterministic fact note
 
-표시 문자열을 AI output에 두지 않는다. Phase B renderer가 raw facts를 지표별 정밀도 정책으로 포맷하며, `null`은 `—`로 표시한다. 이번 Phase A에서는 기존 Markdown/Notion 사용자 본문 구조를 최소 호환으로 유지한다.
+Core PCE `currentObservationDate`는 `관측일`로만 표현하며 실제 발표일로 부르지 않는다. 표시 문자열은 AI output에 두지 않는다.
 
-## 3. 이번 주 매크로 판단
+## 3. 영역별 위험과 AI 해석
 
-- 위험의 성격
-- 지표 간 방향 일치 여부
-- 일시적/지속적 변화
-- 상충 신호
-- 판단 신뢰도
+`facts.areaRisks`와 `analysis.areaInsights`를 `areaId`로 결합한다.
 
-위험 성격:
-- 인플레이션
-- 경기둔화
-- 유동성·위험회피
-- 특정 자산 고유 사건
-- 복합 신호
+- 영역명·score·status: facts
+- key reason: analysis
+- score는 소수점 2자리 표시
 
-## 4. 영역별 위험도
+표 뒤에 위험 성격, 요약, 방향 일치 여부, 핵심 변화와 상충 신호를 analysis에서 표시한다. 일반 AI 분석은 핵심 지표 facts 표보다 앞에 배치하지 않는다.
 
-| 영역 | 점수 | 등급 | 지난주 대비 | 핵심 이유 |
-|---|---:|---|---|---|
+## 4. 포트폴리오 취약 테마
 
-## 5. 포트폴리오 테마별 취약도
+`facts.portfolioThemes` 상위 최대 3개와 `analysis.themeInsights`를 `themeId`로 결합한다.
 
-기본적으로 상위 3개 테마만 표시한다.
-
-예외:
-- 4위 테마가 3위와 점수가 거의 같고 성격이 완전히 다른 위험이면 `추가 주의` 한 줄로만 표시할 수 있다.
-- 개별 종목은 중요한 공시, 실적, 기업 고유 사건, 테마 내 이례적 움직임이 있을 때만 보조로 언급한다.
-
-각 테마에 포함할 항목:
-- 테마
-- 포함 자산
-- 비중
-- 취약도
-- 등급
-- 핵심 이유 최대 2개
-- 행동 제안 1개
+- 테마명·score·level: facts
+- key reasons 최대 2개·action: analysis
+- score는 소수점 2자리 표시
+- 기본 본문에서는 `macroContributions` raw 상세를 노출하지 않음
 
 필수 고지:
 
 > 취약도는 현재 매크로 환경에 대한 노출 정도이며, 기대수익률이나 직접적인 매도 신호가 아니다.
 
-## 6. 헷지 및 방어 테마
+## 5. 대응 및 다음 주 확인 조건
 
-먼저 헷지 필요성을 판정한다.
+- `analysis.hedgeAndDefense`: 필요성, 요약, 후보 최대 2개와 적합 이유·실패 조건·현금 비교
+- `analysis.nextWeekChecklist`: 예정 지표, 위험 강화·완화 조건, 기본 시나리오 무효화 조건
+- `analysis.decisionLog`: 기본 시나리오와 사후 확인 항목
 
-헷지 필요성 단계:
-- 없음
-- 낮음
-- 보통
-- 높음
+입력에 없는 예정 지표나 정책 일정을 추측해서 추가하지 않는다. 특정 종목 추천을 기본적으로 하지 않고 불필요한 매매를 유도하지 않는다.
 
-출력 규칙:
-- 없음 또는 낮음: 별도 헷지 추천을 생략하고, 필요하면 현금 유지 등 한 줄만 표시한다.
-- 보통: 헷지 테마 1개만 제안한다.
-- 높음: 헷지 테마 1~2개를 제안한다.
+## 6. 경고 및 주의 문구
 
-헷지 필요성 판단 시 고려:
-- 전체 위험 단계
-- 상위 취약 테마 3개의 평균 취약도
-- 위험 신호 지속 기간
-- 고위험 자산 비중
-- 현금성 자산 비중
-- 금리·인플레이션·위험선호의 동시 악화 여부
-
-허용 테마 크기:
-- 원자재
-- 금
-- 단기채
-- 장기채
-- 가치주
-- 성장주
-- 기술주
-- 바이오주
-- 조선주
-- 금융주
-- 현금
-
-추천이 필요한 경우 각 테마에 포함할 항목:
-- 적합 이유
-- 실패 조건
-- 포트폴리오 중복
-- 현금 유지와 비교
-
-특정 종목 추천은 기본적으로 하지 않는다.
-헷지를 위해 불필요한 매매를 유도하지 않는다.
-
-## 7. 다음 주 확인사항
-
-- 예정 지표
-- 연준·정책 일정
-- 위험 강화 조건
-- 위험 완화 조건
-- 기본 시나리오 무효화 조건
-
-입력에 없는 예정 지표나 정책 일정을 추측해서 추가하지 않는다.
-
-## 8. 판단 기록
-
-- 기본 시나리오
-- 신뢰도
-- 지난주 수정사항
-- 사후 확인 항목
+- code-owned `warnings`; 없으면 `해당 없음`
+- code-owned `presentation.mandatoryDisclosure`
+- Secret, 실제 보유 수량, 평가금액, 계좌별 비중은 포함하지 않음
 
 ## 표현 제한
 

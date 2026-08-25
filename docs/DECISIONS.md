@@ -296,12 +296,15 @@
 
 ## D-027 weekly-report-output 기반 Markdown 렌더링
 
-상태: D-030에서 입력을 code-assembled weekly-report-output v2로 확장했다. 단일 입력과 순수 렌더러 원칙은 유지한다.
+상태: D-030에서 입력을 code-assembled weekly-report-output v2로 확장했고 Phase B에서 data-first 본문과 display formatter를 추가했다. 단일 입력과 순수 렌더러 원칙은 유지한다.
 
 결정:
 - Markdown 렌더링의 단일 입력은 검증을 통과한 weekly-report-output JSON으로 한다.
 - 렌더러는 AI나 외부 API를 호출하지 않는 순수 동기 함수로 구현한다.
 - 실제 live 실행 명령은 기존 FRED → macro-review → OpenAI weekly-report-output 파이프라인을 재사용한 뒤 Markdown을 렌더링한다.
+- MVP 6개 실제 데이터는 AI 일반 해석보다 먼저 `reportPriority` 순으로 렌더링하고, area/theme canonical 값은 facts에서만 읽어 analysis의 ID 기반 설명과 결합한다.
+- raw number는 변경하지 않고 사용자 표시 경계에서만 지표별 자리수·부호·천 단위·null formatter를 적용한다.
+- 표는 GitHub preview와 Notion native Markdown이 함께 처리하는 enhanced Markdown `<table><tr><td>` 형식으로 생성하며 GFM separator를 사용하지 않는다.
 - 기본 출력은 stdout으로 하고, `REPORT_MARKDOWN_OUTPUT`이 지정된 경우에만 해당 임시 경로에 파일을 쓴다.
 - GitHub Actions의 전체 Markdown은 저장소에 커밋하지 않고 7일 보관 artifact로만 제공하며 로그에는 앞부분 preview만 출력한다.
 
@@ -312,17 +315,21 @@
 
 ## D-028 Notion 주간 보고서 저장 계약
 
-상태: D-030에서 properties의 canonical source를 weekly-report-output v2 `facts`로 확장했다. data-first 본문과 Notion table 형식 변경은 Phase B에 남긴다.
+상태: D-030에서 properties의 canonical source를 weekly-report-output v2 `facts`로 확장했고 Phase B에서 data-first 본문, enhanced Markdown table, 6개 지표 read-back coverage를 추가했다.
 
 결정:
 - MVP Notion 저장 대상은 주간 보고서 archive database의 data source로 한다.
 - page 생성 parent에는 최신 Notion API의 `data_source_id`를 사용한다.
 - 사람이 읽는 Markdown을 page 본문으로 저장하고 weekly-report-output 전체 JSON은 중복 저장하지 않는다.
 - 검색·정렬·검증에 필요한 기준일, 생성시각, 전체 위험 단계·점수, 신뢰도, schema version, Report Key만 page properties로 저장한다.
+- `Overall Score` number property에는 raw canonical score를 저장하고 소수점 2자리 formatting은 본문에만 적용한다.
 - `Report Key = weekly-report:{asOf}`로 upsert하며 같은 기준일의 중복 page 생성을 막는다.
 - 기존 page는 properties 갱신과 native Markdown `replace_content`로 전체 본문을 교체한다.
 - Notion API version은 `2026-03-11`을 기본값으로 고정하고 명시적 호환성 검증 없이 자동 변경하지 않는다.
 - 최신 Notion API의 native Markdown 입력을 사용하므로 자체 Markdown-to-block parser는 MVP에서 구현하지 않는다.
+- page 본문 표는 native enhanced Markdown `<table>` 형식만 사용하며 GFM separator를 보내지 않는다.
+- read-back은 기존 metadata·제목·기준일·주의 문구에 더해 핵심 지표 섹션, MVP 6개 지표명, Core PCE 관측일·기준월 표현, separator placeholder 부재를 검증한다.
+- read-back 실패 로그에는 coverage key만 남기고 전체 Markdown이나 원문 API 응답을 남기지 않는다.
 - `NOTION_API_KEY`와 `NOTION_DATA_SOURCE_ID`는 GitHub Secrets에서만 읽는다.
 
 이유:
@@ -371,7 +378,7 @@
 - indicator/area/theme exact-set, duplicate, placeholder, AI ID coverage, source facts deep-equal은 JSON Schema 뒤의 명시적 consistency validator로 검증한다.
 - `riskContribution`은 기존 area score와 overall weighted score 산식을 지표별로 수학적으로 분해한 raw number이며 새로운 위험 판정을 만들지 않는다.
 - 계산, 판정, 정렬, consistency는 raw JS number를 사용한다. 사용자 표시 반올림은 channel boundary에서만 수행한다.
-- Phase A는 v2 JSON 계약과 최소 채널 호환까지만 구현한다. Markdown/Notion의 6개 지표 data-first 출력은 Phase B, Telegram의 실제 지표 선택·표시는 Phase C로 분리한다.
+- Phase A는 v2 JSON 계약과 최소 채널 호환을, Phase B는 Markdown/Notion의 6개 지표 data-first 출력과 display formatter를 구현했다. Telegram의 실제 지표 선택·표시는 Phase C로 분리한다.
 
 관계:
 

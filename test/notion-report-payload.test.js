@@ -69,6 +69,23 @@ test("buildNotionReportPayload minimally accepts v2 deterministic metadata", asy
   assert.equal(payload.properties.Name.title[0].text.content, input.presentation.title);
   assert.equal(payload.properties["Overall Risk"].select.name, input.facts.overallRisk.level);
   assert.equal(payload.properties["Overall Score"].number, input.facts.overallRisk.score);
+  assert.equal(payload.properties["Overall Score"].number, 0.5473214285714287);
   assert.equal(payload.properties.Confidence.select.name, input.facts.overallRisk.confidence);
   assert.equal(payload.properties["Schema Version"].rich_text[0].text.content, "2.0.0");
+  assert.deepEqual(
+    payload.expected.dataFirstCoverage.indicatorCoverage.map(({ indicatorId }) => indicatorId).sort(),
+    ["btc", "core_pce", "sp500", "us2y", "usdkrw", "wti"]
+  );
+  assert.equal(payload.expected.dataFirstCoverage.corePceObservationDate, "2026-05-01");
+  assert.equal(payload.expected.dataFirstCoverage.corePceReferenceMonth, "2026-05");
+});
+
+test("buildNotionReportPayload rejects an incomplete v2 indicator set", async () => {
+  const input = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  input.facts.indicators.pop();
+  assert.throws(
+    () => buildNotionReportPayload({ weeklyReportOutput: input, markdown: "# report" }),
+    (error) => error.code === "NOTION_REPORT_METADATA_INVALID"
+      && /exactly six indicator facts/.test(error.message)
+  );
 });

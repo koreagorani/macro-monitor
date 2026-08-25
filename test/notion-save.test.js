@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildNotionReportPayload } from "../src/notion/build-notion-report-payload.js";
-import { saveWeeklyReportToNotion } from "../src/notion/save-weekly-report-to-notion.js";
+import { loadJsonFile } from "../src/config/load-config.js";
+import { renderWeeklyReportMarkdown } from "../src/render/render-weekly-report-markdown.js";
+import {
+  hasGfmTableSeparator,
+  hasPlaceholderTableRow,
+  readBackMismatches,
+  saveWeeklyReportToNotion,
+  verifyReadBack
+} from "../src/notion/save-weekly-report-to-notion.js";
 
 const markdown = [
   "# 주간 매크로 리뷰 — 2026-07-12",
@@ -176,4 +184,79 @@ test("saveWeeklyReportToNotion fails before create when data source schema diffe
     (error) => error.code === "NOTION_DATA_SOURCE_SCHEMA_MISMATCH"
       && /Schema Version:number->rich_text/.test(error.message)
   );
+});
+
+test("v2 Notion read-back verifies the data-first section and all six indicators", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  const mismatches = readBackMismatches({
+    page: { properties: payload.properties },
+    pageMarkdown: { markdown: renderedMarkdown, truncated: false },
+    expected: payload.expected
+  });
+  assert.deepEqual(mismatches, []);
+});
+
+test("v2 Notion read-back reports only the missing indicator coverage key", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  const withoutBitcoin = renderedMarkdown.replaceAll("비트코인", "누락된 지표");
+  const mismatches = readBackMismatches({
+    page: { properties: payload.properties },
+    pageMarkdown: { markdown: withoutBitcoin, truncated: false },
+    expected: payload.expected
+  });
+
+  assert.deepEqual(mismatches, ["markdown.indicator.btc"]);
+  assert.doesNotMatch(mismatches.join(","), /누락된 지표|105,432|private/);
+});
+
+test("v2 Notion read-back failure does not expose stored Markdown", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  const withoutWti = renderedMarkdown.replaceAll("WTI", "PRIVATE_MARKDOWN_TOKEN");
+
+  assert.throws(
+    () => verifyReadBack({
+      page: { properties: payload.properties },
+      pageMarkdown: { markdown: withoutWti, truncated: false },
+      expected: payload.expected
+    }),
+    (error) => {
+      assert.equal(error.code, "NOTION_READ_BACK_VERIFICATION_FAILED");
+      assert.match(error.message, /markdown\.indicator\.wti/);
+      assert.doesNotMatch(error.message, /PRIVATE_MARKDOWN_TOKEN|75\.3 USD\/barrel/);
+      return true;
+    }
+  );
+});
+
+test("Notion read-back detects GFM separators and enhanced Markdown placeholder rows", () => {
+  assert.equal(hasGfmTableSeparator("| A | B |\n|---|---:|\n| 1 | 2 |"), true);
+  assert.equal(hasGfmTableSeparator("<table><tr><td>A</td></tr></table>"), false);
+  assert.equal(hasPlaceholderTableRow("<table><tr><td>---</td><td>---:</td></tr></table>"), true);
+  assert.equal(hasPlaceholderTableRow("<table><tr><td>정상</td><td>---</td></tr></table>"), false);
+});
+
+test("v2 save preserves create/upsert behavior while enforcing indicator coverage", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  const notionClient = {
+    retrieveDataSource: async () => dataSourceSchema(),
+    queryPagesByReportKey: async () => [],
+    createReportPage: async () => ({ id: "page-id" }),
+    retrievePage: async () => ({ properties: payload.properties }),
+    retrievePageMarkdown: async () => ({ markdown: renderedMarkdown, truncated: false })
+  };
+
+  const result = await saveWeeklyReportToNotion({
+    notionClient,
+    weeklyReportOutput: report,
+    markdown: renderedMarkdown
+  });
+  assert.deepEqual(result, { status: "created", asOf: report.asOf, verified: true });
 });

@@ -66,6 +66,19 @@ function sameDateTime(left, right, toleranceMs = 0) {
     && Math.abs(leftTime - rightTime) <= toleranceMs;
 }
 
+function hasGfmTableSeparator(markdown) {
+  return /^\s*\|(?:\s*:?-{3,}:?\s*\|){2,}\s*$/m.test(markdown);
+}
+
+function hasPlaceholderTableRow(markdown) {
+  const tableRows = markdown.match(/<tr(?:\s[^>]*)?>[\s\S]*?<\/tr>/gi) ?? [];
+  return tableRows.some((row) => {
+    const cells = [...row.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/gi)]
+      .map((match) => match[1].trim());
+    return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+  });
+}
+
 function readBackMismatches({ page, pageMarkdown, expected }) {
   const stored = readStoredMetadata(page?.properties);
   const markdown = pageMarkdown?.markdown;
@@ -82,8 +95,31 @@ function readBackMismatches({ page, pageMarkdown, expected }) {
     "markdown.present": typeof markdown === "string",
     "markdown.title": typeof markdown === "string" && markdown.includes(expected.title),
     "markdown.asOf": typeof markdown === "string" && markdown.includes(expected.asOf),
-    "markdown.disclosure": typeof markdown === "string" && markdown.includes(expected.disclosure)
+    "markdown.disclosure": typeof markdown === "string" && markdown.includes(expected.disclosure),
+    "markdown.gfmTableSeparatorAbsent": typeof markdown === "string" && !hasGfmTableSeparator(markdown),
+    "markdown.placeholderTableRowAbsent": typeof markdown === "string" && !hasPlaceholderTableRow(markdown)
   };
+
+  if (expected.dataFirstCoverage) {
+    checks["markdown.indicatorSection"] = typeof markdown === "string"
+      && markdown.includes(expected.dataFirstCoverage.sectionHeading);
+    checks["markdown.corePceObservationLabel"] = typeof markdown === "string"
+      && markdown.includes("관측일");
+    checks["markdown.corePceReferenceMonthLabel"] = typeof markdown === "string"
+      && markdown.includes("기준월");
+    if (expected.dataFirstCoverage.corePceObservationDate !== null) {
+      checks["markdown.corePceObservationDate"] = typeof markdown === "string"
+        && markdown.includes(expected.dataFirstCoverage.corePceObservationDate);
+    }
+    if (expected.dataFirstCoverage.corePceReferenceMonth !== null) {
+      checks["markdown.corePceReferenceMonth"] = typeof markdown === "string"
+        && markdown.includes(expected.dataFirstCoverage.corePceReferenceMonth);
+    }
+    for (const indicator of expected.dataFirstCoverage.indicatorCoverage) {
+      checks[`markdown.indicator.${indicator.indicatorId}`] = typeof markdown === "string"
+        && markdown.includes(`<td>${indicator.name}</td>`);
+    }
+  }
   return Object.entries(checks).filter(([, valid]) => !valid).map(([name]) => name);
 }
 
@@ -158,6 +194,8 @@ export {
   NotionReportSaveError,
   REQUIRED_DATA_SOURCE_PROPERTIES,
   assertDataSourceSchema,
+  hasGfmTableSeparator,
+  hasPlaceholderTableRow,
   readBackMismatches,
   readStoredMetadata,
   saveWeeklyReportToNotion,
