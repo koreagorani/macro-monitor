@@ -18,8 +18,7 @@
 - Telegram 알림 구현 및 mock 기반 로컬 검증 완료
 - Telegram 알림 실제 GitHub Actions 검증 완료
 - 보고서 v2 Phase A — deterministic facts / AI analysis 분리 구현 및 로컬 검증 완료
-- 보고서 v2 Phase B — Markdown/Notion data-first 출력 구현 및 로컬 검증 완료
-- 다음 확인: `Manual Weekly Report Notion Save` 재실행으로 title read-back hotfix 실제 검증
+- 보고서 v2 Phase B — Markdown/Notion data-first 출력 및 실제 Notion Actions 검증 완료
 - 다음 작업: Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증
 
 ## 완료된 내용
@@ -32,7 +31,11 @@
 - page title의 authoritative source를 기존 `Name` property로 명확히 하고 중복된 Markdown title 문자열 검증을 제거
 - Markdown renderer의 실제 H1은 유지하고 본문 존재·비절단·기준일·주의 문구·6개 지표 coverage·Core PCE 날짜 표현·separator/placeholder 부재 검증은 유지
 - 로컬 검증: `npm test` 147개 전체 통과, `npm run validate:examples` 8개 전체 통과, 변경 JavaScript `node --check`와 `git diff --check` 통과
-- hotfix 반영 후 같은 workflow 재실행 필요
+- hotfix 커밋 `8284eb7bb5f56615f01a294ea6470153fd8eb9bc`로 재실행한 run `34593302872` 성공
+  - `npm test`: 147개 전체 통과
+  - `npm run validate:examples`: 8개 전체 통과
+  - Notion: `updated`, 기준일 `2026-09-11`, `verified: true`
+- Phase B 실제 검증 완료; 다음 작업은 Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증
 
 ### 보고서 v2 Phase B — Markdown/Notion data-first 출력
 
@@ -56,7 +59,7 @@
   - `git diff --check` 통과
   - 변경 JavaScript 4개 `node --check` 통과
 - 구조적 새 결정 없음: D-027/D-028/D-030을 Phase B 구현 내용으로 확장했으며 D-031은 추가하지 않음
-- `Manual Weekly Report Notion Save` 실제 main 검증은 Phase B 커밋 후 실행 여부를 확인한다.
+- `Manual Weekly Report Notion Save` 실제 main 검증 완료: run `34593302872`
 
 ### 보고서 v2 Phase A — deterministic facts / AI analysis 분리
 
@@ -627,6 +630,5 @@ Node.js 환경:
 ## 미해결
 
 - Phase C — Telegram 중요 실제 지표 최대 3개 deterministic 선택·표시와 실제 Actions 통합 검증
-- Phase B title read-back hotfix의 실제 Actions 재검증
 - 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토
