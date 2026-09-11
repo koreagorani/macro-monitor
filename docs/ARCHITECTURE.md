@@ -71,7 +71,9 @@
 - Markdown, Notion, Telegram의 단일 입력은 계속 최종 weekly-report-output 하나다.
 - `quality.shouldAbort === true`이면 `reportFacts`는 `null`이며 OpenAI·Markdown·Notion 정상 경로를 실행하지 않는다.
 - ID coverage, duplicate, placeholder, source deep-equal 검증은 schema 검증 뒤 별도 consistency validator가 수행한다.
-- Phase A에서는 채널별 본문 구성을 바꾸지 않으며, 6개 지표 data-first 출력은 Phase B/C에서 구현한다.
+- Markdown/Notion은 `facts.indicators`의 MVP 6개를 `reportPriority` 순으로 표시하고, area/theme canonical 값은 facts에서만 읽어 analysis의 ID 기반 설명과 결합한다.
+- 사용자 표시 formatter는 채널 경계에서만 호출한다. raw facts는 변경하지 않으며 위험 판정·정렬·consistency·Notion number property에는 사용하지 않는다.
+- Telegram의 실제 지표 최대 3개 data-first 출력은 Phase C에서 구현한다.
 
 ## 소스 구조
 
@@ -122,7 +124,7 @@ MVP의 Notion 저장 대상은 주간 보고서 아카이브용 database 안의 
 
 저장 내용:
 
-- page 본문: 사람이 읽는 Markdown 보고서
+- page 본문: 한눈에 보는 상태 뒤에 MVP 6개 실제 데이터를 우선 배치한 사람이 읽는 Markdown 보고서
 - page properties: 기준일, 생성시각, 전체 위험 단계·점수, 신뢰도, schema version, Report Key
 - weekly-report-output 전체 JSON: Notion에 중복 저장하지 않음
 - 실제 개인 보유 수량, 평가금액, 계좌별 비중: 저장하지 않음
@@ -139,8 +141,9 @@ Notion API 계약:
 - page parent: `data_source_id`
 - page 생성 시 Notion의 native `markdown` body를 우선 사용한다.
 - 기존 page 갱신 시 Markdown `replace_content` 명령으로 본문 전체를 교체한다.
+- 표는 enhanced Markdown의 `<table fit-page-width="true" header-row="true"><tr><td>` 형식을 사용하며 GFM pipe separator를 보내지 않는다.
 - 자체 Markdown-to-block parser는 MVP에서 구현하지 않는다.
-- 저장 후 page properties와 page Markdown의 기준일·제목·필수 주의 문구를 최소 검증한다.
+- 저장 후 page properties와 page Markdown의 기준일·제목·필수 주의 문구, 핵심 지표 섹션, MVP 6개 지표명, Core PCE 관측일·기준월 표현, separator placeholder 부재를 검증한다.
 
 보안 및 로그:
 
@@ -153,6 +156,7 @@ Notion API 계약:
 
 - https://developers.notion.com/reference/post-page
 - https://developers.notion.com/reference/update-page-markdown
+- https://developers.notion.com/guides/data-apis/enhanced-markdown
 - https://developers.notion.com/guides/data-apis/working-with-databases
 - https://developers.notion.com/reference/versioning
 

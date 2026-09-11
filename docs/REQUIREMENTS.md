@@ -122,9 +122,15 @@
 
 - 5분 이내에 핵심 판단 가능
 - 정상 보고서는 MVP 6개 지표의 실제 값과 관측일, 시장가격형의 1주·4주 변화, 근원 PCE의 전월비·이전치·3개월 평균·기준월을 deterministic facts로 보존
+- 사람이 읽는 Markdown/Notion 본문은 한눈에 보는 전체 상태 다음에 MVP 6개 실제 데이터 현황을 AI 해석보다 먼저 표시
+- 시장가격형 5개는 현재값·관측일·1주 변화와 기준일·4주 변화와 기준일·상태·사실 메모를 표시
+- Core PCE는 최신 전월비·이전 전월비·최근 3개월 평균·consensus·관측일·기준월·상태·사실 메모를 표시하며 `currentObservationDate`를 발표일로 표현하지 않음
 - 실제 값·날짜·단위·상태·점수·임계값은 코드만 생성
 - OpenAI는 facts의 ID를 참조하는 해석만 생성하고 canonical fact를 생성하거나 변경하지 않음
 - 최종 weekly-report-output은 코드가 deterministic facts와 AI analysis를 조립
+- 내부 raw number는 보존하고 숫자 반올림과 천 단위 표시는 Markdown/Notion 사용자 표시 경계에서만 수행
+- Notion 표는 native enhanced Markdown table을 사용하고 GFM separator 또는 `---` placeholder 행을 포함하지 않음
+- Notion 저장 후 핵심 지표 섹션과 6개 지표 coverage를 검증하며 원문 Markdown은 로그에 남기지 않음
 - 전체 위험 단계
 - 영역별 위험
 - 지표 코멘트는 특이사항이 있을 때만

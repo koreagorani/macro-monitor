@@ -18,9 +18,34 @@
 - Telegram 알림 구현 및 mock 기반 로컬 검증 완료
 - Telegram 알림 실제 GitHub Actions 검증 완료
 - 보고서 v2 Phase A — deterministic facts / AI analysis 분리 구현 및 로컬 검증 완료
-- 다음 작업: Phase B — Markdown/Notion data-first 출력
+- 보고서 v2 Phase B — Markdown/Notion data-first 출력 구현 및 로컬 검증 완료
+- 다음 작업: Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증
 
 ## 완료된 내용
+
+### 보고서 v2 Phase B — Markdown/Notion data-first 출력
+
+- `src/report/format-report-value.js` 공용 display formatter 추가
+  - 미국 2년물 수준 2자리, 변화 1자리 bp
+  - WTI 1자리, USD/KRW 1자리와 천 단위, Bitcoin 정수와 천 단위, S&P 500 1자리와 천 단위
+  - Core PCE 2자리 `% MoM`, 일반 변화율 1자리와 near-zero 2자리 fallback, score 2자리, null `—`
+- raw facts를 변경하지 않고 Markdown/Notion 사용자 표시 경계에서만 formatting
+- Markdown 최종 목차를 전체 상태 → 핵심 지표 facts → 영역 facts+AI → 테마 facts+AI → 대응/체크리스트 → 경고/주의 순으로 변경
+- `facts.indicators`를 복사해 `reportPriority` 오름차순으로 정렬하고 시장가격형 5개 actual data와 Core PCE 별도 표를 모두 표시
+- Core PCE `currentObservationDate`는 발표일이 아닌 `관측일`, `referenceMonth`는 `기준월`로 표시
+- area/theme의 name·score·status/level은 facts, key reason·action은 analysis에서 ID join
+- GFM pipe table을 제거하고 Notion enhanced Markdown `<table fit-page-width="true" header-row="true"><tr><td>` 형식으로 통일
+- Notion properties의 `Overall Score`는 raw canonical score 유지; 본문에서만 2자리 표시
+- Notion read-back에 핵심 지표 섹션, MVP 6개 지표명, Core PCE 관측일·기준월, GFM separator와 placeholder row 부재 검증 추가
+- read-back 실패는 coverage key만 노출하고 전체 Markdown·원문 응답은 비로그
+- 기존 Report Key create/update/idempotency, `replace_content`, shouldAbort, Secret 비로그 계약 유지
+- 로컬 검증:
+  - `npm test`: 144개 전체 통과
+  - `npm run validate:examples`: 8개 전체 통과
+  - `git diff --check` 통과
+  - 변경 JavaScript 4개 `node --check` 통과
+- 구조적 새 결정 없음: D-027/D-028/D-030을 Phase B 구현 내용으로 확장했으며 D-031은 추가하지 않음
+- `Manual Weekly Report Notion Save` 실제 main 검증은 Phase B 커밋 후 실행 여부를 확인한다.
 
 ### 보고서 v2 Phase A — deterministic facts / AI analysis 분리
 
@@ -579,17 +604,18 @@ Node.js 환경:
 - `docs/REQUIREMENTS.md`
 - `docs/REPORT_SPEC.md`
 - `docs/HANDOFF.md`
-- `docs/DECISIONS.md` D-030
+- `docs/DECISIONS.md` D-029, D-030
 
 선택:
 - facts 구조 확인 시 `data/schema/report-facts.schema.json`
 - final 입력 확인 시 `data/schema/weekly-report-output.schema.json`
-- Notion native Markdown 동작 확인 시 `src/clients/notion-client.js`
-- 기존 renderer 확인 시 `src/render/render-weekly-report-markdown.js`
+- 표시 formatter 재사용 확인 시 `src/report/format-report-value.js`
+- Telegram 요약 확인 시 `src/telegram/build-telegram-summary.js`
+- 전송 순서 확인 시 `src/telegram/send-weekly-report-notification.js`
 
 ## 미해결
 
-- Phase B — Markdown/Notion에서 MVP 6개 실제 데이터 표, 표시 정밀도 formatter, Notion `<table>` 및 read-back coverage 구현
 - Phase C — Telegram 중요 실제 지표 최대 3개 deterministic 선택·표시와 실제 Actions 통합 검증
+- Phase B 실제 Notion Actions에서 6개 표 렌더링·read-back과 UI의 `---` 제거 확인
 - 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토

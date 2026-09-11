@@ -49,6 +49,25 @@ function buildNotionReportPayload({ weeklyReportOutput, markdown }) {
   }
 
   const reportKey = `weekly-report:${asOf}`;
+  const indicators = isV2 ? weeklyReportOutput?.facts?.indicators : [];
+  if (isV2 && (!Array.isArray(indicators) || indicators.length !== 6)) {
+    throw new NotionReportPayloadError(
+      "NOTION_REPORT_METADATA_INVALID",
+      "Weekly report v2 must include exactly six indicator facts for Notion coverage verification."
+    );
+  }
+  const indicatorCoverage = indicators.map(({ indicatorId, name }) => ({
+    indicatorId: requireText(indicatorId, "facts.indicators[].indicatorId"),
+    name: requireText(name, "facts.indicators[].name")
+  }));
+  const corePce = indicators.find(({ indicatorId }) => indicatorId === "core_pce");
+  if (isV2 && !corePce) {
+    throw new NotionReportPayloadError(
+      "NOTION_REPORT_METADATA_INVALID",
+      "Weekly report v2 must include the core_pce indicator fact."
+    );
+  }
+
   return {
     reportKey,
     markdown,
@@ -62,7 +81,23 @@ function buildNotionReportPayload({ weeklyReportOutput, markdown }) {
       "Schema Version": { type: "rich_text", rich_text: textValue(schemaVersion) },
       "Report Key": { type: "rich_text", rich_text: textValue(reportKey) }
     },
-    expected: { title, asOf, generatedAt, overallLevel, overallScore, confidence, schemaVersion, reportKey, disclosure }
+    expected: {
+      title,
+      asOf,
+      generatedAt,
+      overallLevel,
+      overallScore,
+      confidence,
+      schemaVersion,
+      reportKey,
+      disclosure,
+      dataFirstCoverage: isV2 ? {
+        sectionHeading: "핵심 지표 데이터 현황",
+        indicatorCoverage,
+        corePceObservationDate: corePce.currentObservationDate,
+        corePceReferenceMonth: corePce.referenceMonth
+      } : null
+    }
   };
 }
 
