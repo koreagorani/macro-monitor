@@ -93,7 +93,6 @@ function readBackMismatches({ page, pageMarkdown, expected }) {
     "property.Report Key": stored.reportKey === expected.reportKey,
     "markdown.notTruncated": pageMarkdown?.truncated !== true,
     "markdown.present": typeof markdown === "string",
-    "markdown.title": typeof markdown === "string" && markdown.includes(expected.title),
     "markdown.asOf": typeof markdown === "string" && markdown.includes(expected.asOf),
     "markdown.disclosure": typeof markdown === "string" && markdown.includes(expected.disclosure),
     "markdown.gfmTableSeparatorAbsent": typeof markdown === "string" && !hasGfmTableSeparator(markdown),

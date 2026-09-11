@@ -19,9 +19,20 @@
 - Telegram 알림 실제 GitHub Actions 검증 완료
 - 보고서 v2 Phase A — deterministic facts / AI analysis 분리 구현 및 로컬 검증 완료
 - 보고서 v2 Phase B — Markdown/Notion data-first 출력 구현 및 로컬 검증 완료
+- 다음 확인: `Manual Weekly Report Notion Save` 재실행으로 title read-back hotfix 실제 검증
 - 다음 작업: Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증
 
 ## 완료된 내용
+
+### 보고서 v2 Phase B — 실제 Notion 검증 title read-back hotfix
+
+- `Manual Weekly Report Notion Save` run `34591067850`에서 테스트 144개와 합성 예시 8개 통과, Notion 저장 수행 확인
+- 실제 Notion UI에서 MVP 6개 지표가 모두 표시되고 기존 `---` placeholder 행이 제거된 것을 확인
+- 첫 실제 검증은 Notion Markdown read-back의 첫 H1이 입력 title과 동일 문자열로 유지된다고 가정한 `markdown.title` 단일 mismatch로 실패
+- page title의 authoritative source를 기존 `Name` property로 명확히 하고 중복된 Markdown title 문자열 검증을 제거
+- Markdown renderer의 실제 H1은 유지하고 본문 존재·비절단·기준일·주의 문구·6개 지표 coverage·Core PCE 날짜 표현·separator/placeholder 부재 검증은 유지
+- 로컬 검증: `npm test` 147개 전체 통과, `npm run validate:examples` 8개 전체 통과, 변경 JavaScript `node --check`와 `git diff --check` 통과
+- hotfix 반영 후 같은 workflow 재실행 필요
 
 ### 보고서 v2 Phase B — Markdown/Notion data-first 출력
 
@@ -616,6 +627,6 @@ Node.js 환경:
 ## 미해결
 
 - Phase C — Telegram 중요 실제 지표 최대 3개 deterministic 선택·표시와 실제 Actions 통합 검증
-- Phase B 실제 Notion Actions에서 6개 표 렌더링·read-back과 UI의 `---` 제거 확인
+- Phase B title read-back hotfix의 실제 Actions 재검증
 - 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토

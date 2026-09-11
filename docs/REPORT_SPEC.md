@@ -187,7 +187,7 @@ properties는 입력값을 그대로 매핑하며 점수·등급을 재계산하
 - 일치 page가 둘 이상이면 임의 page를 선택하지 않고 `NOTION_DUPLICATE_REPORT_KEY`로 실패한다.
 - Notion native Markdown 입력을 사용하고 자체 Markdown-to-block 변환기는 구현하지 않는다.
 - 생성과 갱신 모두 renderer가 만든 enhanced Markdown `<table>`을 그대로 사용한다.
-- 저장 후 제목·기준일·주의 문구 외에 핵심 지표 섹션, facts의 MVP 6개 지표명, Core PCE 관측일·기준월 표현, GFM separator와 placeholder table row 부재를 read-back 검증한다.
+- 저장 후 page 제목은 authoritative `Name` property로 검증한다. Markdown 본문은 존재·비절단·기준일·주의 문구, 핵심 지표 섹션, facts의 MVP 6개 지표명, Core PCE 관측일·기준월 표현, GFM separator와 placeholder table row 부재를 검증하며 첫 H1의 동일 문자열 round-trip은 요구하지 않는다.
 - 검증 실패 메시지는 `markdown.indicator.btc` 같은 coverage key만 포함하고 전체 Markdown이나 page 원문을 로그에 남기지 않는다.
 
 ### 환경변수

@@ -328,7 +328,7 @@
 - Notion API version은 `2026-03-11`을 기본값으로 고정하고 명시적 호환성 검증 없이 자동 변경하지 않는다.
 - 최신 Notion API의 native Markdown 입력을 사용하므로 자체 Markdown-to-block parser는 MVP에서 구현하지 않는다.
 - page 본문 표는 native enhanced Markdown `<table>` 형식만 사용하며 GFM separator를 보내지 않는다.
-- read-back은 기존 metadata·제목·기준일·주의 문구에 더해 핵심 지표 섹션, MVP 6개 지표명, Core PCE 관측일·기준월 표현, separator placeholder 부재를 검증한다.
+- read-back에서 page 제목의 canonical 검증은 `Name` property가 담당한다. Markdown은 존재·비절단·기준일·주의 문구, 핵심 지표 섹션, MVP 6개 지표명, Core PCE 관측일·기준월 표현, separator placeholder 부재를 검증하며 첫 H1의 동일 문자열 round-trip은 요구하지 않는다.
 - read-back 실패 로그에는 coverage key만 남기고 전체 Markdown이나 원문 API 응답을 남기지 않는다.
 - `NOTION_API_KEY`와 `NOTION_DATA_SOURCE_ID`는 GitHub Secrets에서만 읽는다.
 

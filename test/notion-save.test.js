@@ -104,7 +104,7 @@ test("saveWeeklyReportToNotion fails safely on duplicate Report Keys", async () 
   );
 });
 
-test("saveWeeklyReportToNotion fails when read-back content differs", async () => {
+test("saveWeeklyReportToNotion fails when required read-back body coverage differs", async () => {
   const readBack = verifiedReadBack();
   readBack.pageMarkdown.markdown = "# wrong report";
   const notionClient = {
@@ -122,7 +122,8 @@ test("saveWeeklyReportToNotion fails when read-back content differs", async () =
       readBackAttempts: 1
     }),
     (error) => error.code === "NOTION_READ_BACK_VERIFICATION_FAILED"
-      && /markdown\.title/.test(error.message)
+      && /markdown\.asOf/.test(error.message)
+      && /markdown\.disclosure/.test(error.message)
   );
 });
 
@@ -196,6 +197,56 @@ test("v2 Notion read-back verifies the data-first section and all six indicators
     expected: payload.expected
   });
   assert.deepEqual(mismatches, []);
+});
+
+test("v2 Notion read-back treats property.Name as the authoritative page title", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  const withoutTitleHeading = renderedMarkdown.split("\n").slice(2).join("\n");
+  const mismatches = readBackMismatches({
+    page: { properties: payload.properties },
+    pageMarkdown: { markdown: withoutTitleHeading, truncated: false },
+    expected: payload.expected
+  });
+
+  assert.deepEqual(mismatches, []);
+});
+
+test("v2 Notion read-back still fails when property.Name differs", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  payload.properties.Name.title[0].text.content = "다른 페이지 제목";
+  const mismatches = readBackMismatches({
+    page: { properties: payload.properties },
+    pageMarkdown: { markdown: renderedMarkdown, truncated: false },
+    expected: payload.expected
+  });
+
+  assert.deepEqual(mismatches, ["property.Name"]);
+});
+
+test("v2 Notion read-back still requires asOf and disclosure body coverage", async () => {
+  const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+  const renderedMarkdown = renderWeeklyReportMarkdown(report);
+  const payload = buildNotionReportPayload({ weeklyReportOutput: report, markdown: renderedMarkdown });
+  const withoutAsOf = renderedMarkdown.replaceAll(report.asOf, "누락된 기준일");
+  const withoutDisclosure = renderedMarkdown.replaceAll(
+    report.presentation.mandatoryDisclosure,
+    "누락된 주의 문구"
+  );
+
+  assert.ok(readBackMismatches({
+    page: { properties: payload.properties },
+    pageMarkdown: { markdown: withoutAsOf, truncated: false },
+    expected: payload.expected
+  }).includes("markdown.asOf"));
+  assert.ok(readBackMismatches({
+    page: { properties: payload.properties },
+    pageMarkdown: { markdown: withoutDisclosure, truncated: false },
+    expected: payload.expected
+  }).includes("markdown.disclosure"));
 });
 
 test("v2 Notion read-back reports only the missing indicator coverage key", async () => {
