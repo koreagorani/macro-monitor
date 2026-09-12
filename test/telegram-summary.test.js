@@ -153,7 +153,7 @@ test("Telegram renders the top three actual facts before AI and formats canonica
   assert.equal((actual.match(/• /g) ?? []).length, 3);
   assert.ok(actual.indexOf("미국 2년물") < actual.indexOf("WTI"));
   assert.ok(actual.indexOf("WTI") < actual.indexOf("비트코인"));
-  assert.match(text, /보조 위험 점수: 1\/3 \(높을수록 위험\)/);
+  assert.match(text, /보조 위험 점수: 1점 \(-1 완화 ↔ 3 위험\)/);
   assert.match(text, /알트코인 — 🟠 경계 \(alert\)/);
   assert.doesNotMatch(text, /1\.98|전체 위험 점수/);
   assert.deepEqual(input, before);

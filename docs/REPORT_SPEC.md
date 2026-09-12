@@ -272,7 +272,7 @@ GitHub Actions 완료 기준:
 - Core PCE: 최신 전월비·관측일, 다음 줄에 이전 전월비·최근 3개월 평균과 status를 표시한다. 관측일을 발표일로 부르지 않는다. 나머지 상세 데이터는 Notion에서 확인한다.
 - actual value와 변화는 Phase B 공용 formatter를 그대로 재사용하고 nullable field는 `—`로 표시한다.
 - Telegram `sendMessage` HTML은 글자색을 지정하지 않으므로 상태를 `🔵 완화`, `🟢 정상`, `🟡 주의`, `🟠 경계`, `🔴 강한 경계/높은 위험`, `⚪ 사용 불가`와 canonical code로 표시한다.
-- overall raw score는 위험 단계를 결정하는 값이 아니라 영역 가중평균 보조값이므로 Telegram에서 반올림한 정수 `n/3 (높을수록 위험)`로 표시한다. 판정과 정렬에는 raw score를 계속 사용한다.
+- overall raw score는 위험 단계를 결정하는 값이 아니라 영역 가중평균 보조값이므로 Telegram에서 반올림한 정수 `n점 (-1 완화 ↔ 3 위험)`으로 표시한다. 판정과 정렬에는 raw score를 계속 사용한다.
 - theme score는 노출도 합산값이라 고정 상한이 없으므로 Telegram에서는 숫자를 생략하고 색상 표식·한글 label·canonical level로 표시한다. 상세 raw score는 Notion 보고서에서 확인한다.
 - AI 설명은 analysis에서, 지표 선택·수치·상태와 테마 name/level은 facts에서만 읽는다.
 - 동적 문자열 HTML escape, 한 메시지, 보이는 텍스트 3,500자 상한을 유지한다. 길이 초과 시 AI 설명 등 선택 문구부터 축약하며 선택 지표의 수치·날짜는 자르지 않는다. 그래도 초과하면 `TELEGRAM_SUMMARY_TOO_LONG`으로 실패한다.

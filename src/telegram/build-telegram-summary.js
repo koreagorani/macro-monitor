@@ -140,7 +140,7 @@ function weeklyMessage({ weeklyReportOutput, compact = false }) {
     warningTitle ? "<b>⚠️ 주간 매크로 경고</b>" : "<b>주간 매크로 요약</b>",
     `기준일: ${escapeHtml(truncateText(weeklyReportOutput?.asOf, 40))}`,
     `전체 위험 단계: ${formatStatus(overallLevel)}`,
-    `보조 위험 점수: ${escapeHtml(formatIntegerScore(overallScore))}/3 (높을수록 위험)`,
+    `보조 위험 점수: ${escapeHtml(formatIntegerScore(overallScore))}점 (-1 완화 ↔ 3 위험)`,
     `신뢰도: ${escapeHtml(truncateText(source.confidence, 40))}`,
     ...(isV2 ? [renderIndicators(weeklyReportOutput.facts.indicators)] : []),
     renderList("판단", coreChanges),
