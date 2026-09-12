@@ -171,6 +171,7 @@ for (const missingIndicator of [false, true]) {
           events.push("telegram");
           assert.match(text, /중요 실제 지표/);
           assert.match(text, /75\.3 USD\/barrel/);
+          assert.match(text, /🟡 주의 \(watch\)/);
           return { delivered: true };
         }
       }

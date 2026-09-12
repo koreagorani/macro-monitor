@@ -3,13 +3,22 @@ import {
   formatDate,
   formatIndicatorChange,
   formatIndicatorCurrentValue,
-  formatScore
+  formatIntegerScore
 } from "../report/format-report-value.js";
 import { selectTelegramIndicators } from "./select-telegram-indicators.js";
 
 const MAX_TELEGRAM_VISIBLE_LENGTH = 3_500;
 const DISCLOSURE = "취약도는 기대수익률이나 직접적인 매도 신호가 아니라 매크로 노출도입니다.";
 const NOTION_LOCATION = "전체 보고서: Notion의 Macro Weekly Reports에서 확인";
+const STATUS_DISPLAY = Object.freeze({
+  easing: { emoji: "🔵", label: "완화" },
+  normal: { emoji: "🟢", label: "정상" },
+  watch: { emoji: "🟡", label: "주의" },
+  alert: { emoji: "🟠", label: "경계" },
+  strong_alert: { emoji: "🔴", label: "강한 경계" },
+  high_risk: { emoji: "🔴", label: "높은 위험" },
+  unavailable: { emoji: "⚪", label: "사용 불가" }
+});
 
 class TelegramSummaryError extends Error {
   constructor(code, message) {
@@ -64,12 +73,18 @@ function renderThemes(themes) {
   const lines = themes.length > 0
     ? themes.map((theme, index) => {
         const name = escapeHtml(theme.name);
-        const level = escapeHtml(theme.level);
-        const score = escapeHtml(theme.score);
-        return `${index + 1}. ${name} — ${level} / ${score}`;
+        return `${index + 1}. ${name} — ${formatStatus(theme.level)}`;
       })
     : ["• 없음"];
   return ["<b>취약 테마</b>", ...lines].join("\n");
+}
+
+function formatStatus(status) {
+  const canonical = truncateText(status, 40) || "unknown";
+  const display = STATUS_DISPLAY[canonical];
+  return display
+    ? `${display.emoji} ${display.label} (${escapeHtml(canonical)})`
+    : `⚪ ${escapeHtml(canonical)}`;
 }
 
 function renderIndicators(indicators) {
@@ -81,7 +96,7 @@ function renderIndicators(indicators) {
     const changes = isPce
       ? `이전 ${formatCorePceValue(indicator.previousMoM, indicator.unit)} / 3개월 평균 ${formatCorePceValue(indicator.threeMonthAverageMoM, indicator.unit)}`
       : `1주 ${formatIndicatorChange(indicator.weeklyChange, indicator.weeklyChangeUnit)} / 4주 ${formatIndicatorChange(indicator.fourWeekChange, indicator.fourWeekChangeUnit)}`;
-    return `• ${escapeHtml(indicator.name)}: ${escapeHtml(current)} (관측일 ${escapeHtml(formatDate(indicator.currentObservationDate))})\n  ${escapeHtml(changes)} — ${escapeHtml(indicator.status)}`;
+    return `• ${escapeHtml(indicator.name)}: ${escapeHtml(current)} (관측일 ${escapeHtml(formatDate(indicator.currentObservationDate))})\n  ${escapeHtml(changes)} — ${formatStatus(indicator.status)}`;
   });
   return ["<b>중요 실제 지표</b>", ...rows].join("\n");
 }
@@ -102,8 +117,7 @@ function normalizeThemes(weeklyReportOutput, maxNameLength) {
   return Array.isArray(themes)
     ? themes.slice(0, 3).map((theme) => ({
         name: truncateText(theme?.name, maxNameLength) || "이름 없음",
-        level: truncateText(theme?.level, 40) || "unknown",
-        score: formatScore(theme?.score)
+        level: truncateText(theme?.level, 40) || "unknown"
       }))
     : [];
 }
@@ -125,8 +139,8 @@ function weeklyMessage({ weeklyReportOutput, compact = false }) {
   const sections = [
     warningTitle ? "<b>⚠️ 주간 매크로 경고</b>" : "<b>주간 매크로 요약</b>",
     `기준일: ${escapeHtml(truncateText(weeklyReportOutput?.asOf, 40))}`,
-    `전체 위험 단계: ${escapeHtml(truncateText(overallLevel, 40))}`,
-    `전체 위험 점수: ${escapeHtml(formatScore(overallScore))}`,
+    `전체 위험 단계: ${formatStatus(overallLevel)}`,
+    `보조 위험 점수: ${escapeHtml(formatIntegerScore(overallScore))}/3 (높을수록 위험)`,
     `신뢰도: ${escapeHtml(truncateText(source.confidence, 40))}`,
     ...(isV2 ? [renderIndicators(weeklyReportOutput.facts.indicators)] : []),
     renderList("판단", coreChanges),
@@ -209,6 +223,7 @@ export {
   DISCLOSURE,
   MAX_TELEGRAM_VISIBLE_LENGTH,
   NOTION_LOCATION,
+  STATUS_DISPLAY,
   TelegramSummaryError,
   buildTelegramSummary,
   escapeHtml,

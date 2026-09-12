@@ -265,13 +265,16 @@ GitHub Actions 완료 기준:
 
 ## 0-3. Telegram data-first 출력 계약
 
-- 정상 메시지 순서: 머리말 → 기준일·전체 위험 단계·2자리 점수·신뢰도 → 중요 실제 지표 → AI 판단 최대 3개 → 취약 테마 최대 3개 → 권장 대응 → Notion 안내·주의 문구
+- 정상 메시지 순서: 머리말 → 기준일·색상 표식이 붙은 전체 위험 단계·정수 보조점수·신뢰도 → 중요 실제 지표 → AI 판단 최대 3개 → 취약 테마 최대 3개 → 권장 대응 → Notion 안내·주의 문구
 - `facts.indicators`에서 최대 3개를 선택한다. status 순서는 `strong_alert > alert > watch > normal > easing > unavailable`이다.
 - 같은 status는 raw `riskContribution` 내림차순, `reportPriority` 오름차순, `indicatorId` 사전순으로 정렬한다. null 기여도는 숫자보다 뒤에 두며 음수를 0으로 바꾸지 않는다. source 배열은 변경하지 않는다.
 - 시장가격형: 이름·단위 포함 현재값·관측일, 다음 줄에 1주·4주 변화와 status를 표시한다.
 - Core PCE: 최신 전월비·관측일, 다음 줄에 이전 전월비·최근 3개월 평균과 status를 표시한다. 관측일을 발표일로 부르지 않는다. 나머지 상세 데이터는 Notion에서 확인한다.
-- Phase B 공용 formatter를 그대로 재사용한다. overall/theme score는 2자리이며 nullable actual field는 `—`다.
-- AI 설명은 analysis에서, 지표 선택·수치·상태와 테마 name/score/level은 facts에서만 읽는다.
+- actual value와 변화는 Phase B 공용 formatter를 그대로 재사용하고 nullable field는 `—`로 표시한다.
+- Telegram `sendMessage` HTML은 글자색을 지정하지 않으므로 상태를 `🔵 완화`, `🟢 정상`, `🟡 주의`, `🟠 경계`, `🔴 강한 경계/높은 위험`, `⚪ 사용 불가`와 canonical code로 표시한다.
+- overall raw score는 위험 단계를 결정하는 값이 아니라 영역 가중평균 보조값이므로 Telegram에서 반올림한 정수 `n/3 (높을수록 위험)`로 표시한다. 판정과 정렬에는 raw score를 계속 사용한다.
+- theme score는 노출도 합산값이라 고정 상한이 없으므로 Telegram에서는 숫자를 생략하고 색상 표식·한글 label·canonical level로 표시한다. 상세 raw score는 Notion 보고서에서 확인한다.
+- AI 설명은 analysis에서, 지표 선택·수치·상태와 테마 name/level은 facts에서만 읽는다.
 - 동적 문자열 HTML escape, 한 메시지, 보이는 텍스트 3,500자 상한을 유지한다. 길이 초과 시 AI 설명 등 선택 문구부터 축약하며 선택 지표의 수치·날짜는 자르지 않는다. 그래도 초과하면 `TELEGRAM_SUMMARY_TOO_LONG`으로 실패한다.
 - Notion `verified === true` 이후에만 정상 Telegram을 전송한다. shouldAbort 품질 실패 분기, 중복 전송 허용, Secret·본문·원문 응답 비로그 정책은 유지한다.
 - 실제 완료 검증은 main의 `Manual Weekly Report Telegram Notification`을 실행해 `weekly`, `verified: true`, `status: sent`와 실제 한 메시지 수신·지표 수치 표시를 확인한다.

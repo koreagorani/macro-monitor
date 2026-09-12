@@ -7,6 +7,7 @@ import {
 } from "../src/report/format-report-value.js";
 import {
   MAX_TELEGRAM_VISIBLE_LENGTH,
+  STATUS_DISPLAY,
   buildTelegramSummary,
   escapeHtml,
   visibleTextLength
@@ -59,7 +60,7 @@ test("weekly summary contains contract fields and escapes dynamic content", asyn
 
   assert.match(summary.text, /기준일:/);
   assert.match(summary.text, /전체 위험 단계:/);
-  assert.match(summary.text, /전체 위험 점수:/);
+  assert.match(summary.text, /보조 위험 점수:/);
   assert.match(summary.text, /신뢰도:/);
   assert.match(summary.text, /A &amp; B &lt; C &gt; D/);
   assert.match(summary.text, /테마 &lt;A&amp;B&gt;/);
@@ -152,9 +153,22 @@ test("Telegram renders the top three actual facts before AI and formats canonica
   assert.equal((actual.match(/• /g) ?? []).length, 3);
   assert.ok(actual.indexOf("미국 2년물") < actual.indexOf("WTI"));
   assert.ok(actual.indexOf("WTI") < actual.indexOf("비트코인"));
-  assert.match(text, /전체 위험 점수: 0\.55/);
-  assert.match(text, /알트코인 — alert \/ 1\.98/);
+  assert.match(text, /보조 위험 점수: 1\/3 \(높을수록 위험\)/);
+  assert.match(text, /알트코인 — 🟠 경계 \(alert\)/);
+  assert.doesNotMatch(text, /1\.98|전체 위험 점수/);
   assert.deepEqual(input, before);
+});
+
+test("Telegram gives every canonical status a distinct readable marker", async () => {
+  assert.deepEqual(Object.keys(STATUS_DISPLAY).sort(), [
+    "alert", "easing", "high_risk", "normal", "strong_alert", "unavailable", "watch"
+  ]);
+  const input = await fixture();
+  for (const [status, { emoji, label }] of Object.entries(STATUS_DISPLAY)) {
+    input.weeklyReportOutput.facts.overallRisk.level = status;
+    const { text } = buildTelegramSummary(input);
+    assert.ok(text.includes(`${emoji} ${label} (${status})`));
+  }
 });
 
 test("Telegram reuses the formatter for every market indicator and Core PCE", async () => {
@@ -200,8 +214,8 @@ test("Telegram displays null actual fields as em dashes without fabricated zero 
   }));
   const { text } = buildTelegramSummary(input);
   assert.match(text, /관측일 —/);
-  assert.match(text, /1주 — \/ 4주 — — unavailable/);
-  assert.match(text, /이전 — \/ 3개월 평균 — — unavailable/);
+  assert.match(text, /1주 — \/ 4주 — — ⚪ 사용 불가 \(unavailable\)/);
+  assert.match(text, /이전 — \/ 3개월 평균 — — ⚪ 사용 불가 \(unavailable\)/);
 });
 
 test("Telegram compact fallback preserves actual rows and fails safely if facts cannot fit", async () => {

@@ -162,7 +162,7 @@ Notion API 계약:
 
 ## Telegram 알림 아키텍처
 
-MVP에서 Notion은 전체 주간 보고서의 원본이고 Telegram은 확인용 요약·경고 채널이다. Telegram 메시지에서 수치나 위험 단계를 다시 계산하지 않는다.
+MVP에서 Notion은 전체 주간 보고서의 원본이고 Telegram은 확인용 요약·경고 채널이다. Telegram 메시지에서 수치나 위험 단계를 다시 판정하지 않으며 raw score는 표시 단계에서만 반올림한다.
 
 정상 보고서 흐름:
 

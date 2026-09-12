@@ -28,6 +28,12 @@ function formatScore(value) {
   return `${sign}${formatMagnitude(value, 2)}`;
 }
 
+function formatIntegerScore(value) {
+  if (!isFiniteNumber(value)) return EMPTY_VALUE;
+  const rounded = Math.round(value);
+  return String(Object.is(rounded, -0) ? 0 : rounded);
+}
+
 function formatPercentageChange(value) {
   if (!isFiniteNumber(value)) return EMPTY_VALUE;
   const oneDecimalMagnitude = Number(formatMagnitude(value, 1));
@@ -77,6 +83,7 @@ export {
   formatDate,
   formatIndicatorChange,
   formatIndicatorCurrentValue,
+  formatIntegerScore,
   formatPercentageChange,
   formatScore
 };

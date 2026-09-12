@@ -8,6 +8,7 @@ import {
   formatDate,
   formatIndicatorChange,
   formatIndicatorCurrentValue,
+  formatIntegerScore,
   formatPercentageChange,
   formatScore
 } from "../src/report/format-report-value.js";
@@ -42,7 +43,14 @@ test("display formatters map null, undefined and non-finite values to an em dash
     assert.equal(formatScore(value), EMPTY_VALUE);
     assert.equal(formatPercentageChange(value), EMPTY_VALUE);
     assert.equal(formatCorePceValue(value), EMPTY_VALUE);
+    assert.equal(formatIntegerScore(value), EMPTY_VALUE);
   }
   assert.equal(formatIndicatorCurrentValue({ indicatorId: "wti", currentValue: null, unit: "USD/barrel" }), EMPTY_VALUE);
   assert.equal(formatDate(null), EMPTY_VALUE);
+});
+
+test("integer score formatter rounds only the display value without negative zero", () => {
+  assert.equal(formatIntegerScore(0.5473214285714287), "1");
+  assert.equal(formatIntegerScore(1.49), "1");
+  assert.equal(formatIntegerScore(-0.2), "0");
 });

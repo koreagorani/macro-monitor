@@ -348,6 +348,8 @@
 - Notion을 전체 주간 보고서의 원본으로 두고 Telegram은 핵심 요약과 경고만 전달하는 확인용 채널로 사용한다.
 - 정상 알림은 검증된 weekly-report-output만 렌더링하며 숫자·위험 단계·임계값을 다시 계산하지 않는다.
 - 중요 지표 선택과 actual data는 facts만 사용하며 AI 판단보다 먼저 표시한다. 공용 display formatter를 재사용하고 세부 정렬·표시 정책은 REPORT_SPEC의 Telegram 계약을 따른다.
+- Telegram HTML의 글자색 미지원은 상태별 색상 원형 이모지로 보완한다. canonical status/level과 한글 label을 함께 표시한다.
+- overall score는 정수 `n/3` 보조점수로 표시하고 theme raw score는 Telegram에서 생략한다. 단계 판정·정렬·Notion raw score에는 영향을 주지 않는다.
 - `quality.shouldAbort === true`이면 AI 보고서와 Notion 저장 대신 macro-review quality 기반 데이터 품질 실패 알림만 보낸다.
 - 정상 주간 보고서는 위험 단계와 관계없이 한 메시지를 보내고, `alert`와 `high_risk`는 같은 메시지의 경고 머리말로 구분한다.
 - 메시지는 `HTML` parse mode, 보이는 텍스트 최대 3,500자, 동적 문자열 escape를 적용하고 MVP에서는 분할하지 않는다.
