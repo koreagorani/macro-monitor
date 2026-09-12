@@ -37,6 +37,7 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          PORTFOLIO_HELD_THEME_IDS: ${{ secrets.PORTFOLIO_HELD_THEME_IDS }}
           AS_OF: ${{ inputs.as_of }}
         run: |
           if [ -n "$AS_OF" ]; then

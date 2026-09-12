@@ -396,3 +396,26 @@
 - 채널마다 upstream 객체를 다시 조인하지 않고 같은 final object를 사용해야 Notion과 Telegram의 데이터 일관성을 유지할 수 있다.
 - strict analysis schema와 exact-set validator를 함께 사용하면 존재하지 않는 ID나 placeholder 행을 조용히 렌더링하는 문제를 생성 단계에서 차단할 수 있다.
 - 내부 반올림을 제거해야 표시 정밀도와 판정 정밀도를 독립적으로 관리할 수 있다.
+
+## D-031 비공개 현재 보유 테마 필터
+
+결정:
+
+- 정상 macro-review와 주간 보고서는 Actions Secret `PORTFOLIO_HELD_THEME_IDS`의 JSON 배열을 현재 보유 테마의 비공개 입력으로 사용한다.
+- 입력에는 공개 `config/portfolio-themes.json`의 enabled `themeId`만 포함하며 종목명·수량·평가금액·계좌 비중은 포함하지 않는다.
+- 취약도 계산은 입력된 보유 테마만 평가한 뒤 기존 raw score 공식으로 상위 3개를 선택한다. 위험 공식, 민감도, level 임계값은 변경하지 않는다.
+- 누락·빈 배열·중복·형식 오류·미등록 ID는 전체 enabled 테마 fallback 없이 정상 보고서 생성을 실패시킨다.
+- `riskOutput.quality.shouldAbort === true`인 경로는 보유 테마 입력 없이도 기존 품질 실패 Telegram 알림을 보낼 수 있다.
+- Google Drive 포트폴리오는 운영상 현재 상태의 출처이지만 GitHub Actions가 Drive 원문이나 보유 금액을 직접 수집하지 않는다. Drive 변경 시 테마 ID Secret을 갱신한다.
+
+관계:
+
+- D-021의 추후 비공개 입력 연결을 구현하고 실제 개인 보유 데이터 비커밋 원칙을 유지한다.
+- D-022의 상위 3개 선택 대상을 전체 enabled 테마에서 현재 보유 enabled 테마로 좁힌다.
+- D-030의 deterministic facts와 AI analysis 분리, D-029의 Notion verified 후 Telegram 전송 계약은 유지한다.
+
+이유:
+
+- 일반 테마 민감도만 평가하면 실제 미보유 테마도 높은 취약도 점수 때문에 보고서에 나타날 수 있다.
+- 현재 보유 여부를 계산 전에 deterministic하게 적용해야 AI가 미보유 테마를 제거하거나 추정하는 책임을 갖지 않는다.
+- 최소한의 테마 ID만 Secret으로 전달하면 개인 포트폴리오 원문을 공개 저장소와 Actions 로그에 노출하지 않고 현재 상태를 반영할 수 있다.

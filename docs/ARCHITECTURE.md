@@ -10,6 +10,7 @@
 → 지표 상태
 → 이례성
 → 영역 위험
+→ 비공개 보유 테마 필터
 → 테마 취약도
 → deterministic reportFacts
 → AI analysis-only JSON
@@ -48,6 +49,8 @@
 - 계산이 끝나면 원시 시계열을 폐기한다.
 - 비트코인과 S&P 500의 전체 원시 시계열을 공개 저장소에 장기간 저장하거나 커밋하지 않는다.
 - 운영 원시 시계열과 개인 최종 보고서는 공개 저장소에 커밋하지 않는다.
+- 실제 보유 여부는 `PORTFOLIO_HELD_THEME_IDS` Actions Secret의 테마 ID JSON 배열로만 전달하며 종목·수량·평가금액은 전달하지 않는다.
+- 정상 보고서는 현재 보유 테마만 취약도 평가한다. Secret 누락·오류 시 전체 테마 fallback 없이 실패하고, 품질 중단 경로는 기존 Telegram 품질 실패 알림을 유지한다.
 - 코드, 설정, 임계값, 문서, 데이터 스키마, 합성 테스트 데이터와 비민감 예시 파일은 공개 저장소에 보관할 수 있다.
 
 ## 정규화 출력 계약
@@ -274,3 +277,4 @@ GitHub Secrets:
 - Notion data source ID
 - Telegram Bot Token
 - Telegram Chat ID
+- 현재 보유 테마 ID JSON 배열

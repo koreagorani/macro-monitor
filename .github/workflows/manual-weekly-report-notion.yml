@@ -40,6 +40,7 @@ jobs:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
           NOTION_API_VERSION: ${{ vars.NOTION_API_VERSION }}
+          PORTFOLIO_HELD_THEME_IDS: ${{ secrets.PORTFOLIO_HELD_THEME_IDS }}
           AS_OF: ${{ inputs.as_of }}
         run: |
           if [ -n "$AS_OF" ]; then

@@ -43,6 +43,7 @@ jobs:
           NOTION_API_VERSION: ${{ vars.NOTION_API_VERSION }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PORTFOLIO_HELD_THEME_IDS: ${{ secrets.PORTFOLIO_HELD_THEME_IDS }}
         run: |
           if [ -n "$AS_OF" ]; then
             npm run send:weekly-report:telegram -- "$AS_OF"

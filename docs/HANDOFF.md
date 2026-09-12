@@ -20,9 +20,22 @@
 - 보고서 v2 Phase A — deterministic facts / AI analysis 분리 구현 및 로컬 검증 완료
 - 보고서 v2 Phase B — Markdown/Notion data-first 출력 및 실제 Notion Actions 검증 완료
 - 보고서 v2 Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증 완료
-- 다음 확인: Telegram 상태 가시성·점수 표현 hotfix 실제 Actions 재검증
+- Telegram 상태 가시성·점수 표현 hotfix 실제 Actions 재검증 완료
+- 다음 확인: 현재 보유 테마 비공개 필터 actual Actions 검증
 
 ## 완료된 내용
+
+### 현재 보유 포트폴리오 테마 반영
+
+- Telegram UX hotfix run `34682454105` 성공: 테스트 160개, 예시 8개, Notion `updated`·`verified: true`, Telegram `weekly`·`sent`
+- Google Drive `건보 포트폴리오 현황`의 2026-09-07 최신 상태를 확인하고 양의 보유가 있는 자산을 공개 theme ID로만 매핑; 장기채 미보유 확인
+- 정상 보고서는 `PORTFOLIO_HELD_THEME_IDS` Actions Secret의 현재 보유 테마만 평가하고 상위 3개를 선택
+- 기존 취약도 공식·민감도·임계값·AI schema는 변경하지 않음
+- Secret에는 theme ID만 저장하며 종목·수량·평가금액·계좌 비중은 코드·문서·로그·AI 입력에 포함하지 않음
+- Secret 누락·오류 시 전체 테마 fallback 없이 fail closed; shouldAbort 품질 실패 Telegram 경로는 유지
+- 구조적 결정 D-031 추가
+- 로컬 검증: `npm test` 170개, `npm run validate:examples` 8개, 변경 JavaScript `node --check`, `git diff --check` 전체 통과
+- 실제 Actions 재검증 전 저장소 Settings → Secrets and variables → Actions에 `PORTFOLIO_HELD_THEME_IDS` 등록 필요
 
 ### 보고서 v2 Phase C — Telegram data-first 출력
 
@@ -636,7 +649,7 @@ Node.js 환경:
 - `docs/REQUIREMENTS.md`
 - `docs/REPORT_SPEC.md`
 - `docs/HANDOFF.md`
-- `docs/DECISIONS.md` D-029, D-030
+- `docs/DECISIONS.md` D-029, D-030, D-031
 
 선택:
 - facts 구조 확인 시 `data/schema/report-facts.schema.json`
@@ -644,9 +657,11 @@ Node.js 환경:
 - 표시 formatter 재사용 확인 시 `src/report/format-report-value.js`
 - Telegram 요약 확인 시 `src/telegram/build-telegram-summary.js`
 - 전송 순서 확인 시 `src/telegram/send-weekly-report-notification.js`
+- 현재 보유 테마 필터 확인 시 `src/portfolio/parse-held-theme-ids.js`, `src/portfolio/evaluate-portfolio-vulnerability.js`
 
 ## 미해결
 
-- Telegram 상태 가시성·점수 표현 hotfix 실제 Actions 재검증
+- `PORTFOLIO_HELD_THEME_IDS` 등록 후 `Manual Weekly Report Telegram Notification` actual Actions 재검증
+- Google Drive 변경과 Actions Secret 동기화는 현재 수동이며 자동 동기화는 별도 인증·운영 계약 필요
 - 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토

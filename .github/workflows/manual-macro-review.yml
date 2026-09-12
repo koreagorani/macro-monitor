@@ -35,6 +35,7 @@ jobs:
       - name: Evaluate macro review
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          PORTFOLIO_HELD_THEME_IDS: ${{ secrets.PORTFOLIO_HELD_THEME_IDS }}
           AS_OF: ${{ inputs.as_of }}
         run: |
           if [ -n "$AS_OF" ]; then

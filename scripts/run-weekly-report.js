@@ -6,6 +6,10 @@ import { evaluateIndicatorStatuses } from "../src/risk/evaluate-indicator.js";
 import { aggregateAreaRisks } from "../src/risk/aggregate-areas.js";
 import { evaluateOverallRisk } from "../src/risk/evaluate-overall-risk.js";
 import { evaluatePortfolioVulnerability } from "../src/portfolio/evaluate-portfolio-vulnerability.js";
+import {
+  parseHeldThemeIds,
+  PortfolioProfileError
+} from "../src/portfolio/parse-held-theme-ids.js";
 import { buildMacroReviewOutput } from "../src/review/build-macro-review-output.js";
 import { buildReportFacts } from "../src/report/build-report-facts.js";
 import { validateReportFactsConsistency } from "../src/report/validate-report-consistency.js";
@@ -33,6 +37,20 @@ function fail({ code, message, errors = [] }) {
     errors
   }, null, 2));
   process.exitCode = 1;
+}
+
+function loadHeldThemeIds(portfolioThemesConfig) {
+  try {
+    return parseHeldThemeIds({
+      rawValue: process.env.PORTFOLIO_HELD_THEME_IDS,
+      portfolioThemesConfig
+    });
+  } catch (error) {
+    if (error instanceof PortfolioProfileError) {
+      throw new WeeklyReportGenerationError(error.code, error.message);
+    }
+    throw error;
+  }
 }
 
 async function buildMacroReview({ asOf }) {
@@ -114,7 +132,8 @@ async function buildMacroReview({ asOf }) {
     : evaluatePortfolioVulnerability({
         riskOutput,
         portfolioThemesConfig,
-        hedgeCandidatesConfig
+        hedgeCandidatesConfig,
+        heldThemeIds: loadHeldThemeIds(portfolioThemesConfig)
       });
 
   if (portfolioVulnerability !== null) {
