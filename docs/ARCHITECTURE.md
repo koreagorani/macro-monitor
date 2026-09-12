@@ -73,7 +73,7 @@
 - ID coverage, duplicate, placeholder, source deep-equal 검증은 schema 검증 뒤 별도 consistency validator가 수행한다.
 - Markdown/Notion은 `facts.indicators`의 MVP 6개를 `reportPriority` 순으로 표시하고, area/theme canonical 값은 facts에서만 읽어 analysis의 ID 기반 설명과 결합한다.
 - 사용자 표시 formatter는 채널 경계에서만 호출한다. raw facts는 변경하지 않으며 위험 판정·정렬·consistency·Notion number property에는 사용하지 않는다.
-- Telegram의 실제 지표 최대 3개 data-first 출력은 Phase C에서 구현한다.
+- Telegram은 facts에서 status·raw riskContribution·reportPriority·ID 순으로 최대 3개 실제 지표를 선택하고 공용 formatter로 AI 판단보다 먼저 표시한다. 세부 규칙은 REPORT_SPEC의 Telegram 계약을 따른다.
 
 ## 소스 구조
 
@@ -184,7 +184,7 @@ macro-review quality.shouldAbort 확인
 
 입력과 표현:
 
-- 정상 알림은 검증된 weekly-report-output의 기준일, 전체 위험 단계·점수, 신뢰도, 핵심 변화 최대 3개, 취약 테마 최대 3개, 권장 대응만 사용한다.
+- 정상 알림은 검증된 weekly-report-output의 기준일, 전체 위험 단계·점수, 신뢰도, 중요 실제 지표 최대 3개, 핵심 변화 최대 3개, 취약 테마 최대 3개, 권장 대응을 사용한다.
 - 데이터 품질 실패 알림은 macro-review의 quality 정보만 사용하며 존재하지 않는 위험 단계·점수를 생성하지 않는다.
 - Telegram Bot API의 `sendMessage`와 `parse_mode=HTML`을 사용한다.
 - 태그는 렌더러가 생성하는 제한된 `<b>`만 허용하고 동적 문자열의 `&`, `<`, `>`는 HTML entity로 escape한다.

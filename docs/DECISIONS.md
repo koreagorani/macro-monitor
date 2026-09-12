@@ -341,12 +341,13 @@
 
 ## D-029 Telegram 주간 알림 전송 계약
 
-상태: D-030에서 정상 알림의 canonical source를 weekly-report-output v2 `facts`로 확장했다. 실제 지표 최대 3개 표시는 Phase C에 남긴다.
+상태: D-030에서 정상 알림의 canonical source를 weekly-report-output v2 `facts`로 확장했다. Phase C에서 deterministic 중요 지표 최대 3개와 공용 formatter 기반 actual data 표시를 구현했다.
 
 결정:
 
 - Notion을 전체 주간 보고서의 원본으로 두고 Telegram은 핵심 요약과 경고만 전달하는 확인용 채널로 사용한다.
 - 정상 알림은 검증된 weekly-report-output만 렌더링하며 숫자·위험 단계·임계값을 다시 계산하지 않는다.
+- 중요 지표 선택과 actual data는 facts만 사용하며 AI 판단보다 먼저 표시한다. 공용 display formatter를 재사용하고 세부 정렬·표시 정책은 REPORT_SPEC의 Telegram 계약을 따른다.
 - `quality.shouldAbort === true`이면 AI 보고서와 Notion 저장 대신 macro-review quality 기반 데이터 품질 실패 알림만 보낸다.
 - 정상 주간 보고서는 위험 단계와 관계없이 한 메시지를 보내고, `alert`와 `high_risk`는 같은 메시지의 경고 머리말로 구분한다.
 - 메시지는 `HTML` parse mode, 보이는 텍스트 최대 3,500자, 동적 문자열 escape를 적용하고 MVP에서는 분할하지 않는다.
@@ -378,7 +379,7 @@
 - indicator/area/theme exact-set, duplicate, placeholder, AI ID coverage, source facts deep-equal은 JSON Schema 뒤의 명시적 consistency validator로 검증한다.
 - `riskContribution`은 기존 area score와 overall weighted score 산식을 지표별로 수학적으로 분해한 raw number이며 새로운 위험 판정을 만들지 않는다.
 - 계산, 판정, 정렬, consistency는 raw JS number를 사용한다. 사용자 표시 반올림은 channel boundary에서만 수행한다.
-- Phase A는 v2 JSON 계약과 최소 채널 호환을, Phase B는 Markdown/Notion의 6개 지표 data-first 출력과 display formatter를 구현했다. Telegram의 실제 지표 선택·표시는 Phase C로 분리한다.
+- Phase A는 v2 JSON 계약과 최소 채널 호환을, Phase B는 Markdown/Notion의 6개 지표 data-first 출력과 display formatter를, Phase C는 Telegram의 deterministic 실제 지표 선택·표시를 구현했다. 실제 Actions 검증 상태는 HANDOFF에서 관리한다.
 
 관계:
 

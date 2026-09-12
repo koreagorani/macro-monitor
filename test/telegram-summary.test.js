@@ -3,6 +3,9 @@ import test from "node:test";
 
 import { loadJsonFile } from "../src/config/load-config.js";
 import {
+  formatCorePceValue, formatDate, formatIndicatorChange, formatIndicatorCurrentValue
+} from "../src/report/format-report-value.js";
+import {
   MAX_TELEGRAM_VISIBLE_LENGTH,
   buildTelegramSummary,
   escapeHtml,
@@ -138,4 +141,80 @@ test("summary fails instead of splitting when the configured limit is still exce
     () => buildTelegramSummary({ riskOutput, weeklyReportOutput, maxVisibleLength: 80 }),
     (error) => error.code === "TELEGRAM_SUMMARY_TOO_LONG"
   );
+});
+
+test("Telegram renders the top three actual facts before AI and formats canonical scores", async () => {
+  const input = await fixture();
+  const before = clone(input);
+  const { text } = buildTelegramSummary(input);
+  assert.ok(text.indexOf("<b>중요 실제 지표</b>") < text.indexOf("<b>판단</b>"));
+  const actual = text.split("<b>중요 실제 지표</b>")[1].split("<b>판단</b>")[0];
+  assert.equal((actual.match(/• /g) ?? []).length, 3);
+  assert.ok(actual.indexOf("미국 2년물") < actual.indexOf("WTI"));
+  assert.ok(actual.indexOf("WTI") < actual.indexOf("비트코인"));
+  assert.match(text, /전체 위험 점수: 0\.55/);
+  assert.match(text, /알트코인 — alert \/ 1\.98/);
+  assert.deepEqual(input, before);
+});
+
+test("Telegram reuses the formatter for every market indicator and Core PCE", async () => {
+  const input = await fixture();
+  for (const indicator of input.weeklyReportOutput.facts.indicators) {
+    indicator.status = "strong_alert";
+    const { text } = buildTelegramSummary(input);
+    const current = indicator.type === "market_price"
+      ? formatIndicatorCurrentValue(indicator)
+      : formatCorePceValue(indicator.currentMoM, indicator.unit);
+    assert.ok(text.includes(escapeHtml(current)));
+    assert.ok(text.includes(`관측일 ${formatDate(indicator.currentObservationDate)}`));
+    if (indicator.type === "market_price") {
+      assert.ok(text.includes(`1주 ${formatIndicatorChange(indicator.weeklyChange, indicator.weeklyChangeUnit)}`));
+      assert.ok(text.includes(`4주 ${formatIndicatorChange(indicator.fourWeekChange, indicator.fourWeekChangeUnit)}`));
+    } else {
+      assert.ok(text.includes(`이전 ${formatCorePceValue(indicator.previousMoM, indicator.unit)}`));
+      assert.ok(text.includes(`3개월 평균 ${formatCorePceValue(indicator.threeMonthAverageMoM, indicator.unit)}`));
+      assert.doesNotMatch(text, /발표일/);
+    }
+    indicator.status = "normal";
+  }
+});
+
+test("Telegram escapes indicator facts, preserves near-zero changes and hides unrelated fields", async () => {
+  const input = await fixture();
+  const wti = input.weeklyReportOutput.facts.indicators.find(({ indicatorId }) => indicatorId === "wti");
+  Object.assign(wti, { status: "strong_alert", name: "<WTI>&", unit: "<USD>&",
+    weeklyChange: 0.04, fourWeekChange: null, quantity: "PRIVATE_QUANTITY", marketValue: "PRIVATE_VALUE" });
+  const { text } = buildTelegramSummary(input);
+  assert.match(text, /&lt;WTI&gt;&amp;/);
+  assert.match(text, /&lt;USD&gt;&amp;/);
+  assert.match(text, /1주 \+0\.04% \/ 4주 —/);
+  assert.doesNotMatch(text, /PRIVATE_QUANTITY|PRIVATE_VALUE/);
+});
+
+test("Telegram displays null actual fields as em dashes without fabricated zero values", async () => {
+  const input = await fixture();
+  input.weeklyReportOutput.facts.indicators.forEach((indicator) => Object.assign(indicator, {
+    status: "unavailable", riskContribution: null, currentValue: null, currentMoM: null,
+    previousMoM: null, threeMonthAverageMoM: null, weeklyChange: null, fourWeekChange: null,
+    currentObservationDate: null
+  }));
+  const { text } = buildTelegramSummary(input);
+  assert.match(text, /관측일 —/);
+  assert.match(text, /1주 — \/ 4주 — — unavailable/);
+  assert.match(text, /이전 — \/ 3개월 평균 — — unavailable/);
+});
+
+test("Telegram compact fallback preserves actual rows and fails safely if facts cannot fit", async () => {
+  const input = await fixture();
+  input.weeklyReportOutput.analysis.oneLookAnalysis.coreChanges = ["긴".repeat(240), "긴".repeat(240), "긴".repeat(240)];
+  const normal = buildTelegramSummary(input).text;
+  const { text } = buildTelegramSummary({ ...input, maxVisibleLength: visibleTextLength(normal) - 1 });
+  const actual = (value) => value.split("<b>중요 실제 지표</b>")[1].split("<b>판단</b>")[0];
+  assert.equal(actual(text), actual(normal));
+  input.weeklyReportOutput.facts.indicators.forEach((indicator) => { indicator.name = "PRIVATE_NAME".repeat(1000); });
+  assert.throws(() => buildTelegramSummary(input), (error) => {
+    assert.equal(error.code, "TELEGRAM_SUMMARY_TOO_LONG");
+    assert.doesNotMatch(error.message, /PRIVATE_NAME/);
+    return true;
+  });
 });

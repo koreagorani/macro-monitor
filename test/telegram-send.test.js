@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { sendWeeklyReportNotification } from "../src/telegram/send-weekly-report-notification.js";
+import { loadJsonFile } from "../src/config/load-config.js";
+import { REQUIRED_DATA_SOURCE_PROPERTIES } from "../src/notion/save-weekly-report-to-notion.js";
 
 function macroReview({ shouldAbort = false } = {}) {
   return {
@@ -141,3 +143,47 @@ test("safe orchestration result excludes message and external identifiers", asyn
   const serialized = JSON.stringify(result);
   assert.doesNotMatch(serialized, /private markdown|주간 매크로|bot|chat|page|deliveryKey/);
 });
+
+for (const missingIndicator of [false, true]) {
+  test(`v2 real renderer and Notion verification ${missingIndicator ? "block" : "allow"} data-first Telegram delivery`, async () => {
+    const report = await loadJsonFile("data/examples/weekly-report-output.example.json");
+    const events = [];
+    let saved;
+    const deps = {
+      macroReviewOutput: { riskOutput: { asOf: report.asOf, quality: { shouldAbort: false } } },
+      openaiClient: {},
+      generateWeeklyReportFn: async () => report,
+      notionClient: {
+        retrieveDataSource: async () => ({ properties: Object.fromEntries(
+          Object.entries(REQUIRED_DATA_SOURCE_PROPERTIES).map(([name, type]) => [name, { type }])
+        ) }),
+        queryPagesByReportKey: async () => [],
+        createReportPage: async (payload) => { saved = payload; events.push("save"); return { id: "private-page" }; },
+        retrievePage: async () => ({ properties: saved.properties }),
+        retrievePageMarkdown: async () => {
+          events.push("read-back");
+          return { truncated: false, markdown: missingIndicator
+            ? saved.markdown.replaceAll("WTI", "MISSING") : saved.markdown };
+        }
+      },
+      telegramClient: {
+        sendMessage: async ({ text }) => {
+          events.push("telegram");
+          assert.match(text, /중요 실제 지표/);
+          assert.match(text, /75\.3 USD\/barrel/);
+          return { delivered: true };
+        }
+      }
+    };
+    if (missingIndicator) {
+      await assert.rejects(sendWeeklyReportNotification(deps),
+        (error) => error.code === "NOTION_READ_BACK_VERIFICATION_FAILED");
+      assert.equal(events.includes("telegram"), false);
+    } else {
+      const result = await sendWeeklyReportNotification(deps);
+      assert.deepEqual(events, ["save", "read-back", "telegram"]);
+      assert.equal(result.verified, true);
+      assert.doesNotMatch(JSON.stringify(result), /75\.3|private-page|중요 실제 지표/);
+    }
+  });
+}

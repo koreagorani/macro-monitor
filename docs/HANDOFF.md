@@ -19,9 +19,23 @@
 - Telegram 알림 실제 GitHub Actions 검증 완료
 - 보고서 v2 Phase A — deterministic facts / AI analysis 분리 구현 및 로컬 검증 완료
 - 보고서 v2 Phase B — Markdown/Notion data-first 출력 및 실제 Notion Actions 검증 완료
-- 다음 작업: Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증
+- 보고서 v2 Phase C — Telegram data-first 출력 구현 및 로컬 검증 완료; 실제 Actions 통합 검증 대기
+- 다음 작업: main에서 `Manual Weekly Report Telegram Notification` 실행 및 실제 수신 확인
 
 ## 완료된 내용
+
+### 보고서 v2 Phase C — Telegram data-first 출력
+
+- `selectTelegramIndicators` 순수 함수 추가: facts의 status → raw riskContribution → reportPriority → ID로 최대 3개 선택, source 불변
+- Telegram에 시장가격형 현재값·관측일·1주/4주 변화, Core PCE 전월비·관측일·이전치·3개월 평균을 AI 판단보다 먼저 표시
+- Phase B 공용 formatter 재사용, overall/theme score 2자리 표시; schema·risk model·priority·기여도 공식 변경 없음
+- Notion verified 이후 전송, shouldAbort, HTML escape, 3,500자·한 메시지, Secret/본문 비로그 계약 유지
+- 테스트 158개 전체 통과; 실제 v2 renderer/Notion read-back 성공·coverage 실패와 Telegram 전송 연결 mock 포함
+- `validate:examples` 8개 전체 통과, 변경 JavaScript 5개 `node --check` 및 `git diff --check` 통과
+- 기존 workflow를 그대로 사용한다. 현재 연결 도구에 새 workflow dispatch 기능이 없어 실제 Actions 실행은 사용자 수행 필요
+- GitHub Actions → `Manual Weekly Report Telegram Notification` → Run workflow → main, as_of 공란
+- 완료 확인: job success, `notificationType: weekly`, `status: sent`, `verified: true`, Telegram 한 메시지 수신 및 실제 지표·2자리 점수 확인
+- 실제 run과 수신 확인 전에는 Phase C 전체 완료로 처리하지 않는다. 구조적 새 Decision 없음; D-029/D-030 확장
 
 ### 보고서 v2 Phase B — 실제 Notion 검증 title read-back hotfix
 
@@ -629,6 +643,6 @@ Node.js 환경:
 
 ## 미해결
 
-- Phase C — Telegram 중요 실제 지표 최대 3개 deterministic 선택·표시와 실제 Actions 통합 검증
+- Phase C — 실제 Actions 통합 검증 및 Telegram data-first 메시지 수신 확인
 - 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토

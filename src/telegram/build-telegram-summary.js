@@ -1,3 +1,12 @@
+import {
+  formatCorePceValue,
+  formatDate,
+  formatIndicatorChange,
+  formatIndicatorCurrentValue,
+  formatScore
+} from "../report/format-report-value.js";
+import { selectTelegramIndicators } from "./select-telegram-indicators.js";
+
 const MAX_TELEGRAM_VISIBLE_LENGTH = 3_500;
 const DISCLOSURE = "취약도는 기대수익률이나 직접적인 매도 신호가 아니라 매크로 노출도입니다.";
 const NOTION_LOCATION = "전체 보고서: Notion의 Macro Weekly Reports에서 확인";
@@ -63,6 +72,20 @@ function renderThemes(themes) {
   return ["<b>취약 테마</b>", ...lines].join("\n");
 }
 
+function renderIndicators(indicators) {
+  const rows = selectTelegramIndicators(indicators).map((indicator) => {
+    const isPce = indicator.type === "scheduled_release";
+    const current = isPce
+      ? formatCorePceValue(indicator.currentMoM, indicator.unit)
+      : formatIndicatorCurrentValue(indicator);
+    const changes = isPce
+      ? `이전 ${formatCorePceValue(indicator.previousMoM, indicator.unit)} / 3개월 평균 ${formatCorePceValue(indicator.threeMonthAverageMoM, indicator.unit)}`
+      : `1주 ${formatIndicatorChange(indicator.weeklyChange, indicator.weeklyChangeUnit)} / 4주 ${formatIndicatorChange(indicator.fourWeekChange, indicator.fourWeekChangeUnit)}`;
+    return `• ${escapeHtml(indicator.name)}: ${escapeHtml(current)} (관측일 ${escapeHtml(formatDate(indicator.currentObservationDate))})\n  ${escapeHtml(changes)} — ${escapeHtml(indicator.status)}`;
+  });
+  return ["<b>중요 실제 지표</b>", ...rows].join("\n");
+}
+
 function normalizeCoreChanges(weeklyReportOutput, maxItemLength) {
   const changes = weeklyReportOutput?.schemaVersion === "2.0.0"
     ? weeklyReportOutput?.analysis?.oneLookAnalysis?.coreChanges
@@ -80,7 +103,7 @@ function normalizeThemes(weeklyReportOutput, maxNameLength) {
     ? themes.slice(0, 3).map((theme) => ({
         name: truncateText(theme?.name, maxNameLength) || "이름 없음",
         level: truncateText(theme?.level, 40) || "unknown",
-        score: theme?.score === null || theme?.score === undefined ? "null" : String(theme.score)
+        score: formatScore(theme?.score)
       }))
     : [];
 }
@@ -103,9 +126,10 @@ function weeklyMessage({ weeklyReportOutput, compact = false }) {
     warningTitle ? "<b>⚠️ 주간 매크로 경고</b>" : "<b>주간 매크로 요약</b>",
     `기준일: ${escapeHtml(truncateText(weeklyReportOutput?.asOf, 40))}`,
     `전체 위험 단계: ${escapeHtml(truncateText(overallLevel, 40))}`,
-    `전체 위험 점수: ${escapeHtml(overallScore)}`,
+    `전체 위험 점수: ${escapeHtml(formatScore(overallScore))}`,
     `신뢰도: ${escapeHtml(truncateText(source.confidence, 40))}`,
-    renderList("핵심 변화", coreChanges),
+    ...(isV2 ? [renderIndicators(weeklyReportOutput.facts.indicators)] : []),
+    renderList("판단", coreChanges),
     renderThemes(themes),
     `<b>권장 대응</b>\n${escapeHtml(recommendedAction)}`
   ];
