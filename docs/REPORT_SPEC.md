@@ -367,3 +367,10 @@ Core PCE `currentObservationDate`는 `관측일`로만 표현하며 실제 발�
 - 전량 정리
 - 반드시 상승·하락
 - 확실한 매수
+
+
+## 자동 주간 보고서 운영
+
+매주 월요일 09:17 KST 전후(Monday 00:17 UTC, `17 0 * * 1`)에 기존 Telegram 전체 파이프라인을 실행한다. GitHub scheduled Actions는 지연될 수 있다. workflow_dispatch의 as_of는 유지하고 미지정 시 애플리케이션이 UTC 실행일을 기준일로 선택한다. 관측일은 facts에 별도로 보존한다.
+
+Notion은 Report Key 기반 idempotent upsert이고 Telegram은 재실행 시 중복 가능하다. 보유 테마 Secret은 수동 동기화하며 Google Drive 자동 동기화는 미구현이다. concurrency와 실패 처리의 상세 계약은 ARCHITECTURE의 주간 production schedule을 따른다.

@@ -419,3 +419,17 @@
 - 일반 테마 민감도만 평가하면 실제 미보유 테마도 높은 취약도 점수 때문에 보고서에 나타날 수 있다.
 - 현재 보유 여부를 계산 전에 deterministic하게 적용해야 AI가 미보유 테마를 제거하거나 추정하는 책임을 갖지 않는다.
 - 최소한의 테마 ID만 Secret으로 전달하면 개인 포트폴리오 원문을 공개 저장소와 Actions 로그에 노출하지 않고 현재 상태를 반영할 수 있다.
+
+
+## D-032 Weekly production schedule and concurrency policy
+
+결정:
+- 기존 production Telegram workflow/job을 schedule과 workflow_dispatch가 공유한다. 매주 월요일 09:17 KST 전후(00:17 UTC), cron `17 0 * * 1`로 실행한다.
+- optional as_of와 애플리케이션 소유 UTC 실행일 기본값을 유지한다.
+- 고정 concurrency group `weekly-macro-report`, cancel-in-progress false, queue max로 end-to-end 실행만 직렬화한다. 큐 한계와 지연 등 운영 상세는 ARCHITECTURE를 따른다.
+- 기존 Secrets, private portfolio fail-closed, shouldAbort와 Notion verified 후 Telegram 전송 계약을 유지한다.
+- D-028의 Notion upsert, D-029의 Telegram 재실행 중복 허용, D-031의 portfolio Secret 수동 동기화 정책을 유지한다.
+
+이유:
+- 검증된 전체 경로를 복제하지 않고 trigger만 확장해야 수동 복구와 정기 실행이 일치한다.
+- 실행 중인 보고서를 취소하지 않으면서 동시 Notion upsert/Telegram 전송을 방지한다. 영속 중복 방지는 이번 범위에 포함하지 않는다.

@@ -1,6 +1,9 @@
 name: Manual Weekly Report Telegram Notification
 
 on:
+  schedule:
+    # Monday 00:17 UTC / 09:17 KST; GitHub may delay scheduled runs.
+    - cron: '17 0 * * 1'
   workflow_dispatch:
     inputs:
       as_of:
@@ -10,6 +13,11 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: weekly-macro-report
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   send-weekly-report-telegram:

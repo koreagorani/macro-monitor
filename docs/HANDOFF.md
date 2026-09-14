@@ -21,9 +21,24 @@
 - 보고서 v2 Phase B — Markdown/Notion data-first 출력 및 실제 Notion Actions 검증 완료
 - 보고서 v2 Phase C — Telegram data-first 출력 및 실제 Actions 통합 검증 완료
 - Telegram 상태 가시성·점수 표현 hotfix 실제 Actions 재검증 완료
-- 다음 확인: 현재 보유 테마 비공개 필터 actual Actions 검증
+- 자동 주간 schedule 구현 완료 / 변경 후 manual regression 및 첫 실제 scheduled trigger 검증 대기
 
 ## 완료된 내용
+
+### 자동 주간 schedule
+
+- 기존 production Telegram workflow에 월요일 09:17 KST 전후(00:17 UTC) cron `17 0 * * 1` 추가, manual workflow_dispatch/as_of 유지
+- application code 변경 없음. 고정 concurrency group과 cancel-in-progress false, queue max 적용
+- 로컬 검증: npm test 170/170, validate:examples 8/8, YAML parse/cron/manual/job/Secrets/concurrency 계약 및 input 없는 shell 분기, git diff --check 통과. JS 변경 없음.
+- D-032와 ARCHITECTURE 운영 계약 기록. 기존 Secrets·실패 처리·보고서 formatting 유지
+- 기준 main `f73ce120bb0be972b001e6e83a61f8bb323717e3`, 이전 actual run `34683836028` 확인: 170 tests, 8 examples, Notion updated/verified true, Telegram weekly sent
+- 현재 GitHub 연결은 새 workflow dispatch를 지원하지 않아 변경 후 manual run은 사용자 실행 필요. 과거 run을 변경 후 검증으로 간주하지 않음
+- 즉시 검증: Actions → Manual Weekly Report Telegram Notification → Run workflow → main, as_of 공란. run ID, commit, tests, examples, Notion verified true, Telegram sent/수신 확인 후 기록
+- manual 검증 성공 후 상태: 자동 주간 schedule 구현 완료 / 첫 실제 scheduled trigger 검증 대기
+- 첫 schedule 검증: event=schedule, default branch main 및 해당 SHA, UTC asOf, tests/examples, Notion verified true, Telegram weekly sent/수신, 현재 보유 테마 적용 및 미보유 테마 제외 확인. run ID 기록
+- manual 및 첫 scheduled production run이 모두 실제 성공한 뒤에만 `Macro Monitor MVP v1 production automation complete` 판정
+- portfolio Secret 수동 동기화 및 Google Drive 자동 sync 미구현, Telegram rerun 중복 허용 유지
+
 
 ### 현재 보유 포트폴리오 테마 반영
 
@@ -661,7 +676,7 @@ Node.js 환경:
 
 ## 미해결
 
-- `PORTFOLIO_HELD_THEME_IDS` 등록 후 `Manual Weekly Report Telegram Notification` actual Actions 재검증
+- schedule 변경 후 manual regression run 및 첫 schedule event 실제 검증 대기
 - Google Drive 변경과 Actions Secret 동기화는 현재 수동이며 자동 동기화는 별도 인증·운영 계약 필요
-- 자동 스케줄 실행의 계약과 완료 조건 설계는 Phase B/C 뒤로 순연
+- schedule 지연·비활성화 여부는 Actions에서 확인; 운영 상세는 ARCHITECTURE 참조
 - 영속 delivery state와 exactly-once 중복 방지는 MVP 이후 별도 검토

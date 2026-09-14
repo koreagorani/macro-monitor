@@ -278,3 +278,20 @@ GitHub Secrets:
 - Telegram Bot Token
 - Telegram Chat ID
 - 현재 보유 테마 ID JSON 배열
+
+
+## 주간 production schedule
+
+운영 진입점은 기존 `.github/workflows/manual-weekly-report-telegram.yml`의 `Manual Weekly Report Telegram Notification`이다. schedule과 workflow_dispatch는 같은 job에서 npm ci → npm test → validate:examples → send:weekly-report:telegram을 실행한다.
+
+- 자동 실행: 매주 월요일 09:17 KST 전후, Monday 00:17 UTC, cron `17 0 * * 1`.
+- schedule은 default branch `main`의 최신 commit에서 실행한다. 정각 혼잡을 피하지만 실행 지연이나 부하에 따른 누락이 가능하며 정확한 시작 시각을 보장하지 않는다. 공개 저장소가 60일간 비활성이면 schedule이 비활성화될 수 있어 Actions 상태를 확인한다.
+- workflow_dispatch와 optional `as_of`를 유지한다. schedule에는 input이 없으며 `AS_OF`가 빈 값이면 기존 shell 분기가 날짜 인자를 생략한다.
+- 날짜는 `scripts/send-weekly-report-telegram.js`의 `new Date().toISOString().slice(0, 10)`이 결정한다. UTC 실행일의 YYYY-MM-DD이며 월요일 00:17 UTC는 KST도 월요일이다. 날짜를 넘길 만큼 지연되면 실제 실행일을 사용하고 특정 기준일 복구는 manual as_of로 지정한다. YAML에서 날짜를 재계산하지 않는다.
+- workflow-level concurrency group `weekly-macro-report`, `cancel-in-progress: false`, `queue: max`로 이 end-to-end workflow의 schedule/manual 실행을 직렬화한다. 실행 중 작업을 취소하지 않고 최대 100개 pending을 허용하며 초과분은 취소된다. 대기 진입 순서로 처리하며 dispatch 순서는 보장하지 않는다. 다른 진단 workflow는 이 잠금에 포함하지 않으므로 운영 실행과 Notion 단독 진단을 겹쳐 실행하지 않는다.
+- 기존 7개 Secrets와 OPENAI_MODEL, NOTION_API_VERSION 전달을 유지한다. PORTFOLIO_HELD_THEME_IDS 누락/오류는 fail-closed이며 전체 theme fallback은 없다.
+- Notion은 Report Key 기반 idempotent upsert, Telegram은 재실행 시 중복 가능하다. concurrency는 동시 실행을 막으며 persistent delivery deduplication은 post-MVP다.
+- shouldAbort는 OpenAI/Markdown/Notion을 생략하고 quality failure Telegram을 전송한다. Notion verified 실패는 정상 Telegram을 차단하고 Telegram 실패는 Notion rollback 없이 workflow failure가 된다.
+- portfolio held-theme Secret은 현재 수동 동기화한다. 자동 Google Drive portfolio sync는 미구현이다.
+
+공식 계약: [schedule](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule), [concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
